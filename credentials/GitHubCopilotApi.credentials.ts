@@ -5,19 +5,19 @@ import {
 } from 'n8n-workflow';
 
 /**
- * GitHub Copilot API OAuth2 Credentials
- * Only accepts GitHub Copilot tokens (gho_*) for API authentication
+ * GitHub Copilot API OAuth2 Credentials with correct scopes
+ * Specifically configured for GitHub Copilot API access
  */
 
-export class GitHubApi implements ICredentialType {
-	name = 'gitHubApi';
+export class GitHubCopilotApi implements ICredentialType {
+	name = 'githubCopilotApi';
 
-	displayName = 'GitHub OAuth2 API';
+	displayName = 'GitHub Copilot OAuth2 API';
 	
 	extends = ['oAuth2Api'];
 
 	documentationUrl =
-		'https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps';
+		'https://docs.github.com/en/copilot/github-copilot-chat/copilot-chat-in-ides/using-github-copilot-chat-in-your-ide';
 
 	properties: INodeProperties[] = [
 		{
@@ -42,7 +42,8 @@ export class GitHubApi implements ICredentialType {
 			displayName: 'Scope',
 			name: 'scope',
 			type: 'hidden',
-			default: 'copilot copilot:read copilot:write read:org repo user',
+			// GitHub Copilot specific scopes based on documentation research
+			default: 'copilot user read:user read:org',
 		},
 		{
 			displayName: 'Auth URI Query Parameters',
@@ -63,6 +64,12 @@ export class GitHubApi implements ICredentialType {
 			baseURL: 'https://api.githubcopilot.com',
 			url: '/models',
 			method: 'GET',
+			headers: {
+				'User-Agent': 'vscode-copilot',
+				'Copilot-Integration-Id': 'vscode-chat',
+				'Editor-Version': 'vscode/1.85.0',
+				'Editor-Plugin-Version': 'copilot-chat/0.12.0',
+			},
 		},
 	};
 }

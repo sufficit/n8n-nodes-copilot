@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "3.3.0",
-  "description": "n8n community node for GitHub Copilot and N8N AI Agent with CLI integration and official Chat API access to GPT-5, Claude, Gemini and more using your existing Copilot credits",
+  	"version": "3.12.2",
+  "description": "n8n community node for GitHub Copilot with CLI integration, Chat API access, and AI Chat Model for workflows - access GPT-5, Claude, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
   "author": {
@@ -27,13 +27,12 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/GitHubApi.credentials.js",
-      "dist/credentials/GitHubApiManual.credentials.js"
+      "dist/credentials/GitHubCopilotApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/GitHubCopilot/GitHubCopilot.node.js",
       "dist/nodes/GitHubCopilotChatAPI/GitHubCopilotChatAPI.node.js",
-      "dist/nodes/N8nAiAgent/N8nAiAgent.node.js"
+      "dist/nodes/GitHubCopilotChatModel/GitHubCopilotChatModel.node.js"
     ]
   },
   "keywords": [
@@ -57,15 +56,16 @@
   },
   "packageManager": "pnpm@7.1.0",
   "dependencies": {
+    "@langchain/openai": "^0.6.12",
     "n8n-workflow": "*"
   },
   "devDependencies": {
     "@types/node": "^18.16.16",
-    "@typescript-eslint/parser": "^5.45.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8.28.0",
     "gulp": "^4.0.2",
     "prettier": "^2.7.1",
-    "typescript": "~4.8.4"
+    "typescript": "^5.9.2"
   }
 }

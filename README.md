@@ -143,11 +143,26 @@ gh auth token
 ```
 
 ### 1. Adicionar o Node
+
 1. Crie um novo workflow
 2. Procure por **GitHub Copilot** na lista de nodes
 3. Arraste para o canvas
 4. **Deixe o campo token vazio** (se o servidor tem `gh auth login`)
 5. **OU** insira um token gerado por `gh auth token`
+
+### 2. Configuração para GitHub Copilot Chat API
+
+Para usar o **GitHub Copilot Chat API** (com modelos GPT-5, Claude, etc.):
+
+1. **Use autenticação OAuth2**: Selecione **"GitHub OAuth2 API"** (credencial padrão do n8n)
+2. **Configure a credencial OAuth2**:
+   - **Client ID**: Seu GitHub OAuth App Client ID
+   - **Client Secret**: Seu GitHub OAuth App Client Secret
+   - **Scope**: `copilot read:org repo user`
+3. **Crie uma GitHub OAuth App**:
+   - Vá para GitHub → Settings → Developer settings → OAuth Apps
+   - Clique em "New OAuth App" e configure callback URL do n8n
+4. **Vantagens**: Autenticação segura, renovação automática de tokens, acesso organizacional
 
 ## 🎮 Como Usar
 
@@ -307,12 +322,17 @@ npm run format
 
 ### Estrutura do Projeto
 ```
-├── credentials/
-│   └── GitHubApi.credentials.ts
 ├── nodes/
-│   └── GitHubCopilot/
-│       ├── GitHubCopilot.node.ts
-│       └── githubcopilot.svg
+│   ├── GitHubCopilot/
+│   │   ├── GitHubCopilot.node.ts
+│   │   └── githubcopilot.svg
+│   ├── GitHubCopilotChatAPI/
+│   │   └── GitHubCopilotChatAPI.node.ts
+│   └── GitHubCopilotChatModel/
+│       └── GitHubCopilotChatModel.node.ts
+├── shared/
+│   └── models/
+│       └── GitHubCopilotModels.ts
 ├── package.json
 ├── tsconfig.json
 ├── gulpfile.js

@@ -79,6 +79,17 @@ export class GitHubCopilot implements INodeType {
 		},
 		inputs: [NodeConnectionType.Main],
 		outputs: [NodeConnectionType.Main],
+		credentials: [
+			{
+				name: 'githubCopilotApi',
+				required: false,
+				displayOptions: {
+					show: {
+						operation: ['suggest', 'explain'],
+					},
+				},
+			},
+		],
 		properties: [
 			{
 				displayName: 'Operation',

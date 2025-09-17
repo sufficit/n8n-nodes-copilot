@@ -13,8 +13,8 @@ import {
     makeApiRequest,
 } from './utils';
 import { nodeProperties } from './nodeProperties';
-import { validateModelCapabilities } from './utils/modelCapabilities';
 import { processMediaFile } from './utils/mediaDetection';
+import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
 
 export class GitHubCopilotChatAPI implements INodeType {
     description: INodeTypeDescription = {
@@ -32,7 +32,7 @@ export class GitHubCopilotChatAPI implements INodeType {
         outputs: [NodeConnectionType.Main],
         credentials: [
             {
-                name: 'githubApi',
+                name: 'githubCopilotApi',
                 required: true,
             },
         ],
@@ -55,18 +55,13 @@ export class GitHubCopilotChatAPI implements INodeType {
                     
                     const includeMedia = this.getNodeParameter('includeMedia', i, false) as boolean;
 
+                    // Get model capabilities from centralized manager
+                    const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
+
                     // Validate model capabilities before processing (only if media is included)
                     if (includeMedia) {
-                        const validation = validateModelCapabilities(model, true, false); // Only image support
-                        if (!validation.isValid) {
-                            throw new Error(validation.errorMessage || 'Model validation failed');
-                        }
-
-                        // Log warnings if any
-                        if (validation.warnings) {
-                            for (const warning of validation.warnings) {
-                                console.warn(`GitHub Copilot API Warning: ${warning}`);
-                            }
+                        if (!modelInfo?.capabilities.vision && !modelInfo?.capabilities.multimodal) {
+                            throw new Error(`Model ${model} does not support vision/image processing. Please select a model with vision capabilities.`);
                         }
                     }
 

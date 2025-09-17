@@ -73,7 +73,7 @@ export async function processImageFile(
         if (compressedTokens < estimatedTokens) {
             return {
                 data: compressedBase64,
-                mimeType: getImageMimeType(filename),
+                mimeType: getImageMimeType(compressedBuffer),
                 filename,
                 size: compressedBuffer.length,
                 estimatedTokens: compressedTokens
@@ -81,7 +81,7 @@ export async function processImageFile(
         }
     }
 
-    const mimeType = getImageMimeType(filename);
+    const mimeType = getImageMimeType(imageBuffer);
 
     return {
         data: base64Image,

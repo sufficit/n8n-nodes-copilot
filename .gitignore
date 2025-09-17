@@ -15,3 +15,6 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+.token
+models.json
+package-lock.json

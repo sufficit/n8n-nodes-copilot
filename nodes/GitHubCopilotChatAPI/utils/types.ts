@@ -1,4 +1,7 @@
 import { IExecuteFunctions } from 'n8n-workflow';
+import { CopilotResponse } from '../../../shared/utils/GitHubCopilotApiUtils';
+
+export { CopilotResponse };
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -11,20 +14,6 @@ export interface ChatMessageContent {
     image_url?: { url: string };
     // Note: GitHub Copilot API doesn't support input_audio type
     // Audio must be handled as text or converted to other formats
-}
-
-export interface CopilotResponse {
-    choices: Array<{
-        message: {
-            content: string;
-        };
-        finish_reason: string;
-    }>;
-    usage?: {
-        prompt_tokens: number;
-        completion_tokens: number;
-        total_tokens: number;
-    };
 }
 
 export interface FileProcessOptions {

@@ -1,4 +1,5 @@
 import { INodeProperties } from 'n8n-workflow';
+import { GitHubCopilotModelsManager, DEFAULT_MODELS } from '../../shared/models/GitHubCopilotModels';
 
 export const nodeProperties: INodeProperties[] = [
     {
@@ -19,40 +20,9 @@ export const nodeProperties: INodeProperties[] = [
         displayName: 'Model',
         name: 'model',
         type: 'options',
-        options: [
-            {
-                name: 'GPT-5',
-                value: 'gpt-5',
-                description: 'OpenAI GPT-5 (Latest and most capable) ✓ Images',
-            },
-            {
-                name: 'GPT-5 Mini',
-                value: 'gpt-5-mini',
-                description: 'OpenAI GPT-5 Mini (Faster, cost-effective) ✓ Images',
-            },
-            {
-                name: 'Claude Opus 4.1',
-                value: 'claude-opus-4.1',
-                description: 'Anthropic Claude Opus 4.1 (Advanced reasoning) ✗ Text only',
-            },
-            {
-                name: 'Gemini 2.5 Pro',
-                value: 'gemini-2.5-pro',
-                description: 'Google Gemini 2.5 Pro (Multimodal capabilities) ✓ Images',
-            },
-            {
-                name: 'Grok Code Fast 1',
-                value: 'grok-code-fast-1',
-                description: 'xAI Grok Code Fast 1 (Optimized for coding) ✗ Text only',
-            },
-            {
-                name: 'GPT-4.1 Copilot',
-                value: 'gpt-4.1-copilot',
-                description: 'OpenAI GPT-4.1 specialized for coding assistance ✓ Images',
-            },
-        ],
-        default: 'gpt-5-mini',
-        description: 'Select AI model to use',
+        options: GitHubCopilotModelsManager.toN8nOptions(),
+        default: DEFAULT_MODELS.GENERAL,
+        description: 'Select the GitHub Copilot model to use',
     },
     {
         displayName: 'Message',
