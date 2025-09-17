@@ -126,9 +126,19 @@ As extensões usam dois modos de autenticação:
 Durante a análise, foram encontradas referências a headers específicos:
 - `Authorization: Bearer {token}`
 - `Content-Type: application/json`
-- `Accept: application/json`
+- `Accept: application/vnd.github+json`
+- `X-GitHub-Api-Version: 2025-07-16` - **🔑 VERSÃO CRÍTICA DESCOBERTA**
 - `User-Agent: [específico do VS Code]`
 - `Integration-Id: [identificador específico]`
+
+### ⭐ **Descoberta Crítica: Versão da API**
+**X-GitHub-Api-Version: `2025-07-16`** é a versão específica que:
+- ✅ **Permite acesso ao endpoint de modelos**: `https://api.githubcopilot.com/models`
+- ✅ **Habilita GPT-5 e GPT-5 Mini**: Chat completions funcionais
+- ❌ **Modelos premium requerem subscription específica**: GPT-4.1, GPT-4o, o3-mini retornam 403
+- 🔍 **Melhora compatibilidade geral** com endpoints GitHub Copilot
+
+**Uso obrigatório em todos os headers para máxima compatibilidade.**
 
 ## 🔧 **Implementação nos Nodes n8n**
 

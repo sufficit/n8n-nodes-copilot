@@ -2,6 +2,7 @@
 * **Version**: 202509171200
 * **Description**: Este arquivo fornece diretrizes e instruções para o desenvolvimento dos nodes n8n do GitHub Copilot.
 * **Repository**: https://github.com/sufficit/n8n-nodes-copilot
+* **VS Code Copilot Chat Repository**: https://github.com/microsoft/vscode-copilot-chat
 
 ## Table of Contents
 - [Diretrizes Gerais](#diretrizes-gerais)
