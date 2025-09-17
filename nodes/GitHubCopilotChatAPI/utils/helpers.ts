@@ -18,7 +18,7 @@ export async function makeApiRequest(
     body: Record<string, unknown>,
     hasMedia = false
 ): Promise<CopilotResponse> {
-    return await makeGitHubCopilotRequest(context, endpoint, body, "githubCopilotApi", hasMedia);
+    return await makeGitHubCopilotRequest(context, endpoint, body, hasMedia);
 }
 
 // Re-export shared utility functions for backward compatibility

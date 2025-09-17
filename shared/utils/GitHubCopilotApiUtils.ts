@@ -11,13 +11,6 @@ interface OAuth2Credentials {
     [key: string]: unknown;
 }
 
-// Interface for manual credentials (used by ChatModel)
-interface ManualCredentials {
-    token?: string;
-    accessToken?: string;
-    [key: string]: unknown;
-}
-
 // GitHub Copilot API Response interface
 export interface CopilotResponse {
     id: string;
@@ -47,72 +40,44 @@ export async function makeGitHubCopilotRequest(
     context: IExecuteFunctions, 
     endpoint: string, 
     body: Record<string, unknown>,
-    credentialType: 'githubCopilotApi' | 'githubApiManual' = 'githubCopilotApi',
     hasMedia = false
 ): Promise<CopilotResponse> {
+    // GitHub Copilot OAuth2 credentials with correct scopes
+    const credentials = await context.getCredentials('githubCopilotApi') as OAuth2Credentials;
     
-    let token: string;
+    // Debug: Log credential structure for OAuth2
+    console.log('🔍 OAuth2 Credentials Debug:', Object.keys(credentials));
     
-    // Extract token based on credential type
-    if (credentialType === 'githubCopilotApi') {
-        // GitHub Copilot OAuth2 credentials with correct scopes
-        const credentials = await context.getCredentials('githubCopilotApi') as OAuth2Credentials;
-        
-        // Debug: Log credential structure for OAuth2
-        console.log('🔍 OAuth2 Credentials Debug:', Object.keys(credentials));
-        
-        // OAuth2 credentials might have different property names
-        token = (
-            credentials.accessToken || 
-            credentials.access_token || 
-            credentials.oauthTokenData?.access_token ||
-            credentials.token
-        ) as string;
+    // OAuth2 credentials might have different property names
+    const token = (
+        credentials.accessToken || 
+        credentials.access_token || 
+        credentials.oauthTokenData?.access_token ||
+        credentials.token
+    ) as string;
 
-        // Validate OAuth2 token exists
-        if (!token) {
-            console.error('❌ Available OAuth2 credential properties:', Object.keys(credentials));
-            console.error('❌ Full OAuth2 credential object:', JSON.stringify(credentials, null, 2));
-            throw new Error('GitHub Copilot: No access token found in OAuth2 credentials. Available properties: ' + Object.keys(credentials).join(', '));
-        }
-        
-    } else {
-        // Manual credentials (for ChatModel)
-        const credentials = await context.getCredentials('githubApiManual') as ManualCredentials;
-        
-        console.log('🔍 Manual Credentials Debug:', Object.keys(credentials));
-        
-        token = credentials.token || credentials.accessToken as string;
-        
-        // Validate manual token exists
-        if (!token) {
-            console.error('❌ Available manual credential properties:', Object.keys(credentials));
-            throw new Error('GitHub Copilot: No access token found in manual credentials. Available properties: ' + Object.keys(credentials).join(', '));
-        }
+    // Validate OAuth2 token exists
+    if (!token) {
+        console.error('❌ Available OAuth2 credential properties:', Object.keys(credentials));
+        console.error('❌ Full OAuth2 credential object:', JSON.stringify(credentials, null, 2));
+        throw new Error('GitHub Copilot: No access token found in OAuth2 credentials. Available properties: ' + Object.keys(credentials).join(', '));
     }
 
     // Debug: Show token info for troubleshooting
     const tokenPrefix = token.substring(0, Math.min(4, token.indexOf('_') + 1)) || token.substring(0, 4);
     const tokenSuffix = token.substring(Math.max(0, token.length - 5));
-    console.log(`🔍 GitHub Copilot ${credentialType} Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
+    console.log(`🔍 GitHub Copilot OAuth2 Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
     
     // Note: GitHub Copilot accepts different token formats
     if (!token.startsWith('gho_') && !token.startsWith('ghu_') && !token.startsWith('github_pat_')) {
         console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
     }
     
-    // Prepare headers for GitHub Copilot API (exact VS Code format)
+    // Prepare headers for GitHub Copilot API (minimal working format)
     const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': 'vscode-copilot',
-        // Critical headers for GitHub Copilot API integration
-        'Copilot-Integration-Id': 'vscode-chat',
-        'Editor-Version': 'vscode/1.85.0',
-        'Editor-Plugin-Version': 'copilot-chat/0.12.0',
-        'X-Request-Id': `n8n-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        'Openai-Intent': 'conversation-panel',
+        'Content-Type': 'application/json',
     };
 
     // Add required headers for vision/audio requests
@@ -133,15 +98,17 @@ export async function makeGitHubCopilotRequest(
     if (!response.ok) {
         const errorText = await response.text();
         
-        // Include token info in error for debugging
+        // Secure token display - show only prefix and last 5 characters
+        const tokenPrefix = token.substring(0, 4);
+        const tokenSuffix = token.substring(token.length - 5);
         const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
         
         console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
         console.error(`❌ Error details: ${errorText}`);
-        console.error(`❌ Used credential type: ${credentialType}`);
+        console.error(`❌ Used credential type: githubCopilotApi`);
         console.error(`❌ Token format used: ${tokenInfo}`);
         
-        // Enhanced error message with token info for debugging
+        // Enhanced error message with secure token info
         const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}]`;
         
         throw new Error(enhancedError);
