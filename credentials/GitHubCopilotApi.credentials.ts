@@ -5,6 +5,8 @@ import {
 	IAuthenticateGeneric,
 } from 'n8n-workflow';
 
+import { GITHUB_COPILOT_API } from '../shared/utils/GitHubCopilotEndpoints';
+
 /**
  * GitHub Copilot API Token Credentials
  * ONLY GitHub CLI generated tokens work with GitHub Copilot API
@@ -54,8 +56,8 @@ export class GitHubCopilotApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'https://api.githubcopilot.com',
-			url: '/models',
+			baseURL: GITHUB_COPILOT_API.BASE_URL,
+			url: GITHUB_COPILOT_API.ENDPOINTS.MODELS,
 			method: 'GET',
 		},
 	};

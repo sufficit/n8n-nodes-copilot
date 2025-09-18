@@ -1,4 +1,5 @@
 import { IExecuteFunctions } from 'n8n-workflow';
+import { GITHUB_COPILOT_API, GitHubCopilotEndpoints } from './GitHubCopilotEndpoints';
 
 // Interface for OAuth2 credentials
 interface OAuth2Credentials {
@@ -93,7 +94,7 @@ export async function makeGitHubCopilotRequest(
     };
 
     // Use GitHub Copilot official API endpoint
-    const response = await fetch(`https://api.githubcopilot.com${endpoint}`, options);
+    const response = await fetch(`${GITHUB_COPILOT_API.BASE_URL}${endpoint}`, options);
     
     if (!response.ok) {
         const errorText = await response.text();

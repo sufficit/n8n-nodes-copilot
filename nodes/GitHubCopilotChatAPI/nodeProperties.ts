@@ -168,6 +168,25 @@ export const nodeProperties: INodeProperties[] = [
                 default: 1,
                 description: 'Alternative to temperature, controls diversity via nucleus sampling',
             },
+            {
+                displayName: 'Auto Retry on 403 Error',
+                name: 'enableRetry',
+                type: 'boolean',
+                default: true,
+                description: 'Automatically retry requests when hitting TPM (Transactions Per Minute) quota limits (HTTP 403)',
+            },
+            {
+                displayName: 'Max Retry Attempts',
+                name: 'maxRetries',
+                type: 'number',
+                default: 3,
+                description: 'Maximum number of retry attempts for 403 errors',
+                displayOptions: {
+                    show: {
+                        enableRetry: [true],
+                    },
+                },
+            },
         ],
     },
 ];

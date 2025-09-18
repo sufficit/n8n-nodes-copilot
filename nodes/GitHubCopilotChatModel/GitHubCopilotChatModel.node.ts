@@ -8,6 +8,7 @@ import {
 
 import { ChatOpenAI } from '@langchain/openai';
 import { GitHubCopilotModelsManager, DEFAULT_MODELS } from '../../shared/models/GitHubCopilotModels';
+import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
 
 export class GitHubCopilotChatModel implements INodeType {
     description: INodeTypeDescription = {
@@ -103,6 +104,25 @@ export class GitHubCopilotChatModel implements INodeType {
                             rows: 3,
                         },
                     },
+                    {
+                        displayName: 'Auto Retry on 403 Error',
+                        name: 'enableRetry',
+                        type: 'boolean',
+                        default: true,
+                        description: 'Automatically retry requests when hitting TPM (Transactions Per Minute) quota limits (HTTP 403)',
+                    },
+                    {
+                        displayName: 'Max Retry Attempts',
+                        name: 'maxRetries',
+                        type: 'number',
+                        default: 3,
+                        description: 'Maximum number of retry attempts for 403 errors',
+                        displayOptions: {
+                            show: {
+                                enableRetry: [true],
+                            },
+                        },
+                    },
                 ],
             },
         ],
@@ -116,6 +136,8 @@ export class GitHubCopilotChatModel implements INodeType {
             topP?: number;
             enableVision?: boolean;
             systemMessage?: string;
+            enableRetry?: boolean;
+            maxRetries?: number;
         };
 
         // Get model information from centralized manager
@@ -158,8 +180,9 @@ export class GitHubCopilotChatModel implements INodeType {
             temperature: options.temperature || 0.7,
             maxTokens: Math.min(options.maxTokens || 1000, safeModelInfo?.capabilities.maxOutputTokens || 4096),
             topP: options.topP || 1,
+            maxRetries: options.enableRetry !== false ? (options.maxRetries || 3) : 0,
             configuration: {
-                baseURL: 'https://api.githubcopilot.com',
+                baseURL: GITHUB_COPILOT_API.BASE_URL,
                 apiKey: token,  // Use validated token
                 defaultHeaders: {
                     'User-Agent': 'GitHubCopilotChat/1.0.0 n8n/3.10.1',

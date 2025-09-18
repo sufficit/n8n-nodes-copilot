@@ -11,10 +11,12 @@ import {
     ChatMessage,
     ChatMessageContent,
     makeApiRequest,
+    CopilotResponse,
 } from './utils';
 import { nodeProperties } from './nodeProperties';
 import { processMediaFile } from './utils/mediaDetection';
 import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
+import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
 
 export class GitHubCopilotChatAPI implements INodeType {
     description: INodeTypeDescription = {
@@ -52,6 +54,10 @@ export class GitHubCopilotChatAPI implements INodeType {
                     const userMessage = this.getNodeParameter('message', i) as string;
                     const systemMessage = this.getNodeParameter('systemMessage', i, '') as string;
                     const advancedOptions = this.getNodeParameter('advancedOptions', i, {}) as IDataObject;
+                    
+                    // Get retry options
+                    const enableRetry = advancedOptions.enableRetry !== false;
+                    const maxRetries = (advancedOptions.maxRetries as number) || 3;
                     
                     const includeMedia = this.getNodeParameter('includeMedia', i, false) as boolean;
 
@@ -146,9 +152,36 @@ export class GitHubCopilotChatAPI implements INodeType {
                         ...advancedOptions,
                     };
 
-                    // Make API request with vision support if media is included
+                    // Make API request with retry logic
                     const hasMedia = includeMedia;
-                    const response = await makeApiRequest(this, '/chat/completions', requestBody, hasMedia);
+                    let response: CopilotResponse | null = null;
+                    let attempt = 1;
+                    
+                    while (attempt <= maxRetries + 1) {
+                        try {
+                            response = await makeApiRequest(this, GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, hasMedia);
+                            break; // Success, exit retry loop
+                        } catch (error: unknown) {
+                            const isLastAttempt = attempt >= maxRetries + 1;
+                            const errorObj = error as { status?: number; message?: string };
+                            const is403Error = errorObj.status === 403 || errorObj.message?.includes('403');
+                            
+                            if (is403Error && enableRetry && !isLastAttempt) {
+                                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000); // Exponential backoff, max 30s
+                                console.log(`GitHub Copilot API attempt ${attempt} failed with 403, retrying in ${delay}ms...`);
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                attempt++;
+                                continue;
+                            }
+                            
+                            // If not retryable or last attempt, throw the error
+                            throw error;
+                        }
+                    }
+                    
+                    if (!response) {
+                        throw new Error('Failed to get response from GitHub Copilot API after all retry attempts');
+                    }
 
                     // Extract result
                     const result: IDataObject = {
