@@ -22,28 +22,26 @@ async function testAllModels() {
         
         console.log(`✅ Total de modelos carregados: ${allModels.length}`);
         
-        // Filtrar apenas modelos habilitados
-        const enabledModels = allModels.filter(model => 
-            model.model_picker_enabled !== false
-        );
+        // TESTAR TODOS OS MODELOS (não filtrar apenas habilitados)
+        const testModels = allModels;
         
-        console.log(`📊 Modelos habilitados para teste: ${enabledModels.length}`);
-        console.log(`📊 Modelos desabilitados (ignorados): ${allModels.length - enabledModels.length}`);
+        console.log(`📊 Modelos para teste: ${testModels.length} (TODOS)`);
         
-        // Mostrar detalhes por provider ANTES do teste
+        // Estatísticas por provider ANTES do teste
         const byProvider = {};
-        enabledModels.forEach(model => {
+        testModels.forEach(model => {
             if (!byProvider[model.vendor]) {
                 byProvider[model.vendor] = [];
             }
             byProvider[model.vendor].push(model);
         });
         
-        console.log('\n🎯 Modelos que serão testados por Provider:');
+        console.log('\n🎯 TODOS os modelos que serão testados por Provider:');
         Object.keys(byProvider).sort().forEach(provider => {
             console.log(`  ${provider}: ${byProvider[provider].length} modelos`);
             byProvider[provider].forEach(model => {
-                console.log(`    - ${model.id} (${model.name})`);
+                const status = model.model_picker_enabled !== false ? '✅' : '❌';
+                console.log(`    ${status} ${model.id} (${model.name})`);
             });
         });
         
@@ -73,16 +71,9 @@ async function testAllModels() {
             errors: {}
         };
         
-        // TESTE LIMITADO - apenas modelos específicos para economizar recursos
-        const testModels = enabledModels.filter(model => 
-            model.id === 'gpt-4.1' || model.id === 'claude-3.5-sonnet'
-        );
+        // TESTE COMPLETO - usando todos os modelos já definidos acima
         
-        console.log(`🎯 Testando apenas ${testModels.length} modelos específicos:\n`);
-        testModels.forEach(model => {
-            console.log(`   - ${model.id} (${model.name})`);
-        });
-        console.log('');
+        console.log(`🎯 Testando TODOS os ${testModels.length} modelos:\n`);
         
         for (let i = 0; i < testModels.length; i++) {
             const model = testModels[i];

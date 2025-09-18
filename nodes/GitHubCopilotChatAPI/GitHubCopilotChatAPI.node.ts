@@ -20,7 +20,7 @@ export class GitHubCopilotChatAPI implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'GitHub Copilot Chat API',
         name: 'gitHubCopilotChatAPI',
-        icon: 'file:copilot.svg',
+        icon: 'file:../../shared/icons/copilot.svg',
         group: ['AI'],
         version: 1,
         subtitle: '={{$parameter["operation"] + ": " + $parameter["model"]}}',

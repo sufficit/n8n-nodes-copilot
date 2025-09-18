@@ -326,7 +326,7 @@ async function authenticate() {
         let useExistingGitHubToken = false;
         
         try {
-            githubToken = fs.readFileSync('./github-token.txt', 'utf8').trim();
+            githubToken = fs.readFileSync('./results/github-token.txt', 'utf8').trim();
             console.log('📁 Token GitHub encontrado no arquivo github-token.txt');
             console.log(`🔑 Token: ${githubToken.substring(0, 20)}...`);
             console.log('❓ Deseja usar este token? (s/N)');
@@ -345,8 +345,8 @@ async function authenticate() {
             githubToken = await obtainGitHubToken();
             
             // Salvar token GitHub
-            fs.writeFileSync('./github-token.txt', githubToken);
-            console.log('💾 Token GitHub salvo em: ./github-token.txt\n');
+            fs.writeFileSync('./results/github-token.txt', githubToken);
+            console.log('💾 Token GitHub salvo em: ./results/github-token.txt\n');
         }
         
         // Obter informações do usuário
@@ -374,8 +374,8 @@ async function authenticate() {
             note: 'Usando token GitHub diretamente (formato gho_*)'
         };
         
-        fs.writeFileSync('./copilot-authentication.json', JSON.stringify(fullTokenData, null, 2));
-        console.log('📄 Dados completos salvos em: ./copilot-authentication.json\n');
+        fs.writeFileSync('./results/copilot-authentication.json', JSON.stringify(fullTokenData, null, 2));
+        console.log('📄 Dados completos salvos em: ./results/copilot-authentication.json\n');
         
         // Testar token
         await testCopilotToken(finalToken);

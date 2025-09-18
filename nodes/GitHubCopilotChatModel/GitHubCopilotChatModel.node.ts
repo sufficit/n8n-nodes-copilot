@@ -13,7 +13,7 @@ export class GitHubCopilotChatModel implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'GitHub Copilot Chat Model',
         name: 'gitHubCopilotChatModel',
-        icon: 'file:copilot.svg',
+        icon: 'file:../../shared/icons/copilot.svg',
         group: ['transform'],
         version: 1,
         description: 'GitHub Copilot chat model for AI workflows - access GPT-5, Claude, Gemini and more using your Copilot subscription',

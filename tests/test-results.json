@@ -1,0 +1,129 @@
+{
+  "timestamp": "2025-09-17T22:16:52.723Z",
+  "totalModels": 32,
+  "enabledModels": 13,
+  "testedModels": 13,
+  "results": {
+    "success": [
+      {
+        "model": "gpt-5-mini",
+        "name": "GPT-5 mini (Azure OpenAI)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "gpt-5",
+        "name": "GPT-5 (Azure OpenAI)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "gpt-4o",
+        "name": "GPT-4o (Azure OpenAI)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "o3-mini",
+        "name": "o3-mini (Azure OpenAI)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "claude-3.7-sonnet",
+        "name": "Claude Sonnet 3.7 (Anthropic)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "claude-sonnet-4",
+        "name": "Claude Sonnet 4 (Anthropic)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "claude-opus-4",
+        "name": "Claude Opus 4 (Anthropic)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      },
+      {
+        "model": "o4-mini",
+        "name": "o4-mini (Preview) (Azure OpenAI)",
+        "endpoint": "https://api.githubcopilot.com/chat/completions",
+        "response": "OK"
+      }
+    ],
+    "failed": [
+      {
+        "model": "gpt-4.1",
+        "name": "GPT-4.1 (Azure OpenAI)",
+        "status": 404,
+        "error": "Not Found",
+        "restrictions": [],
+        "errorDetails": "Not Found"
+      },
+      {
+        "model": "claude-3.5-sonnet",
+        "name": "Claude Sonnet 3.5 (Anthropic)",
+        "status": 404,
+        "error": "Not Found",
+        "restrictions": [],
+        "errorDetails": "Not Found"
+      },
+      {
+        "model": "claude-3.7-sonnet-thought",
+        "name": "Claude Sonnet 3.7 Thinking (Anthropic)",
+        "status": 404,
+        "error": "Not Found",
+        "restrictions": [],
+        "errorDetails": "Not Found"
+      },
+      {
+        "model": "gemini-2.0-flash-001",
+        "name": "Gemini 2.0 Flash (Google)",
+        "status": 404,
+        "error": "Not Found",
+        "restrictions": [],
+        "errorDetails": "Not Found"
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "name": "Gemini 2.5 Pro (Google)",
+        "status": 404,
+        "error": "Not Found",
+        "restrictions": [],
+        "errorDetails": "Not Found"
+      }
+    ],
+    "errors": {
+      "404": [
+        "Azure OpenAI",
+        "Anthropic",
+        "Anthropic",
+        "Google",
+        "Google"
+      ]
+    }
+  },
+  "byProvider": [
+    {
+      "provider": "Azure OpenAI",
+      "totalModels": 6,
+      "successCount": 5,
+      "failedCount": 1
+    },
+    {
+      "provider": "Anthropic",
+      "totalModels": 5,
+      "successCount": 3,
+      "failedCount": 2
+    },
+    {
+      "provider": "Google",
+      "totalModels": 2,
+      "successCount": 0,
+      "failedCount": 2
+    }
+  ]
+}

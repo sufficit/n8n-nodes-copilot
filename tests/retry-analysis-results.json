@@ -1,0 +1,1528 @@
+{
+  "timestamp": "2025-09-18T12:26:32.393Z",
+  "endpoint": "https://api.githubcopilot.com/chat/completions",
+  "token_prefix": "gho_qnvNf8...",
+  "retry_count": 3,
+  "models_tested": 17,
+  "summary": {
+    "consistent_failures": 14,
+    "consistent_success": 3,
+    "intermittent": 0,
+    "error_patterns": {
+      "403-Forbidden": {
+        "count": 39,
+        "models": [
+          "Azure OpenAI",
+          "Anthropic",
+          "Google"
+        ],
+        "sample_details": "access to this endpoint is forbidden\n",
+        "headers_found": {
+          "x-github-request-id": "DBD1:356AF:164D68D:1A035A6:68CBFA3A"
+        },
+        "rate_limit_indicators": []
+      },
+      "400-Bad Request": {
+        "count": 3,
+        "models": [
+          "Azure OpenAI"
+        ],
+        "sample_details": "Bad Request\n",
+        "headers_found": {
+          "x-github-request-id": "DBD1:356AF:165768D:1A0EA39:68CBFA61"
+        },
+        "rate_limit_indicators": []
+      }
+    }
+  },
+  "models": [
+    {
+      "model": "gpt-4.1",
+      "name": "GPT-4.1",
+      "vendor": "Azure OpenAI",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:164D68D:1A035A6:68CBFA3A"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:30 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164D68D:1A035A6:68CBFA3A",
+            "x-request-id": "00000-b5521c68-93a5-48c9-a73e-228bad429e56"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:164DBDD:1A03B8A:68CBFA3A"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:32 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164DBDD:1A03B8A:68CBFA3A",
+            "x-request-id": "00000-4503f525-41a8-457e-bf48-22b480e10088"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:164E07B:1A040E0:68CBFA3C"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:33 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164E07B:1A040E0:68CBFA3C",
+            "x-request-id": "00000-32b4695c-526c-434c-b1ab-8b4e9a6d5042"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gpt-3.5-turbo",
+      "name": "GPT 3.5 Turbo",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "response": "OK 1",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "906",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:34 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164E34E:1A0442B:68CBFA3D",
+            "x-request-id": "00000-c4dbcb4a-41f1-42fb-b060-68e422572e1a"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": true,
+          "response": "OK 2",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "908",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:36 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164EB0F:1A04CC8:68CBFA3E",
+            "x-request-id": "00000-fbfb1728-06f9-4031-95aa-fbf7e8b5ef4e"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": true,
+          "response": "OK 3",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "934",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:37 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164F0EB:1A05377:68CBFA40",
+            "x-request-id": "00000-962e6998-f069-4134-b446-2b23189085d5"
+          }
+        }
+      ],
+      "pattern": "SUCESSO_CONSISTENTE",
+      "success_count": 3,
+      "failure_count": 0
+    },
+    {
+      "model": "gpt-3.5-turbo-0613",
+      "name": "GPT 3.5 Turbo",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "response": "OK 1",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "918",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:39 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164F4D8:1A057FE:68CBFA41",
+            "x-request-id": "00000-c0d611b4-c30f-41b4-9a22-34f2ad94bf77"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": true,
+          "response": "OK 2",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "912",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:40 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:164FBA6:1A05FA8:68CBFA43",
+            "x-request-id": "00000-68e0e9fe-dca8-4ce6-bd24-82da238eb496"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": true,
+          "response": "OK 3",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "919",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:42 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16501F8:1A066DC:68CBFA44",
+            "x-request-id": "00000-873db197-03e7-4077-9dd0-81eac8ef8c30"
+          }
+        }
+      ],
+      "pattern": "SUCESSO_CONSISTENTE",
+      "success_count": 3,
+      "failure_count": 0
+    },
+    {
+      "model": "gpt-4o-mini",
+      "name": "GPT-4o mini",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": true,
+          "response": "OK 1",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "927",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:45 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1650685:1A06BF9:68CBFA46",
+            "x-request-id": "00000-2038ab4e-092d-4c1b-877a-2b9bed837acc"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": true,
+          "response": "OK 2",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "938",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:46 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165147A:1A07B7F:68CBFA49",
+            "x-request-id": "00000-a3a245bc-074c-44b4-933f-33218ac51324"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": true,
+          "response": "OK 3",
+          "usage": {
+            "completion_tokens": 4,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 25
+          },
+          "headers": {
+            "content-length": "914",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "application/json",
+            "date": "Thu, 18 Sep 2025 12:25:48 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1651A3B:1A08274:68CBFA4A",
+            "x-request-id": "00000-31b5dd17-2c68-4e7e-b7cb-3f5b70e1dce4"
+          }
+        }
+      ],
+      "pattern": "SUCESSO_CONSISTENTE",
+      "success_count": 3,
+      "failure_count": 0
+    },
+    {
+      "model": "gpt-4-0613",
+      "name": "GPT 4",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1651EC2:1A0872B:68CBFA4C"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:48 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1651EC2:1A0872B:68CBFA4C",
+            "x-request-id": "00000-e18a58de-2f4d-4cf8-bc10-8928c9ad7270"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165239C:1A08CE9:68CBFA4C"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:50 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165239C:1A08CE9:68CBFA4C",
+            "x-request-id": "00000-1900b7b4-02bd-4fc0-929c-7b765a7d8a0e"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1652893:1A0928B:68CBFA4E"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:51 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1652893:1A0928B:68CBFA4E",
+            "x-request-id": "00000-b3edb115-3635-4ead-9155-ce26132f6b3d"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gpt-4o-2024-11-20",
+      "name": "GPT-4o",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1652B76:1A095BA:68CBFA4F"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:53 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1652B76:1A095BA:68CBFA4F",
+            "x-request-id": "00000-6937d155-baf0-41af-93b0-38adf0fd129f"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16535C6:1A0A11E:68CBFA51"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:54 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16535C6:1A0A11E:68CBFA51",
+            "x-request-id": "00000-620257b9-3a13-4eed-9d58-c7094b7d4336"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1653ADF:1A0A6DF:68CBFA52"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:55 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1653ADF:1A0A6DF:68CBFA52",
+            "x-request-id": "00000-025cac2e-824a-443e-9193-9a827c946a2f"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gpt-4-o-preview",
+      "name": "GPT-4o",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1653D10:1A0A9AE:68CBFA53"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:56 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1653D10:1A0A9AE:68CBFA53",
+            "x-request-id": "00000-4319e8ad-891c-4cc6-89a5-cd50432741df"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1654344:1A0B0B6:68CBFA54"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:58 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1654344:1A0B0B6:68CBFA54",
+            "x-request-id": "00000-b2344eab-3c12-405a-919a-fa3218dc8fc5"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165477F:1A0B628:68CBFA56"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:25:59 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165477F:1A0B628:68CBFA56",
+            "x-request-id": "00000-45a20930-355a-46a0-b375-1dee4bdf871c"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gpt-4o-2024-08-06",
+      "name": "GPT-4o",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1654AA6:1A0B920:68CBFA57"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:00 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1654AA6:1A0B920:68CBFA57",
+            "x-request-id": "00000-973b7cf9-50c8-44bb-a2cd-91dcff7e06ba"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16551E7:1A0C153:68CBFA58"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:02 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16551E7:1A0C153:68CBFA58",
+            "x-request-id": "00000-f24eae7b-9ac1-432d-8491-4cb2df1b83d7"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16558E2:1A0C92C:68CBFA5A"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:03 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:GPT4o:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:GPT4o:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16558E2:1A0C92C:68CBFA5A",
+            "x-request-id": "00000-1e28f7f0-b0b2-4414-9cff-29cb1c6f8003"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "o3-mini",
+      "name": "o3-mini",
+      "vendor": "Azure OpenAI",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1655D13:1A0CDCF:68CBFA5B"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:04 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1655D13:1A0CDCF:68CBFA5B",
+            "x-request-id": "00000-3832abee-0329-4a6d-9f4a-dc4b9fda0d07"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16561F3:1A0D341:68CBFA5C"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:05 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16561F3:1A0D341:68CBFA5C",
+            "x-request-id": "00000-3d6aae69-800a-4ca6-9a43-91d0dae5d9b2"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16566DD:1A0D891:68CBFA5D"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:06 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16566DD:1A0D891:68CBFA5D",
+            "x-request-id": "00000-0aafbaeb-d6ad-43b5-9a38-e65bc0a3332a"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "o3-mini-2025-01-31",
+      "name": "o3-mini",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1656999:1A0DBE8:68CBFA5E"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:07 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1656999:1A0DBE8:68CBFA5E",
+            "x-request-id": "00000-fb9ad107-ccfe-46ab-afc5-84a0ceb45805"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1656E8E:1A0E13D:68CBFA5F"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:08 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1656E8E:1A0E13D:68CBFA5F",
+            "x-request-id": "00000-9b8af8ed-ae23-4c77-801b-511a272b5e6f"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16573A5:1A0E715:68CBFA60"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:09 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:O3Mini:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:O3Mini:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16573A5:1A0E715:68CBFA60",
+            "x-request-id": "00000-a0ab89fd-7a43-4669-9444-31a07803bea6"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "o3-mini-paygo",
+      "name": "o3-mini",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "400 - Bad Request",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 400,
+          "error": "Bad Request",
+          "details": "Bad Request\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165768D:1A0EA39:68CBFA61"
+          },
+          "all_headers": {
+            "content-length": "12",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:10 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165768D:1A0EA39:68CBFA61",
+            "x-request-id": "00000-2ad72ee6-1c68-47ad-8611-9b427ee939d1"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 400,
+          "error": "Bad Request",
+          "details": "Bad Request\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1657AF5:1A0EF27:68CBFA62"
+          },
+          "all_headers": {
+            "content-length": "12",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:11 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1657AF5:1A0EF27:68CBFA62",
+            "x-request-id": "00000-07046f6f-d93a-4c17-b174-e6159e8693e5"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 400,
+          "error": "Bad Request",
+          "details": "Bad Request\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1657F9B:1A0F44D:68CBFA63"
+          },
+          "all_headers": {
+            "content-length": "12",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:12 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1657F9B:1A0F44D:68CBFA63",
+            "x-request-id": "00000-7d9cda4b-4271-4f44-b3d2-dc187be91243"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "claude-3.7-sonnet",
+      "name": "Claude Sonnet 3.7",
+      "vendor": "Anthropic",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1658241:1A0F79A:68CBFA64"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:13 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1658241:1A0F79A:68CBFA64",
+            "x-request-id": "00000-d2d34927-3f4e-43ab-b5ce-7b9ed264e75a"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165872D:1A0FD25:68CBFA65"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:14 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165872D:1A0FD25:68CBFA65",
+            "x-request-id": "00000-5c14e440-290d-444f-a8b0-2cf53fead0f3"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1658C4C:1A10288:68CBFA66"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:15 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37Sonnet:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1658C4C:1A10288:68CBFA66",
+            "x-request-id": "00000-e47d3238-4ef8-4070-88fc-9fd1642c3dfe"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "claude-3.7-sonnet-thought",
+      "name": "Claude Sonnet 3.7 Thinking",
+      "vendor": "Anthropic",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1658ED8:1A10562:68CBFA67"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:16 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1658ED8:1A10562:68CBFA67",
+            "x-request-id": "00000-2245ac93-f537-4327-baa3-b25c0d71445a"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16592CB:1A10A65:68CBFA68"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:17 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16592CB:1A10A65:68CBFA68",
+            "x-request-id": "00000-833e3f61-04b7-4c49-bb34-7d15cdd04274"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:16597A8:1A10FA5:68CBFA69"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:18 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Claude37SonnetThought:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:16597A8:1A10FA5:68CBFA69",
+            "x-request-id": "00000-4468cc6a-f61c-422a-b069-a5e3aee3fec5"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "claude-sonnet-4",
+      "name": "Claude Sonnet 4",
+      "vendor": "Anthropic",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1659A4B:1A112E2:68CBFA6A"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:19 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1659A4B:1A112E2:68CBFA6A",
+            "x-request-id": "00000-07e81e78-0073-49d2-9537-6940e049ae57"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:1659F8B:1A118A4:68CBFA6B"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:20 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:1659F8B:1A118A4:68CBFA6B",
+            "x-request-id": "00000-a5193042-4cee-41c4-9edb-07fd4758f3df"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165A458:1A11DFA:68CBFA6C"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:22 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeSonnet4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165A458:1A11DFA:68CBFA6C",
+            "x-request-id": "00000-faf3c7ad-394e-4832-95ff-c1a7e7a8ac5d"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "claude-opus-4",
+      "name": "Claude Opus 4",
+      "vendor": "Anthropic",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165AA18:1A12459:68CBFA6E"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:23 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165AA18:1A12459:68CBFA6E",
+            "x-request-id": "00000-c4d66ea5-7853-4411-9add-070fa75f2cc5"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165AF18:1A12A13:68CBFA6F"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:24 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165AF18:1A12A13:68CBFA6F",
+            "x-request-id": "00000-e7d2ada2-ed09-4aae-85c4-76ecfa38e8b8"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165B420:1A12F94:68CBFA70"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:25 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:ClaudeOpus4:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165B420:1A12F94:68CBFA70",
+            "x-request-id": "00000-e54b348d-3359-4e17-9eb6-6101a96de78e"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "vendor": "Google",
+      "enabled": true,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165B6E1:1A132BA:68CBFA71"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:26 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165B6E1:1A132BA:68CBFA71",
+            "x-request-id": "00000-232cec3f-57ea-40d6-9449-b32adff9e4bf"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165BB8F:1A13846:68CBFA72"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:27 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165BB8F:1A13846:68CBFA72",
+            "x-request-id": "00000-1541e396-657b-436c-abfe-7ea03c133130"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165C094:1A13DA7:68CBFA73"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:28 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gemini25Pro:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165C094:1A13DA7:68CBFA73",
+            "x-request-id": "00000-41e237b6-495d-4219-ac36-202840dcfe5f"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    },
+    {
+      "model": "gpt-4.1-2025-04-14",
+      "name": "GPT-4.1",
+      "vendor": "Azure OpenAI",
+      "enabled": false,
+      "previous_error": "403 - Forbidden",
+      "attempts": [
+        {
+          "attempt": 1,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165C359:1A140D4:68CBFA74"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:29 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165C359:1A140D4:68CBFA74",
+            "x-request-id": "00000-1a281496-c638-4130-9cfa-60dad9ce43a0"
+          }
+        },
+        {
+          "attempt": 2,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165C812:1A1463C:68CBFA75"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:30 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165C812:1A1463C:68CBFA75",
+            "x-request-id": "00000-da2d8e8c-602d-4daa-904d-3cc3845f8b9b"
+          }
+        },
+        {
+          "attempt": 3,
+          "success": false,
+          "status": 403,
+          "error": "Forbidden",
+          "details": "access to this endpoint is forbidden\n",
+          "error_json": null,
+          "headers": {
+            "x-github-request-id": "DBD1:356AF:165CD52:1A14BD6:68CBFA76"
+          },
+          "all_headers": {
+            "content-length": "37",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-type": "text/plain; charset=utf-8",
+            "date": "Thu, 18 Sep 2025 12:26:31 GMT",
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "x-endpoint-client-forbidden": "tpm:Gpt41:clientID:copilot_4_cli",
+            "x-endpoint-integration-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli",
+            "x-endpoint-user-forbidden": "tpm:Gpt41:clientID:copilot_4_cli:integrationID:copilot-4-cli:userID",
+            "x-github-backend": "Kubernetes",
+            "x-github-request-id": "DBD1:356AF:165CD52:1A14BD6:68CBFA76",
+            "x-request-id": "00000-8f633369-94db-47bc-aab8-c47d80043187"
+          }
+        }
+      ],
+      "pattern": "FALHA_CONSISTENTE",
+      "success_count": 0,
+      "failure_count": 3
+    }
+  ]
+}

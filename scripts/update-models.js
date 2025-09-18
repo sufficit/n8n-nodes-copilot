@@ -164,8 +164,8 @@ async function updateModelsFile() {
             providers: byProvider
         };
         
-        fs.writeFileSync('./scripts/models-update-report.json', JSON.stringify(reportData, null, 2));
-        console.log('📄 Relatório salvo em: ./scripts/models-update-report.json');
+        fs.writeFileSync('./results/models-update-report.json', JSON.stringify(reportData, null, 2));
+        console.log('📄 Relatório salvo em: ./results/models-update-report.json');
         
         // 11. Resumo final
         console.log('\n' + '='.repeat(50));
