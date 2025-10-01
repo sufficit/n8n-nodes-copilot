@@ -39,36 +39,34 @@ export class GitHubCopilotAuthHelper implements INodeType {
     ],
     properties: [
       {
-        displayName: "🎯 Como Usar",
-        name: "instructions",
+        displayName: "✨ Autenticação Visual - Sem Terminal!",
+        name: "notice1",
         type: "notice",
-        default: `
-          <div style="background: #e8f5e8; padding: 20px; border-left: 4px solid #4CAF50; border-radius: 4px;">
-            <h3 style="margin-top: 0; color: #2E7D32;">✨ Autenticação Visual - Sem Terminal!</h3>
-            
-            <p><strong>1. Ative este workflow</strong></p>
-            <p>Clique em "Active" no canto superior direito</p>
-            
-            <p><strong>2. Copie a URL do Webhook</strong></p>
-            <p>Clique em "Copy URL" abaixo e envie para o usuário</p>
-            
-            <p><strong>3. Usuário acessa a URL no navegador</strong></p>
-            <p>Uma página bonita vai abrir com instruções claras</p>
-            
-            <p><strong>4. Processo automático!</strong></p>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-              <li>✅ Página solicita código do GitHub</li>
-              <li>✅ Mostra código grande para copiar</li>
-              <li>✅ Abre GitHub automaticamente</li>
-              <li>✅ Aguarda autorização (polling automático)</li>
-              <li>✅ Exibe token pronto para copiar</li>
-            </ul>
-            
-            <p style="background: #fff3e0; padding: 10px; border-radius: 4px; margin-top: 15px;">
-              <strong>💡 Sem CORS!</strong> O n8n faz as chamadas para o GitHub, não o navegador!
-            </p>
-          </div>
-        `,
+        default: "Este node permite que usuários finais obtenham tokens GitHub Copilot sem usar terminal.",
+      },
+      {
+        displayName: "📋 Passo 1: Ativar Workflow",
+        name: "notice2",
+        type: "notice",
+        default: "Clique no botão 'Active' no canto superior direito para ativar o workflow. A Production URL só funciona com workflow ativo!",
+      },
+      {
+        displayName: "🔗 Passo 2: Copiar URL",
+        name: "notice3",
+        type: "notice",
+        default: "Copie a 'Production URL' que aparece abaixo (em Webhook URLs) e envie para o usuário final.",
+      },
+      {
+        displayName: "🌐 Passo 3: Usuário Acessa URL",
+        name: "notice4",
+        type: "notice",
+        default: "O usuário abre a URL no navegador e segue as instruções visuais: 1) Clica 'Começar', 2) Copia o código, 3) Autoriza no GitHub, 4) Copia o token gerado automaticamente.",
+      },
+      {
+        displayName: "💡 Sem CORS!",
+        name: "notice5",
+        type: "notice",
+        default: "O n8n faz proxy das requisições para GitHub API, então não há problemas de CORS quando usuário acessa a página pelo navegador.",
       },
       {
         displayName: "Client ID",
