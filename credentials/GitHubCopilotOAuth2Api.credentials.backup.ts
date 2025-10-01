@@ -93,10 +93,7 @@ export class GitHubCopilotOAuth2Api implements ICredentialType {
       name: "generateCode",
       type: "button",
       typeOptions: {
-        action: {
-          type: "generateDeviceCode",
-          displayName: "🎲 Generate 8-Character Code",
-        },
+        action: "generateDeviceCode",
       },
       default: "",
       displayOptions: {
