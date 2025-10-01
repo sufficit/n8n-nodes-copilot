@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "3.29.7",
+  "version": "3.31.0",
   "description": "n8n community node for GitHub Copilot with CLI integration, Chat API access, and AI Chat Model for workflows - access GPT-5, Claude, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
@@ -10,9 +10,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sufficit/n8n-nodes-github-copilot.git"
+    "url": "git+https://github.com/sufficit/n8n-nodes-github-copilot.git"
   },
-  "main": "index.js",
   "scripts": {
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
@@ -27,12 +26,11 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/GitHubCopilotApi.credentials.js",
-      "dist/credentials/GitHubCopilotOAuth2Api.credentials.js",
-      "dist/credentials/GitHubCopilotOAuth2Api.credentials.oauth.js"
+      "dist/credentials/GitHubCopilotApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/GitHubCopilot/GitHubCopilot.node.js",
+      "dist/nodes/GitHubCopilotAuthHelper/GitHubCopilotAuthHelper.node.js",
       "dist/nodes/GitHubCopilotChatAPI/GitHubCopilotChatAPI.node.js",
       "dist/nodes/GitHubCopilotChatModel/GitHubCopilotChatModel.node.js",
       "dist/nodes/GitHubCopilotOpenAI/GitHubCopilotOpenAI.node.js",
@@ -59,10 +57,8 @@
     "pnpm": ">=7.1"
   },
   "dependencies": {
-    "@langchain/openai": "^0.6.14"
-  },
-  "peerDependencies": {
-    "n8n-workflow": ">=1.0.0"
+    "@langchain/openai": "^0.6.14",
+    "n8n-workflow": "^1.110.0"
   },
   "overrides": {
     "form-data": "^4.0.4",

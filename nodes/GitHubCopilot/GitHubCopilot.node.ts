@@ -70,7 +70,7 @@ export class GitHubCopilot implements INodeType {
   description: INodeTypeDescription = {
     displayName: "GitHub Copilot",
     name: "gitHubCopilot",
-    icon: "file:githubCopilot.svg",
+    icon: "file:../../shared/icons/copilot.svg",
     group: ["transform"],
     version: 1,
     subtitle: "",
