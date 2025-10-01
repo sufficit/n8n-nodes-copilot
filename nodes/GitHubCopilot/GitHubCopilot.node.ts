@@ -342,7 +342,7 @@ export class GitHubCopilot implements INodeType {
                 credentialType === "githubCopilotOAuth2Api" ? "OAuth2" : "API"
               } Credential`;
             }
-          } catch (error) {
+          } catch {
             // Credential not configured but user wanted to use it
             throw new NodeOperationError(
               this.getNode(),

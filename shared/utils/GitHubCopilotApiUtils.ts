@@ -47,7 +47,7 @@ export async function makeGitHubCopilotRequest(
   let credentialType = "githubCopilotApi"; // default
   try {
     credentialType = context.getNodeParameter("credentialType", 0, "githubCopilotApi") as string;
-  } catch (error) {
+  } catch {
     // If credentialType parameter doesn't exist, use default
     console.log("🔍 No credentialType parameter found, using default: githubCopilotApi");
   }
@@ -83,11 +83,9 @@ export async function makeGitHubCopilotRequest(
     console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
   }
     
-  // Prepare headers for GitHub Copilot API (minimal working format)
+  // Prepare headers using centralized configuration
   const headers: Record<string, string> = {
-    "Authorization": `Bearer ${token}`,
-    "Accept": "application/json",
-    "Content-Type": "application/json",
+    ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
   };
 
   // Add required headers for vision/audio requests
@@ -102,8 +100,9 @@ export async function makeGitHubCopilotRequest(
     body: JSON.stringify(body),
   };
 
-  // Use GitHub Copilot official API endpoint
-  const response = await fetch(`${GITHUB_COPILOT_API.BASE_URL}${endpoint}`, options);
+  // Use centralized endpoint construction
+  const fullUrl = `${GITHUB_COPILOT_API.BASE_URL}${endpoint}`;
+  const response = await fetch(fullUrl, options);
     
   if (!response.ok) {
     const errorText = await response.text();

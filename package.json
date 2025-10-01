@@ -55,7 +55,7 @@
     "automation"
   ],
   "engines": {
-    "node": ">=16.10",
+    "node": ">=18.19",
     "pnpm": ">=7.1"
   },
   "dependencies": {
@@ -65,14 +65,14 @@
     "n8n-workflow": ">=1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.16.16",
-    "@typescript-eslint/eslint-plugin": "^5.45.0",
-    "@typescript-eslint/parser": "^5.45.0",
-    "eslint": "^8.28.0",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "eslint": "^8.57.0",
     "gulp": "^4.0.2",
     "n8n-core": "^1.0.0",
-    "n8n-workflow": "^1.0.0",
-    "prettier": "^2.7.1",
-    "typescript": "^5.9.2"
+    "n8n-workflow": "^1.111.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.1.6"
   }
 }
