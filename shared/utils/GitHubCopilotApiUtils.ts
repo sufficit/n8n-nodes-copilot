@@ -43,11 +43,20 @@ export async function makeGitHubCopilotRequest(
     body: Record<string, unknown>,
     hasMedia = false
 ): Promise<CopilotResponse> {
-    // GitHub Copilot OAuth2 credentials with correct scopes
-    const credentials = await context.getCredentials('githubCopilotApi') as OAuth2Credentials;
+    // Determine credential type dynamically
+    let credentialType = 'githubCopilotApi'; // default
+    try {
+        credentialType = context.getNodeParameter('credentialType', 0, 'githubCopilotApi') as string;
+    } catch (error) {
+        // If credentialType parameter doesn't exist, use default
+        console.log('🔍 No credentialType parameter found, using default: githubCopilotApi');
+    }
+
+    // Get credentials based on type
+    const credentials = await context.getCredentials(credentialType) as OAuth2Credentials;
     
     // Debug: Log credential structure for OAuth2
-    console.log('🔍 OAuth2 Credentials Debug:', Object.keys(credentials));
+    console.log(`🔍 ${credentialType} Credentials Debug:`, Object.keys(credentials));
     
     // OAuth2 credentials might have different property names
     const token = (
@@ -59,15 +68,15 @@ export async function makeGitHubCopilotRequest(
 
     // Validate OAuth2 token exists
     if (!token) {
-        console.error('❌ Available OAuth2 credential properties:', Object.keys(credentials));
-        console.error('❌ Full OAuth2 credential object:', JSON.stringify(credentials, null, 2));
-        throw new Error('GitHub Copilot: No access token found in OAuth2 credentials. Available properties: ' + Object.keys(credentials).join(', '));
+        console.error(`❌ Available ${credentialType} credential properties:`, Object.keys(credentials));
+        console.error(`❌ Full ${credentialType} credential object:`, JSON.stringify(credentials, null, 2));
+        throw new Error(`GitHub Copilot: No access token found in ${credentialType} credentials. Available properties: ` + Object.keys(credentials).join(', '));
     }
 
     // Debug: Show token info for troubleshooting
     const tokenPrefix = token.substring(0, Math.min(4, token.indexOf('_') + 1)) || token.substring(0, 4);
     const tokenSuffix = token.substring(Math.max(0, token.length - 5));
-    console.log(`🔍 GitHub Copilot OAuth2 Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
+    console.log(`🔍 GitHub Copilot ${credentialType} Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
     
     // Note: GitHub Copilot accepts different token formats
     if (!token.startsWith('gho_') && !token.startsWith('ghu_') && !token.startsWith('github_pat_')) {
@@ -106,7 +115,7 @@ export async function makeGitHubCopilotRequest(
         
         console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
         console.error(`❌ Error details: ${errorText}`);
-        console.error(`❌ Used credential type: githubCopilotApi`);
+        console.error(`❌ Used credential type: ${credentialType}`);
         console.error(`❌ Token format used: ${tokenInfo}`);
         
         // Enhanced error message with secure token info

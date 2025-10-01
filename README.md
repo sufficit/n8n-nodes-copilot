@@ -154,6 +154,17 @@ gh auth token
 
 Para usar o **GitHub Copilot Chat API** (com modelos GPT-5, Claude, etc.):
 
+#### **Opção A: OAuth2 Automático (Recomendado) ✅**
+1. **Use a nova credencial**: Selecione **"GitHub Copilot OAuth2 API"**
+2. **Clique em "Connect"**: Use o botão OAuth2 para autenticação automática
+3. **Configure GitHub OAuth App**:
+   - Vá para GitHub → Settings → Developer settings → OAuth Apps
+   - Clique em "New OAuth App"
+   - **Authorization callback URL**: `https://your-n8n-instance.com/rest/oauth2-credential/callback`
+   - Copie Client ID e Client Secret para a credencial N8N
+4. **Vantagens**: Botão de autenticação, renovação automática de tokens, interface padrão N8N
+
+#### **Opção B: OAuth2 Manual (Compatibilidade)**
 1. **Use autenticação OAuth2**: Selecione **"GitHub OAuth2 API"** (credencial padrão do n8n)
 2. **Configure a credencial OAuth2**:
    - **Client ID**: Seu GitHub OAuth App Client ID
