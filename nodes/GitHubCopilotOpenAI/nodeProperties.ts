@@ -29,6 +29,47 @@ export const nodeProperties: INodeProperties[] = [
 			"The model to use for the completion. Supports all OpenAI model names that map to GitHub Copilot models.",
   },
   {
+    displayName: "Messages Input Mode",
+    name: "messagesInputMode",
+    type: "options",
+    options: [
+      {
+        name: "Manual (UI)",
+        value: "manual",
+        description: "Enter messages one by one using the UI",
+      },
+      {
+        name: "JSON (Programmatic)",
+        value: "json",
+        description: "Provide messages as JSON array",
+      },
+    ],
+    default: "manual",
+    description: "How to provide the messages for the conversation",
+  },
+  {
+    displayName: "Messages (JSON)",
+    name: "messagesJson",
+    type: "json",
+    default: `[
+  {
+    "role": "system",
+    "content": "You are a helpful assistant."
+  },
+  {
+    "role": "user",
+    "content": "Hello!"
+  }
+]`,
+    placeholder: "Enter messages as JSON array",
+    description: "Array of messages in OpenAI format: [{\"role\": \"user\", \"content\": \"...\"}]",
+    displayOptions: {
+      show: {
+        messagesInputMode: ["json"],
+      },
+    },
+  },
+  {
     displayName: "Messages",
     name: "messages",
     type: "fixedCollection",
@@ -43,6 +84,11 @@ export const nodeProperties: INodeProperties[] = [
           content: "",
         },
       ],
+    },
+    displayOptions: {
+      show: {
+        messagesInputMode: ["manual"],
+      },
     },
     options: [
       {
@@ -89,7 +135,7 @@ export const nodeProperties: INodeProperties[] = [
     description: "Array of messages for the conversation",
   },
   {
-    displayName: "Tools",
+    displayName: "Tools (Optional)",
     name: "tools",
     type: "json",
     default: "",
@@ -112,8 +158,8 @@ export const nodeProperties: INodeProperties[] = [
     }
   }
 ]`,
-    description: "Array of tools/functions available to the model (OpenAI format)",
-    hint: "JSON array of tool definitions in OpenAI format",
+    description: "Optional: Array of tools/functions available to the model (OpenAI format). Leave empty if not using function calling.",
+    hint: "JSON array of tool definitions in OpenAI format. This field is optional.",
   },
   {
     displayName: "Tool Choice",

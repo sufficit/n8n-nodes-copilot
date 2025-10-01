@@ -43,20 +43,34 @@ export class GitHubCopilotOpenAI implements INodeType {
         if (operation === "chat") {
           // Get OpenAI-style parameters from n8n UI
           const model = this.getNodeParameter("model", i, "gpt-4o") as string;
-          const messagesParam = this.getNodeParameter("messages", i, {
-            message: [],
-          }) as IDataObject;
+          const messagesInputMode = this.getNodeParameter("messagesInputMode", i, "manual") as string;
           const temperature = this.getNodeParameter("temperature", i, 1) as number;
           const tools = this.getNodeParameter("tools", i, "") as string;
 
-          // Parse messages from n8n UI format
-          const messages: Array<{ role: string; content: string }> = [];
-          if (messagesParam.message && Array.isArray(messagesParam.message)) {
-            for (const msg of messagesParam.message as IDataObject[]) {
-              messages.push({
-                role: msg.role as string,
-                content: msg.content as string,
-              });
+          // Parse messages based on input mode
+          let messages: Array<{ role: string; content: string }> = [];
+
+          if (messagesInputMode === "json") {
+            // JSON mode: parse from JSON string
+            const messagesJson = this.getNodeParameter("messagesJson", i, "[]") as string;
+            try {
+              messages = JSON.parse(messagesJson);
+            } catch (error) {
+              throw new Error(`Failed to parse messages JSON: ${error instanceof Error ? error.message : "Unknown error"}`);
+            }
+          } else {
+            // Manual mode: parse from n8n UI format
+            const messagesParam = this.getNodeParameter("messages", i, {
+              message: [],
+            }) as IDataObject;
+            
+            if (messagesParam.message && Array.isArray(messagesParam.message)) {
+              for (const msg of messagesParam.message as IDataObject[]) {
+                messages.push({
+                  role: msg.role as string,
+                  content: msg.content as string,
+                });
+              }
             }
           }
 
