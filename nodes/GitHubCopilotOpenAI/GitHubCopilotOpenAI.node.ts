@@ -27,20 +27,6 @@ export class GitHubCopilotOpenAI implements INodeType {
       {
         name: "githubCopilotApi",
         required: true,
-        displayOptions: {
-          show: {
-            credentialType: ["githubCopilotApi"],
-          },
-        },
-      },
-      {
-        name: "githubCopilotOAuth2Api",
-        required: true,
-        displayOptions: {
-          show: {
-            credentialType: ["githubCopilotOAuth2Api"],
-          },
-        },
       },
     ],
     properties: nodeProperties,

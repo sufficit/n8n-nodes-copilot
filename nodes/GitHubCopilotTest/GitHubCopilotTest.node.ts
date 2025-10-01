@@ -425,42 +425,9 @@ export class GitHubCopilotTest implements INodeType {
       {
         name: "githubCopilotApi",
         required: true,
-        displayOptions: {
-          show: {
-            credentialType: ["githubCopilotApi"],
-          },
-        },
-      },
-      {
-        name: "githubCopilotOAuth2Api",
-        required: true,
-        displayOptions: {
-          show: {
-            credentialType: ["githubCopilotOAuth2Api"],
-          },
-        },
       },
     ],
     properties: [
-      {
-        displayName: "Credential Type",
-        name: "credentialType",
-        type: "options",
-        options: [
-          {
-            name: "GitHub Copilot API (Manual Token)",
-            value: "githubCopilotApi",
-            description: "Use manual GitHub CLI token",
-          },
-          {
-            name: "GitHub Copilot OAuth2 (with Helper)",
-            value: "githubCopilotOAuth2Api",
-            description: "Use OAuth2 credential with helper script",
-          },
-        ],
-        default: "githubCopilotApi",
-        description: "Type of credential to use for GitHub Copilot authentication",
-      },
       {
         displayName: "Test Function",
         name: "testFunction",
@@ -550,19 +517,11 @@ export class GitHubCopilotTest implements INodeType {
             ? (this.getNodeParameter("testsPerModel", i) as number)
             : 5;
 
-        // Get credentials based on type
-        const credentialType = this.getNodeParameter(
-          "credentialType",
-          i,
-          "githubCopilotApi",
-        ) as string;
-        const credentials = await this.getCredentials(credentialType, i);
+        // Get credentials
+        const credentials = await this.getCredentials("githubCopilotApi", i);
 
-        // OAuth2 credentials might have different property names
-        const token = (credentials.accessToken ||
-					credentials.access_token ||
-					(credentials.oauthTokenData as Record<string, unknown>)?.access_token ||
-					credentials.token) as string;
+        // Get token from credential
+        const token = credentials.token as string;
 
         if (!token) {
           throw new Error(GITHUB_COPILOT_API.ERRORS.CREDENTIALS_REQUIRED);

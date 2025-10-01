@@ -87,17 +87,6 @@ export class GitHubCopilot implements INodeType {
         displayOptions: {
           show: {
             useCredential: [true],
-            credentialType: ["githubCopilotApi"],
-          },
-        },
-      },
-      {
-        name: "githubCopilotOAuth2Api",
-        required: false,
-        displayOptions: {
-          show: {
-            useCredential: [true],
-            credentialType: ["githubCopilotOAuth2Api"],
           },
         },
       },
@@ -109,30 +98,6 @@ export class GitHubCopilot implements INodeType {
         type: "boolean",
         default: false,
         description: "Use GitHub Copilot API credential instead of local GitHub CLI authentication",
-      },
-      {
-        displayName: "Credential Type",
-        name: "credentialType",
-        type: "options",
-        options: [
-          {
-            name: "GitHub Copilot API (Manual Token)",
-            value: "githubCopilotApi",
-            description: "Use manual GitHub CLI token",
-          },
-          {
-            name: "GitHub Copilot OAuth2 (with Helper)",
-            value: "githubCopilotOAuth2Api",
-            description: "Use OAuth2 credential with helper script",
-          },
-        ],
-        default: "githubCopilotApi",
-        description: "Type of credential to use for GitHub Copilot authentication",
-        displayOptions: {
-          show: {
-            useCredential: [true],
-          },
-        },
       },
       {
         displayName: "Operation",
@@ -323,24 +288,14 @@ export class GitHubCopilot implements INodeType {
 
         if (useCredential) {
           try {
-            const credentialType = this.getNodeParameter(
-              "credentialType",
-              i,
-              "githubCopilotApi",
-            ) as string;
-            const credentials = await this.getCredentials(credentialType);
+            const credentials = await this.getCredentials("githubCopilotApi");
 
-            // OAuth2 credentials might have different property names
-            const token = (credentials.accessToken ||
-							credentials.access_token ||
-							(credentials.oauthTokenData as Record<string, unknown>)?.access_token ||
-							credentials.token) as string;
+            // Get token from credential
+            const token = credentials.token as string;
 
             if (token) {
               githubToken = token;
-              authMethod = `GitHub Copilot ${
-                credentialType === "githubCopilotOAuth2Api" ? "OAuth2" : "API"
-              } Credential`;
+              authMethod = "GitHub Copilot API Credential";
             }
           } catch {
             // Credential not configured but user wanted to use it
