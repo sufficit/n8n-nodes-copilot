@@ -1,5 +1,5 @@
-import { IExecuteFunctions } from 'n8n-workflow';
-import { GITHUB_COPILOT_API, GitHubCopilotEndpoints } from './GitHubCopilotEndpoints';
+import { IExecuteFunctions } from "n8n-workflow";
+import { GITHUB_COPILOT_API } from "./GitHubCopilotEndpoints";
 
 // Interface for OAuth2 credentials
 interface OAuth2Credentials {
@@ -38,192 +38,192 @@ export interface CopilotResponse {
  * Works with both OAuth2 and manual token credentials
  */
 export async function makeGitHubCopilotRequest(
-    context: IExecuteFunctions, 
-    endpoint: string, 
-    body: Record<string, unknown>,
-    hasMedia = false
+  context: IExecuteFunctions, 
+  endpoint: string, 
+  body: Record<string, unknown>,
+  hasMedia = false
 ): Promise<CopilotResponse> {
-    // Determine credential type dynamically
-    let credentialType = 'githubCopilotApi'; // default
-    try {
-        credentialType = context.getNodeParameter('credentialType', 0, 'githubCopilotApi') as string;
-    } catch (error) {
-        // If credentialType parameter doesn't exist, use default
-        console.log('🔍 No credentialType parameter found, using default: githubCopilotApi');
-    }
+  // Determine credential type dynamically
+  let credentialType = "githubCopilotApi"; // default
+  try {
+    credentialType = context.getNodeParameter("credentialType", 0, "githubCopilotApi") as string;
+  } catch (error) {
+    // If credentialType parameter doesn't exist, use default
+    console.log("🔍 No credentialType parameter found, using default: githubCopilotApi");
+  }
 
-    // Get credentials based on type
-    const credentials = await context.getCredentials(credentialType) as OAuth2Credentials;
+  // Get credentials based on type
+  const credentials = await context.getCredentials(credentialType) as OAuth2Credentials;
     
-    // Debug: Log credential structure for OAuth2
-    console.log(`🔍 ${credentialType} Credentials Debug:`, Object.keys(credentials));
+  // Debug: Log credential structure for OAuth2
+  console.log(`🔍 ${credentialType} Credentials Debug:`, Object.keys(credentials));
     
-    // OAuth2 credentials might have different property names
-    const token = (
+  // OAuth2 credentials might have different property names
+  const token = (
         credentials.accessToken || 
         credentials.access_token || 
         credentials.oauthTokenData?.access_token ||
         credentials.token
     ) as string;
 
-    // Validate OAuth2 token exists
-    if (!token) {
-        console.error(`❌ Available ${credentialType} credential properties:`, Object.keys(credentials));
-        console.error(`❌ Full ${credentialType} credential object:`, JSON.stringify(credentials, null, 2));
-        throw new Error(`GitHub Copilot: No access token found in ${credentialType} credentials. Available properties: ` + Object.keys(credentials).join(', '));
-    }
+  // Validate OAuth2 token exists
+  if (!token) {
+    console.error(`❌ Available ${credentialType} credential properties:`, Object.keys(credentials));
+    console.error(`❌ Full ${credentialType} credential object:`, JSON.stringify(credentials, null, 2));
+    throw new Error(`GitHub Copilot: No access token found in ${credentialType} credentials. Available properties: ` + Object.keys(credentials).join(", "));
+  }
 
-    // Debug: Show token info for troubleshooting
-    const tokenPrefix = token.substring(0, Math.min(4, token.indexOf('_') + 1)) || token.substring(0, 4);
-    const tokenSuffix = token.substring(Math.max(0, token.length - 5));
-    console.log(`🔍 GitHub Copilot ${credentialType} Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
+  // Debug: Show token info for troubleshooting
+  const tokenPrefix = token.substring(0, Math.min(4, token.indexOf("_") + 1)) || token.substring(0, 4);
+  const tokenSuffix = token.substring(Math.max(0, token.length - 5));
+  console.log(`🔍 GitHub Copilot ${credentialType} Debug: Using token ${tokenPrefix}...${tokenSuffix}`);
     
-    // Note: GitHub Copilot accepts different token formats
-    if (!token.startsWith('gho_') && !token.startsWith('ghu_') && !token.startsWith('github_pat_')) {
-        console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
-    }
+  // Note: GitHub Copilot accepts different token formats
+  if (!token.startsWith("gho_") && !token.startsWith("ghu_") && !token.startsWith("github_pat_")) {
+    console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
+  }
     
-    // Prepare headers for GitHub Copilot API (minimal working format)
-    const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-    };
+  // Prepare headers for GitHub Copilot API (minimal working format)
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  };
 
-    // Add required headers for vision/audio requests
-    if (hasMedia) {
-        headers['Copilot-Vision-Request'] = 'true';
-        headers['Copilot-Media-Request'] = 'true';
-    }
+  // Add required headers for vision/audio requests
+  if (hasMedia) {
+    headers["Copilot-Vision-Request"] = "true";
+    headers["Copilot-Media-Request"] = "true";
+  }
     
-    const options = {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-    };
+  const options = {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  };
 
-    // Use GitHub Copilot official API endpoint
-    const response = await fetch(`${GITHUB_COPILOT_API.BASE_URL}${endpoint}`, options);
+  // Use GitHub Copilot official API endpoint
+  const response = await fetch(`${GITHUB_COPILOT_API.BASE_URL}${endpoint}`, options);
     
-    if (!response.ok) {
-        const errorText = await response.text();
+  if (!response.ok) {
+    const errorText = await response.text();
         
-        // Secure token display - show only prefix and last 5 characters
-        const tokenPrefix = token.substring(0, 4);
-        const tokenSuffix = token.substring(token.length - 5);
-        const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
+    // Secure token display - show only prefix and last 5 characters
+    const tokenPrefix = token.substring(0, 4);
+    const tokenSuffix = token.substring(token.length - 5);
+    const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
         
-        console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
-        console.error(`❌ Error details: ${errorText}`);
-        console.error(`❌ Used credential type: ${credentialType}`);
-        console.error(`❌ Token format used: ${tokenInfo}`);
+    console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
+    console.error(`❌ Error details: ${errorText}`);
+    console.error(`❌ Used credential type: ${credentialType}`);
+    console.error(`❌ Token format used: ${tokenInfo}`);
         
-        // Enhanced error message with secure token info
-        const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}]`;
+    // Enhanced error message with secure token info
+    const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}]`;
         
-        throw new Error(enhancedError);
-    }
+    throw new Error(enhancedError);
+  }
     
-    return await response.json() as CopilotResponse;
+  return await response.json() as CopilotResponse;
 }
 
 /**
  * Utility functions for file handling (shared between nodes)
  */
 export async function downloadFileFromUrl(url: string): Promise<Buffer> {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Failed to download file from URL: ${response.status} ${response.statusText}`);
-    }
-    return Buffer.from(await response.arrayBuffer());
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download file from URL: ${response.status} ${response.statusText}`);
+  }
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export async function getFileFromBinary(
-    context: IExecuteFunctions, 
-    itemIndex: number, 
-    propertyName: string
+  context: IExecuteFunctions, 
+  itemIndex: number, 
+  propertyName: string
 ): Promise<Buffer> {
-    const items = context.getInputData();
-    const item = items[itemIndex];
+  const items = context.getInputData();
+  const item = items[itemIndex];
     
-    if (!item.binary || !item.binary[propertyName]) {
-        throw new Error(`No binary data found in property "${propertyName}"`);
-    }
+  if (!item.binary || !item.binary[propertyName]) {
+    throw new Error(`No binary data found in property "${propertyName}"`);
+  }
     
-    const binaryData = item.binary[propertyName];
+  const binaryData = item.binary[propertyName];
     
-    if (binaryData.data) {
-        // Data is base64 encoded
-        return Buffer.from(binaryData.data, 'base64');
-    } else if (binaryData.id) {
-        // Data is in binary data manager
-        return await context.helpers.getBinaryDataBuffer(itemIndex, propertyName);
-    } else {
-        throw new Error(`Invalid binary data format in property "${propertyName}"`);
-    }
+  if (binaryData.data) {
+    // Data is base64 encoded
+    return Buffer.from(binaryData.data, "base64");
+  } else if (binaryData.id) {
+    // Data is in binary data manager
+    return await context.helpers.getBinaryDataBuffer(itemIndex, propertyName);
+  } else {
+    throw new Error(`Invalid binary data format in property "${propertyName}"`);
+  }
 }
 
 export function getImageMimeType(filename: string): string {
-    const ext = filename.toLowerCase().split('.').pop();
-    switch (ext) {
-        case 'jpg':
-        case 'jpeg':
-            return 'image/jpeg';
-        case 'png':
-            return 'image/png';
-        case 'webp':
-            return 'image/webp';
-        case 'gif':
-            return 'image/gif';
-        default:
-            return 'image/jpeg';
-    }
+  const ext = filename.toLowerCase().split(".").pop();
+  switch (ext) {
+  case "jpg":
+  case "jpeg":
+    return "image/jpeg";
+  case "png":
+    return "image/png";
+  case "webp":
+    return "image/webp";
+  case "gif":
+    return "image/gif";
+  default:
+    return "image/jpeg";
+  }
 }
 
 export function getAudioMimeType(filename: string): string {
-    const ext = filename.toLowerCase().split('.').pop();
-    switch (ext) {
-        case 'mp3':
-            return 'audio/mpeg';
-        case 'wav':
-            return 'audio/wav';
-        case 'm4a':
-            return 'audio/mp4';
-        case 'flac':
-            return 'audio/flac';
-        case 'ogg':
-            return 'audio/ogg';
-        case 'aac':
-            return 'audio/aac';
-        default:
-            return 'audio/mpeg';
-    }
+  const ext = filename.toLowerCase().split(".").pop();
+  switch (ext) {
+  case "mp3":
+    return "audio/mpeg";
+  case "wav":
+    return "audio/wav";
+  case "m4a":
+    return "audio/mp4";
+  case "flac":
+    return "audio/flac";
+  case "ogg":
+    return "audio/ogg";
+  case "aac":
+    return "audio/aac";
+  default:
+    return "audio/mpeg";
+  }
 }
 
 export function validateFileSize(buffer: Buffer, maxSizeKB = 1024): void {
-    const sizeKB = buffer.length / 1024;
-    if (sizeKB > maxSizeKB) {
-        throw new Error(`File size ${sizeKB.toFixed(2)}KB exceeds limit of ${maxSizeKB}KB`);
-    }
+  const sizeKB = buffer.length / 1024;
+  if (sizeKB > maxSizeKB) {
+    throw new Error(`File size ${sizeKB.toFixed(2)}KB exceeds limit of ${maxSizeKB}KB`);
+  }
 }
 
 export function estimateTokens(base64String: string): number {
-    // Rough estimation: base64 characters / 4 * 3 for bytes, then / 4 for tokens
-    return Math.ceil((base64String.length / 4 * 3) / 4);
+  // Rough estimation: base64 characters / 4 * 3 for bytes, then / 4 for tokens
+  return Math.ceil((base64String.length / 4 * 3) / 4);
 }
 
 export function validateTokenLimit(estimatedTokens: number, maxTokens = 128000): { 
     valid: boolean; 
     message?: string 
 } {
-    if (estimatedTokens <= maxTokens) {
-        return { valid: true };
-    }
+  if (estimatedTokens <= maxTokens) {
+    return { valid: true };
+  }
     
-    return {
-        valid: false,
-        message: `Content too large: ${estimatedTokens} tokens exceeds limit of ${maxTokens}. Consider using smaller files or text.`
-    };
+  return {
+    valid: false,
+    message: `Content too large: ${estimatedTokens} tokens exceeds limit of ${maxTokens}. Consider using smaller files or text.`
+  };
 }
 
 export function truncateToTokenLimit(content: string, maxTokens = 100000): { 
@@ -232,24 +232,24 @@ export function truncateToTokenLimit(content: string, maxTokens = 100000): {
     originalTokens: number; 
     finalTokens: number 
 } {
-    const originalTokens = Math.ceil(content.length / 4); // Rough estimate for text
+  const originalTokens = Math.ceil(content.length / 4); // Rough estimate for text
     
-    if (originalTokens <= maxTokens) {
-        return {
-            content,
-            truncated: false,
-            originalTokens,
-            finalTokens: originalTokens
-        };
-    }
-    
-    const targetLength = Math.floor(content.length * (maxTokens / originalTokens));
-    const truncatedContent = content.slice(0, targetLength) + '...[truncated]';
-    
+  if (originalTokens <= maxTokens) {
     return {
-        content: truncatedContent,
-        truncated: true,
-        originalTokens,
-        finalTokens: Math.ceil(truncatedContent.length / 4)
+      content,
+      truncated: false,
+      originalTokens,
+      finalTokens: originalTokens
     };
+  }
+    
+  const targetLength = Math.floor(content.length * (maxTokens / originalTokens));
+  const truncatedContent = content.slice(0, targetLength) + "...[truncated]";
+    
+  return {
+    content: truncatedContent,
+    truncated: true,
+    originalTokens,
+    finalTokens: Math.ceil(truncatedContent.length / 4)
+  };
 }

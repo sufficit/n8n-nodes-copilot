@@ -17,8 +17,8 @@
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
-    "lint": "eslint nodes credentials --ext .ts",
-    "lintfix": "eslint nodes credentials --ext .ts --fix",
+    "lint": "eslint nodes credentials shared --ext .ts",
+    "lintfix": "eslint nodes credentials shared --ext .ts --fix",
     "prepublishOnly": "npm run build"
   },
   "files": [
