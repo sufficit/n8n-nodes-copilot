@@ -498,8 +498,41 @@ function generateAuthPage(proxyUrl: string): string {
     }
     
     function copyCode() {
-      navigator.clipboard.writeText(userCode);
-      const btn = document.getElementById("step2").querySelector(".btn");
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(userCode).then(() => {
+          showCopySuccess("step2");
+        }).catch((err) => {
+          // Fallback to execCommand
+          fallbackCopyCode();
+        });
+      } else {
+        // Fallback for older browsers
+        fallbackCopyCode();
+      }
+    }
+    
+    function fallbackCopyCode() {
+      // Create temporary textarea
+      const textarea = document.createElement("textarea");
+      textarea.value = userCode;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        document.execCommand("copy");
+        showCopySuccess("step2");
+      } catch (err) {
+        alert("Erro ao copiar. Código: " + userCode);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+    
+    function showCopySuccess(stepId) {
+      const btn = document.getElementById(stepId).querySelector(".btn");
       const originalText = btn.innerHTML;
       btn.innerHTML = '<span>✅</span><span>Copiado!</span>';
       setTimeout(() => {
@@ -590,13 +623,37 @@ function generateAuthPage(proxyUrl: string): string {
     }
     
     function copyToken() {
-      navigator.clipboard.writeText(accessToken);
-      const btn = document.getElementById("successSection").querySelector(".btn");
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span>✅</span><span>Token Copiado!</span>';
-      setTimeout(() => {
-        btn.innerHTML = originalText;
-      }, 2000);
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(accessToken).then(() => {
+          showCopySuccess("successSection");
+        }).catch((err) => {
+          // Fallback to execCommand
+          fallbackCopyToken();
+        });
+      } else {
+        // Fallback for older browsers
+        fallbackCopyToken();
+      }
+    }
+    
+    function fallbackCopyToken() {
+      // Create temporary textarea
+      const textarea = document.createElement("textarea");
+      textarea.value = accessToken;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        document.execCommand("copy");
+        showCopySuccess("successSection");
+      } catch (err) {
+        alert("Erro ao copiar token. Por favor, selecione e copie manualmente.");
+      } finally {
+        document.body.removeChild(textarea);
+      }
     }
     
     function sleep(ms) {
