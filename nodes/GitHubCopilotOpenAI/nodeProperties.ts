@@ -137,8 +137,11 @@ export const nodeProperties: INodeProperties[] = [
   {
     displayName: "Tools (Optional)",
     name: "tools",
-    type: "json",
+    type: "string",
     default: "",
+    typeOptions: {
+      rows: 10,
+    },
     placeholder: `[
   {
     "type": "function",
@@ -159,7 +162,7 @@ export const nodeProperties: INodeProperties[] = [
   }
 ]`,
     description: "Optional: Array of tools/functions available to the model (OpenAI format). Leave empty if not using function calling.",
-    hint: "JSON array of tool definitions in OpenAI format. This field is optional.",
+    hint: "JSON array of tool definitions in OpenAI format. Leave this field empty if you don't need function calling.",
   },
   {
     displayName: "Tool Choice",
