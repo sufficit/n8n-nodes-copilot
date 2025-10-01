@@ -6,25 +6,6 @@ import { INodeProperties } from "n8n-workflow";
 
 export const nodeProperties: INodeProperties[] = [
   {
-    displayName: "Credential Type",
-    name: "credentialType",
-    type: "options",
-    options: [
-      {
-        name: "GitHub Copilot API (Manual Token)",
-        value: "githubCopilotApi",
-        description: "Use manual GitHub CLI token",
-      },
-      {
-        name: "GitHub Copilot OAuth2 (with Helper)",
-        value: "githubCopilotOAuth2Api",
-        description: "Use OAuth2 credential with helper script",
-      },
-    ],
-    default: "githubCopilotApi",
-    description: "Type of credential to use for GitHub Copilot authentication",
-  },
-  {
     displayName: "Operation",
     name: "operation",
     type: "options",
