@@ -118,12 +118,11 @@ export class GitHubCopilotAuthHelper implements INodeType {
 
           const data = await response.json();
           
+          res.setHeader("Content-Type", "application/json");
+          res.status(200).json(data);
+          
           return {
-            webhookResponse: {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            },
+            noWebhookResponse: true,
           };
         }
 
@@ -146,23 +145,21 @@ export class GitHubCopilotAuthHelper implements INodeType {
 
           const data = await response.json();
           
+          res.setHeader("Content-Type", "application/json");
+          res.status(200).json(data);
+          
           return {
-            webhookResponse: {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            },
+            noWebhookResponse: true,
           };
         }
 
         throw new Error(`Unknown action: ${action}`);
       } catch (error: any) {
+        res.setHeader("Content-Type", "application/json");
+        res.status(500).json({ error: error.message });
+        
         return {
-          webhookResponse: {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ error: error.message }),
-          },
+          noWebhookResponse: true,
         };
       }
     }
