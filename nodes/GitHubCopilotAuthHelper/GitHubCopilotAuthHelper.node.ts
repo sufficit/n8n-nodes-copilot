@@ -92,6 +92,7 @@ export class GitHubCopilotAuthHelper implements INodeType {
 
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const req = this.getRequestObject();
+    const res = this.getResponseObject();
     const clientId = this.getNodeParameter("clientId") as string;
     const scopes = this.getNodeParameter("scopes") as string;
 
@@ -170,12 +171,12 @@ export class GitHubCopilotAuthHelper implements INodeType {
     const webhookUrl = this.getNodeWebhookUrl("default") as string;
     const html = generateAuthPage(webhookUrl);
 
+    // Use response object directly to ensure proper content-type
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
+
     return {
-      webhookResponse: {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-        body: html,
-      },
+      noWebhookResponse: true,
     };
   }
 }
