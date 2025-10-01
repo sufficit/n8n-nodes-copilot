@@ -1,52 +1,67 @@
 import {
-  IExecuteFunctions,
-  INodeExecutionData,
+  IWebhookFunctions,
+  IWebhookResponseData,
   INodeType,
   INodeTypeDescription,
 } from "n8n-workflow";
 
 /**
- * GitHub Copilot Auth Helper Node
- * Generates an interactive HTML page for OAuth Device Flow authentication
- * User opens the page in browser, follows the flow, and gets the token
+ * GitHub Copilot Auth Helper - Webhook Node
+ * Serves interactive HTML page AND acts as proxy for GitHub API calls
+ * Solves CORS issues by making requests from n8n server
  */
 export class GitHubCopilotAuthHelper implements INodeType {
   description: INodeTypeDescription = {
     displayName: "GitHub Copilot Auth Helper",
     name: "githubCopilotAuthHelper",
     icon: "file:../../shared/icons/copilot.svg",
-    group: ["transform"],
+    group: ["trigger"],
     version: 1,
-    description: "Interactive OAuth Device Flow authentication helper - generates HTML page for easy token generation",
+    description: "Interactive OAuth Device Flow - serves HTML page with proxy to avoid CORS",
     defaults: {
-      name: "GitHub Copilot Auth Helper",
+      name: "GitHub Copilot Auth",
     },
-    inputs: ["main"],
-    outputs: ["main"],
+    inputs: [],
+    outputs: [],
+    webhooks: [
+      {
+        name: "default",
+        httpMethod: "=",
+        responseMode: "onReceived",
+        path: "github-auth",
+      },
+    ],
     properties: [
       {
-        displayName: "📋 Como Usar",
+        displayName: "🎯 Como Usar",
         name: "instructions",
         type: "notice",
         default: "",
         description: `
-          <div style="background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; border-radius: 4px;">
-            <h3 style="margin-top: 0;">🎯 Este node gera uma página HTML interativa!</h3>
-            <ol>
-              <li>Execute este node</li>
-              <li>Copie o HTML do output</li>
-              <li>Salve como arquivo .html e abra no navegador</li>
-              <li>OU use um node "Send Email" para enviar para você</li>
-              <li>Siga as instruções na página para obter seu token</li>
-            </ol>
-            <p><strong>A página faz tudo automaticamente:</strong></p>
-            <ul>
-              <li>✅ Solicita device code do GitHub</li>
-              <li>✅ Mostra código para copiar</li>
+          <div style="background: #e8f5e8; padding: 20px; border-left: 4px solid #4CAF50; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #2E7D32;">✨ Autenticação Visual - Sem Terminal!</h3>
+            
+            <p><strong>1. Ative este workflow</strong></p>
+            <p>Clique em "Active" no canto superior direito</p>
+            
+            <p><strong>2. Copie a URL do Webhook</strong></p>
+            <p>Clique em "Copy URL" abaixo e envie para o usuário</p>
+            
+            <p><strong>3. Usuário acessa a URL no navegador</strong></p>
+            <p>Uma página bonita vai abrir com instruções claras</p>
+            
+            <p><strong>4. Processo automático!</strong></p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li>✅ Página solicita código do GitHub</li>
+              <li>✅ Mostra código grande para copiar</li>
               <li>✅ Abre GitHub automaticamente</li>
-              <li>✅ Faz polling até você autorizar</li>
+              <li>✅ Aguarda autorização (polling automático)</li>
               <li>✅ Exibe token pronto para copiar</li>
             </ul>
+            
+            <p style="background: #fff3e0; padding: 10px; border-radius: 4px; margin-top: 15px;">
+              <strong>💡 Sem CORS!</strong> O n8n faz as chamadas para o GitHub, não o navegador!
+            </p>
           </div>
         `,
       },
@@ -66,70 +81,103 @@ export class GitHubCopilotAuthHelper implements INodeType {
         required: true,
         description: "OAuth scopes required for GitHub Copilot",
       },
-      {
-        displayName: "Output Format",
-        name: "outputFormat",
-        type: "options",
-        options: [
-          {
-            name: "Complete HTML File",
-            value: "html",
-            description: "Full HTML page ready to save and open",
-          },
-          {
-            name: "HTML + Instructions",
-            value: "htmlWithInstructions",
-            description: "HTML with usage instructions",
-          },
-        ],
-        default: "htmlWithInstructions",
-      },
     ],
   };
 
-  async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    const items = this.getInputData();
-    const returnData: INodeExecutionData[] = [];
+  async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+    const req = this.getRequestObject();
+    const clientId = this.getNodeParameter("clientId") as string;
+    const scopes = this.getNodeParameter("scopes") as string;
 
-    for (let i = 0; i < items.length; i++) {
-      const clientId = this.getNodeParameter("clientId", i) as string;
-      const scopes = this.getNodeParameter("scopes", i) as string;
-      const outputFormat = this.getNodeParameter("outputFormat", i) as string;
+    // Handle proxy POST requests
+    if (req.method === "POST") {
+      const body = this.getBodyData();
+      const action = body.action as string;
 
-      // Generate interactive HTML page
-      const html = generateAuthPage(clientId, scopes);
+      try {
+        if (action === "device_code") {
+          // Request device code from GitHub
+          const response = await fetch("https://github.com/login/device/code", {
+            method: "POST",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              client_id: clientId,
+              scope: scopes,
+            }),
+          });
 
-      const output: any = {
-        html,
-        clientId,
-        scopes,
-      };
+          const data = await response.json();
+          
+          return {
+            webhookResponse: {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            },
+          };
+        }
 
-      if (outputFormat === "htmlWithInstructions") {
-        output.instructions = [
-          "1. Copy the HTML content below",
-          "2. Save as 'github-copilot-auth.html'",
-          "3. Open the file in your browser",
-          "4. Follow the on-screen instructions",
-          "5. Copy the token when it appears",
-          "6. Use the token in your GitHub Copilot OAuth2 credential in n8n",
-        ].join("\n");
+        if (action === "poll_token") {
+          // Poll for access token
+          const deviceCode = body.device_code as string;
+          
+          const response = await fetch("https://github.com/login/oauth/access_token", {
+            method: "POST",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              client_id: clientId,
+              device_code: deviceCode,
+              grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+            }),
+          });
+
+          const data = await response.json();
+          
+          return {
+            webhookResponse: {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            },
+          };
+        }
+
+        throw new Error(`Unknown action: ${action}`);
+      } catch (error: any) {
+        return {
+          webhookResponse: {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ error: error.message }),
+          },
+        };
       }
-
-      returnData.push({
-        json: output,
-        pairedItem: i,
-      });
     }
 
-    return [returnData];
+    // Handle GET requests - serve HTML page
+    const webhookUrl = this.getNodeWebhookUrl("default") as string;
+    const html = generateAuthPage(webhookUrl);
+
+    return {
+      webhookResponse: {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+        body: html,
+      },
+    };
   }
 }
 
 /**
- * Generates the complete HTML page for Device Flow authentication
+ * Generates the HTML page with proxy support
  */
-function generateAuthPage(clientId: string, scopes: string): string {
+function generateAuthPage(proxyUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -387,7 +435,7 @@ function generateAuthPage(clientId: string, scopes: string): string {
         <span>Copiar Token</span>
       </button>
       <p class="info-text" style="color: #155724; margin-top: 15px;">
-        ✨ Cole este token na credencial "GitHub Copilot OAuth2 (with Helper)" no n8n
+        ✨ Cole este token na credencial "GitHub Copilot API" no n8n
       </p>
     </div>
     
@@ -398,10 +446,7 @@ function generateAuthPage(clientId: string, scopes: string): string {
   </div>
   
   <script>
-    const CLIENT_ID = "${clientId}";
-    const SCOPES = "${scopes}";
-    const DEVICE_CODE_URL = "https://github.com/login/device/code";
-    const ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
+    const PROXY_URL = "${proxyUrl}";
     
     let deviceCode = "";
     let userCode = "";
@@ -413,16 +458,14 @@ function generateAuthPage(clientId: string, scopes: string): string {
         document.getElementById("step1").querySelector(".btn").disabled = true;
         document.getElementById("step1").querySelector(".btn").innerHTML = '<span>⏳</span><span>Solicitando...</span>';
         
-        // Request device code
-        const response = await fetch(DEVICE_CODE_URL, {
+        // Request device code via n8n proxy
+        const response = await fetch(PROXY_URL, {
           method: "POST",
           headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
-          body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            scope: SCOPES
+          body: JSON.stringify({
+            action: "device_code"
           })
         });
         
@@ -478,16 +521,14 @@ function generateAuthPage(clientId: string, scopes: string): string {
         document.getElementById("statusText").textContent = \`Verificando... (tentativa \${attempt}/\${maxAttempts})\`;
         
         try {
-          const response = await fetch(ACCESS_TOKEN_URL, {
+          const response = await fetch(PROXY_URL, {
             method: "POST",
             headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/x-www-form-urlencoded",
+              "Content-Type": "application/json",
             },
-            body: new URLSearchParams({
-              client_id: CLIENT_ID,
-              device_code: deviceCode,
-              grant_type: "urn:ietf:params:oauth:grant-type:device_code"
+            body: JSON.stringify({
+              action: "poll_token",
+              device_code: deviceCode
             })
           });
           

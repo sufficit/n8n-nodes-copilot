@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.31.1] - 2025-10-01
+
+### Added
+
+#### 🎁 Binary Output for Auth Helper
+
+- **Binary file download option** in GitHub Copilot Auth Helper node
+- Now the default output format returns HTML as binary data
+- User can directly download the `.html` file from n8n
+- No need to copy/paste HTML text anymore!
+
+#### Output Format Options
+
+1. **📄 Binary File (Download Ready)** - DEFAULT
+   - HTML returned as binary data
+   - Ready to download as `.html` file
+   - Click download button in n8n UI
+   
+2. **📋 HTML Text + Instructions**
+   - HTML as text with usage instructions
+   - For users who prefer copy/paste
+   
+3. **📝 HTML Text Only**
+   - Just the HTML code
+   - For advanced users
+
+### Changed
+
+- Default output format changed from "htmlWithInstructions" to "binary"
+- Improved user experience - one click to download authentication page
+
+### How to Use
+
+1. Add "GitHub Copilot Auth Helper" node
+2. Execute node
+3. **Click download button** on the binary output
+4. Open downloaded `github-copilot-auth.html` in browser
+5. Follow instructions to get token
+
+---
+
 ## [3.31.0] - 2025-10-01
 
 ### Added
