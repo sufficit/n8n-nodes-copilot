@@ -3,6 +3,7 @@ import { IExecuteFunctions } from "n8n-workflow";
 import {
   makeGitHubCopilotRequest,
   CopilotResponse,
+  RetryConfig,
   downloadFileFromUrl as sharedDownloadFileFromUrl,
   getFileFromBinary as sharedGetFileFromBinary,
   estimateTokens as sharedEstimateTokens,
@@ -11,14 +12,20 @@ import {
 /**
  * API request wrapper for GitHub Copilot Chat API node
  * Uses OAuth2 credentials specifically configured for GitHub Copilot
+ * @param context - n8n execution context
+ * @param endpoint - API endpoint path
+ * @param body - Request body
+ * @param hasMedia - Whether request contains media (images/audio)
+ * @param retryConfig - Optional retry configuration for handling intermittent failures
  */
 export async function makeApiRequest(
   context: IExecuteFunctions,
   endpoint: string,
   body: Record<string, unknown>,
   hasMedia = false,
+  retryConfig?: RetryConfig,
 ): Promise<CopilotResponse> {
-  return await makeGitHubCopilotRequest(context, endpoint, body, hasMedia);
+  return await makeGitHubCopilotRequest(context, endpoint, body, hasMedia, retryConfig);
 }
 
 // Re-export shared utility functions for backward compatibility

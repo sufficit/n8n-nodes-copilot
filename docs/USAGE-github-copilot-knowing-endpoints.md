@@ -8,6 +8,7 @@ Este documento lista URLs e endpoints descobertos durante investigações das ex
 ## 🔗 **Endpoints Principais da API**
 
 ### APIs Core do Copilot
+
 - `https://api.githubcopilot.com` - **Endpoint principal da API do Copilot**
 - `https://api.githubcopilot.com/models` - Lista de modelos disponíveis
 - `https://api.githubcopilot.com/chat/completions` - Chat completions

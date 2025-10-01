@@ -23,6 +23,15 @@ export interface CopilotResponse {
         message: {
             role: string;
             content: string;
+            tool_calls?: Array<{
+                id: string;
+                type: string;
+                function: {
+                    name: string;
+                    arguments: string;
+                };
+            }>;
+            [key: string]: unknown; // Allow additional fields from GitHub Copilot (like 'padding')
         };
         finish_reason: string;
     }>;
@@ -34,15 +43,37 @@ export interface CopilotResponse {
 }
 
 /**
+ * Retry configuration for GitHub Copilot API requests
+ */
+export interface RetryConfig {
+  /** Maximum number of retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Base delay in milliseconds between retries (default: 500ms, uses exponential backoff) */
+  baseDelay?: number;
+  /** Whether to retry on 403 errors (default: true) */
+  retryOn403?: boolean;
+}
+
+/**
  * Makes an API request to GitHub Copilot API
  * Works with both OAuth2 and manual token credentials
+ * @param context - n8n execution context
+ * @param endpoint - API endpoint path
+ * @param body - Request body
+ * @param hasMedia - Whether request contains media (images/audio)
+ * @param retryConfig - Optional retry configuration for handling intermittent failures
  */
 export async function makeGitHubCopilotRequest(
   context: IExecuteFunctions, 
   endpoint: string, 
   body: Record<string, unknown>,
-  hasMedia = false
+  hasMedia = false,
+  retryConfig?: RetryConfig
 ): Promise<CopilotResponse> {
+  // Default retry configuration
+  const MAX_RETRIES = retryConfig?.maxRetries ?? 3;
+  const BASE_DELAY = retryConfig?.baseDelay ?? 500;
+  const RETRY_ON_403 = retryConfig?.retryOn403 ?? true;
   // Determine credential type dynamically
   let credentialType = "githubCopilotApi"; // default
   try {
@@ -86,6 +117,11 @@ export async function makeGitHubCopilotRequest(
   // Prepare headers using centralized configuration
   const headers: Record<string, string> = {
     ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+    // Add VS Code client headers for better compatibility and reduced 403 errors
+    "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
+    // Note: X-GitHub-Api-Version removed - causes "invalid apiVersion" errors
+    "Editor-Version": "vscode/1.95.0",
+    "Editor-Plugin-Version": "copilot/1.0.0",
   };
 
   // Add required headers for vision/audio requests
@@ -102,28 +138,73 @@ export async function makeGitHubCopilotRequest(
 
   // Use centralized endpoint construction
   const fullUrl = `${GITHUB_COPILOT_API.BASE_URL}${endpoint}`;
-  const response = await fetch(fullUrl, options);
-    
-  if (!response.ok) {
-    const errorText = await response.text();
+  
+  // Retry logic for 403 errors (GitHub Copilot intermittent issues)
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(fullUrl, options);
+      
+      // If we get a 403, retry (unless it's the last attempt)
+      if (response.status === 403 && RETRY_ON_403 && attempt < MAX_RETRIES) {
+        const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);
+        // Add small random jitter (0-20%) to avoid thundering herd
+        const jitter = Math.random() * delayMs * 0.2;
+        const totalDelay = Math.floor(delayMs + jitter);
+        console.warn(`⚠️ GitHub Copilot API 403 error on attempt ${attempt}/${MAX_RETRIES}. Retrying in ${totalDelay}ms...`);
+        // Wait before retrying (exponential backoff with jitter)
+        await new Promise(resolve => setTimeout(resolve, totalDelay));
+        continue;
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
         
-    // Secure token display - show only prefix and last 5 characters
-    const tokenPrefix = token.substring(0, 4);
-    const tokenSuffix = token.substring(token.length - 5);
-    const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
+        // Secure token display - show only prefix and last 5 characters
+        const tokenPrefix = token.substring(0, 4);
+        const tokenSuffix = token.substring(token.length - 5);
+        const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
         
-    console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
-    console.error(`❌ Error details: ${errorText}`);
-    console.error(`❌ Used credential type: ${credentialType}`);
-    console.error(`❌ Token format used: ${tokenInfo}`);
+        console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
+        console.error(`❌ Error details: ${errorText}`);
+        console.error(`❌ Used credential type: ${credentialType}`);
+        console.error(`❌ Token format used: ${tokenInfo}`);
+        console.error(`❌ Attempt: ${attempt}/${MAX_RETRIES}`);
         
-    // Enhanced error message with secure token info
-    const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}]`;
+        // Enhanced error message with secure token info
+        const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`;
         
-    throw new Error(enhancedError);
+        throw new Error(enhancedError);
+      }
+      
+      // Success! Return the response
+      if (attempt > 1) {
+        console.log(`✅ GitHub Copilot API succeeded on attempt ${attempt}/${MAX_RETRIES}`);
+      }
+      return await response.json() as CopilotResponse;
+      
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // If it's not the last attempt and it's a network/timeout error, retry
+      if (attempt < MAX_RETRIES) {
+        const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);
+        // Add small random jitter (0-20%) to avoid thundering herd
+        const jitter = Math.random() * delayMs * 0.2;
+        const totalDelay = Math.floor(delayMs + jitter);
+        console.warn(`⚠️ GitHub Copilot API error on attempt ${attempt}/${MAX_RETRIES}: ${lastError.message}. Retrying in ${totalDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, totalDelay));
+        continue;
+      }
+      
+      // Last attempt failed, throw the error
+      throw lastError;
+    }
   }
-    
-  return await response.json() as CopilotResponse;
+  
+  // Should never reach here, but just in case
+  throw lastError || new Error("GitHub Copilot API request failed after all retries");
 }
 
 /**
