@@ -42,8 +42,7 @@ export class GitHubCopilotAuthHelper implements INodeType {
         displayName: "🎯 Como Usar",
         name: "instructions",
         type: "notice",
-        default: "",
-        description: `
+        default: `
           <div style="background: #e8f5e8; padding: 20px; border-left: 4px solid #4CAF50; border-radius: 4px;">
             <h3 style="margin-top: 0; color: #2E7D32;">✨ Autenticação Visual - Sem Terminal!</h3>
             
