@@ -58,10 +58,11 @@
     "node": ">=16.10",
     "pnpm": ">=7.1"
   },
-  "packageManager": "pnpm@7.1.0",
   "dependencies": {
-    "@langchain/openai": "^0.6.14",
-    "n8n-workflow": "^1.111.0"
+    "@langchain/openai": "^0.6.14"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.16.16",
@@ -69,7 +70,8 @@
     "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8.28.0",
     "gulp": "^4.0.2",
-    "n8n-core": "^1.113.0",
+    "n8n-core": "^1.0.0",
+    "n8n-workflow": "^1.0.0",
     "prettier": "^2.7.1",
     "typescript": "^5.9.2"
   }
