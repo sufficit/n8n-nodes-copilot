@@ -26,7 +26,13 @@ export class GitHubCopilotAuthHelper implements INodeType {
     webhooks: [
       {
         name: "default",
-        httpMethod: "=",
+        httpMethod: "GET",
+        responseMode: "onReceived",
+        path: "github-auth",
+      },
+      {
+        name: "default",
+        httpMethod: "POST",
         responseMode: "onReceived",
         path: "github-auth",
       },
