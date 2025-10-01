@@ -3,7 +3,6 @@ import {
   INodeExecutionData,
   INodeType,
   INodeTypeDescription,
-  NodeConnectionType,
   IDataObject,
 } from "n8n-workflow";
 
@@ -413,15 +412,15 @@ export class GitHubCopilotTest implements INodeType {
     displayName: "GitHub Copilot Test",
     name: "gitHubCopilotTest",
     icon: "file:../../shared/icons/copilot.svg",
-    group: ["AI"],
+    group: ["transform"],
     version: 1,
     subtitle: "={{$parameter[\"testFunction\"]}}",
     description: "Test GitHub Copilot API credentials with predefined functions",
     defaults: {
       name: "GitHub Copilot Test",
     },
-    inputs: [NodeConnectionType.Main],
-    outputs: [NodeConnectionType.Main],
+    inputs: ["main"],
+    outputs: ["main"],
     credentials: [
       {
         name: "githubCopilotApi",

@@ -3,7 +3,6 @@ import {
   INodeExecutionData,
   INodeType,
   INodeTypeDescription,
-  NodeConnectionType,
   IDataObject,
 } from "n8n-workflow";
 
@@ -14,7 +13,7 @@ export class GitHubCopilotOpenAI implements INodeType {
     displayName: "GitHub Copilot OpenAI",
     name: "gitHubCopilotOpenAI",
     icon: "file:../../shared/icons/copilot.svg",
-    group: ["AI"],
+    group: ["transform"],
     version: 1,
     subtitle: "={{$parameter[\"operation\"] + \": \" + $parameter[\"model\"]}}",
     description:
@@ -22,8 +21,8 @@ export class GitHubCopilotOpenAI implements INodeType {
     defaults: {
       name: "GitHub Copilot OpenAI",
     },
-    inputs: [NodeConnectionType.Main],
-    outputs: [NodeConnectionType.Main],
+    inputs: ["main"],
+    outputs: ["main"],
     credentials: [
       {
         name: "githubCopilotApi",

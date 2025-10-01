@@ -1,7 +1,6 @@
 import {
   INodeType,
   INodeTypeDescription,
-  NodeConnectionType,
   ISupplyDataFunctions,
   SupplyData,
 } from "n8n-workflow";
@@ -40,7 +39,7 @@ export class GitHubCopilotChatModel implements INodeType {
       },
     },
     inputs: [],
-    outputs: [NodeConnectionType.AiLanguageModel],
+    outputs: ["ai_languageModel"],
     outputNames: ["Model"],
     credentials: [
       {
