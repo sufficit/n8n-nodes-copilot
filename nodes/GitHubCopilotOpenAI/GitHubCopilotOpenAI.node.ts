@@ -4,6 +4,7 @@ import {
   INodeType,
   INodeTypeDescription,
   IDataObject,
+  NodeOperationError,
 } from "n8n-workflow";
 
 import { nodeProperties } from "./nodeProperties";
@@ -364,7 +365,25 @@ export class GitHubCopilotOpenAI implements INodeType {
             // Fallback: detect error type from message and create clean OpenAI-style messages
             const lowerMessage = cleanMessage.toLowerCase();
             
-            if (lowerMessage.includes("403") || lowerMessage.includes("forbidden")) {
+            // Check for 400 Bad Request - should NOT retry
+            const is400Error = lowerMessage.includes("400") || lowerMessage.includes("bad request");
+            
+            if (is400Error) {
+              errorType = "invalid_request_error";
+              errorCode = "invalid_request";
+              finalMessage = cleanMessage;
+              
+              // Throw non-retryable error for 400 Bad Request
+              console.log('🚫 400 Bad Request detected - throwing non-retryable error');
+              throw new NodeOperationError(
+                this.getNode(),
+                `Bad Request (400): ${finalMessage}`,
+                {
+                  itemIndex: i,
+                  description: 'The request was malformed or contains invalid parameters. Retrying will not help.',
+                }
+              );
+            } else if (lowerMessage.includes("403") || lowerMessage.includes("forbidden")) {
               errorType = "invalid_request_error";
               errorCode = "insufficient_quota";
               // Clean message for 403 errors
@@ -382,10 +401,6 @@ export class GitHubCopilotOpenAI implements INodeType {
               errorType = "invalid_request_error";
               errorCode = "invalid_api_key";
               finalMessage = "Incorrect API key provided. You can find your API key at https://platform.openai.com/account/api-keys.";
-            } else if (lowerMessage.includes("400") || lowerMessage.includes("bad request")) {
-              errorType = "invalid_request_error";
-              errorCode = "invalid_request";
-              finalMessage = cleanMessage;
             } else if (lowerMessage.includes("429") || lowerMessage.includes("rate limit")) {
               errorType = "rate_limit_error";
               errorCode = "rate_limit_exceeded";
