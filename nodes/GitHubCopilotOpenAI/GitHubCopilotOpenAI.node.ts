@@ -154,6 +154,39 @@ export class GitHubCopilotOpenAI implements INodeType {
             });
           }
           
+          // ⚠️ VALIDATE MESSAGE FORMAT: Detect incorrect file usage in content
+          for (let msgIndex = 0; msgIndex < messages.length; msgIndex++) {
+            const msg = messages[msgIndex] as any;
+            
+            // Check if content is an array (OpenAI format with image_url)
+            if (Array.isArray(msg.content)) {
+              for (const contentItem of msg.content) {
+                // Detect if user is trying to use type: 'file' inside content array
+                if (contentItem.type === 'file') {
+                  throw new NodeOperationError(
+                    this.getNode(),
+                    `❌ GitHub Copilot API Error: File attachments cannot be used inside 'content' array.\n\n` +
+                    `📋 INCORRECT FORMAT (OpenAI style - doesn't work):\n` +
+                    `{\n` +
+                    `  "role": "user",\n` +
+                    `  "content": [\n` +
+                    `    {"type": "text", "text": "Analyze this"},\n` +
+                    `    {"type": "file", "file": "data:..."}  ❌ WRONG\n` +
+                    `  ]\n` +
+                    `}\n\n` +
+                    `✅ CORRECT FORMAT (GitHub Copilot - message level):\n` +
+                    `[\n` +
+                    `  {"role": "user", "content": "Analyze this file"},\n` +
+                    `  {"role": "user", "content": "data:image/png;base64,...", "type": "file"}  ✅ CORRECT\n` +
+                    `]\n\n` +
+                    `💡 Solution: Use separate messages with 'type' property at message level, not inside content array.`,
+                    { itemIndex: i }
+                  );
+                }
+              }
+            }
+          }
+          
           console.log('📤 Final messages being sent to API:', JSON.stringify(messages, null, 2));
 
                     // Get advanced options
