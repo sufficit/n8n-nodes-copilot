@@ -62,6 +62,20 @@ export class GitHubCopilotChatModel implements INodeType {
         description: "Select the GitHub Copilot model to use (loaded dynamically based on your subscription)",
       },
       {
+        displayName: "Custom Model Name",
+        name: "customModel",
+        type: "string",
+        default: "",
+        placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
+        description: "Enter the model name manually. This is useful for new/beta models not yet in the list.",
+        hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
+        displayOptions: {
+          show: {
+            model: ["__manual__"],
+          },
+        },
+      },
+      {
         displayName: "Options",
         name: "options",
         placeholder: "Add Option",
@@ -146,7 +160,21 @@ export class GitHubCopilotChatModel implements INodeType {
   };
 
   async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData> {
-    const model = this.getNodeParameter("model", itemIndex) as string;
+    let model = this.getNodeParameter("model", itemIndex) as string;
+    
+    // Check if user selected manual entry
+    if (model === "__manual__") {
+      // User selected "✏️ Enter Custom Model Name" from dropdown
+      const customModel = this.getNodeParameter("customModel", itemIndex) as string;
+      if (!customModel || customModel.trim() === "") {
+        throw new Error("Custom model name is required when selecting '✏️ Enter Custom Model Name'");
+      }
+      model = customModel;
+      console.log(`✏️ Using manually entered model: ${model}`);
+    } else {
+      console.log(`✅ Using model from list: ${model}`);
+    }
+    
     const options = this.getNodeParameter("options", itemIndex, {}) as {
 			temperature?: number;
 			maxTokens?: number;
