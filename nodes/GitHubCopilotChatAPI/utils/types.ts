@@ -6,6 +6,7 @@ export { CopilotResponse };
 export interface ChatMessage {
 	role: "system" | "user" | "assistant";
 	content: string | Array<ChatMessageContent>;
+	type?: "file"; // Only for file attachments in GitHub Copilot API
 }
 
 export interface ChatMessageContent {

@@ -120,10 +120,6 @@ export class GitHubCopilotChatAPI implements INodeType {
             });
           }
 
-          // Prepare user message content
-          let userContent: string | Array<ChatMessageContent> = userMessage;
-
-          // Handle multimodal content (unified media handling)
           if (includeMedia) {
             const mediaSource = this.getNodeParameter("mediaSource", i) as string;
             const mediaFile = this.getNodeParameter("mediaFile", i, "") as string;
@@ -134,17 +130,15 @@ export class GitHubCopilotChatAPI implements INodeType {
               "",
             ) as string;
 
-            const contentArray: Array<ChatMessageContent> = [];
-
-            // Add text content
+            // Add text message first (if provided)
             if (userMessage.trim()) {
-              contentArray.push({
-                type: "text",
-                text: userMessage,
+              messages.push({
+                role: "user",
+                content: userMessage,
               });
             }
 
-            // Process media file and auto-detect type
+            // Process media file and add as separate message
             try {
               const mediaResult = await processMediaFile(
                 this,
@@ -156,37 +150,37 @@ export class GitHubCopilotChatAPI implements INodeType {
               );
 
               if (mediaResult.type === "image" && mediaResult.dataUrl) {
-                // Handle as image
-                contentArray.push({
-                  type: "image_url",
-                  image_url: {
-                    url: mediaResult.dataUrl,
-                  },
+                // Add image as separate message using discovered format
+                messages.push({
+                  role: "user",
+                  content: mediaResult.dataUrl,
+                  type: "file",
                 });
               } else {
-                // Unknown or error
-                contentArray.push({
-                  type: "text",
-                  text: `[Image processing failed: ${mediaResult.description}]`,
+                // Unknown or error - add as text message
+                messages.push({
+                  role: "user",
+                  content: `[Image processing failed: ${mediaResult.description}]`,
                 });
               }
             } catch (error) {
-              contentArray.push({
-                type: "text",
-                text: `[Media processing error: ${
+              // Add error as text message
+              messages.push({
+                role: "user",
+                content: `[Media processing error: ${
                   error instanceof Error ? error.message : "Unknown error"
                 }]`,
               });
             }
 
-            userContent = contentArray;
+            // Don't set userContent - messages are added directly
+          } else {
+            // No media - add user message normally
+            messages.push({
+              role: "user",
+              content: userMessage,
+            });
           }
-
-          // Add user message
-          messages.push({
-            role: "user",
-            content: userContent,
-          });
 
           // Prepare request body
           const requestBody: Record<string, unknown> = {
