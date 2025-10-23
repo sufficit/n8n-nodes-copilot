@@ -194,21 +194,28 @@ export async function makeGitHubCopilotRequest(
       
       if (!response.ok) {
         const errorText = await response.text();
-        
+
+        // Check for 400 Bad Request - should NOT retry
+        if (response.status === 400) {
+          console.log(`🚫 400 Bad Request detected - not retrying`);
+          const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText}`;
+          throw new Error(enhancedError);
+        }
+
         // Secure token display - show only prefix and last 5 characters
         const tokenPrefix = token.substring(0, 4);
         const tokenSuffix = token.substring(token.length - 5);
         const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
-        
+
         console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
         console.error(`❌ Error details: ${errorText}`);
         console.error(`❌ Used credential type: ${credentialType}`);
         console.error(`❌ Token format used: ${tokenInfo}`);
         console.error(`❌ Attempt: ${attempt}/${MAX_RETRIES}`);
-        
+
         // Enhanced error message with secure token info
         const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`;
-        
+
         throw new Error(enhancedError);
       }
       
