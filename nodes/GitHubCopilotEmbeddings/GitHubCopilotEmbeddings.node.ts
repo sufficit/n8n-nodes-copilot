@@ -31,7 +31,7 @@ export class GitHubCopilotEmbeddings implements INodeType {
 		icon: "file:../../shared/icons/copilot.svg",
 		group: ["transform"],
 		version: 1,
-		subtitle: '={{$parameter["operation"]}}',
+		subtitle: '={{$parameter["model"]}}',
 		description: "Generate text embeddings using GitHub Copilot API",
 		defaults: {
 			name: "GitHub Copilot Embeddings",
@@ -45,21 +45,6 @@ export class GitHubCopilotEmbeddings implements INodeType {
 			},
 		],
 		properties: [
-			{
-				displayName: "Operation",
-				name: "operation",
-				type: "options",
-				noDataExpression: true,
-				options: [
-					{
-						name: "Generate Embeddings",
-						value: "generate",
-						description: "Generate vector embeddings for text input",
-						action: "Generate embeddings for text",
-					},
-				],
-				default: "generate",
-			},
 			{
 				displayName: "Model",
 				name: "model",
@@ -250,8 +235,6 @@ export class GitHubCopilotEmbeddings implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				const operation = this.getNodeParameter("operation", i) as string;
-				
 				// Get model (support custom input like ChatAPI)
 				const selectedModel = this.getNodeParameter("model", i) as string;
 				let model: string;
@@ -395,7 +378,6 @@ export class GitHubCopilotEmbeddings implements INodeType {
 					returnData.push({
 						json: {
 							error: error instanceof Error ? error.message : "Unknown error occurred",
-							operation: this.getNodeParameter("operation", i),
 						},
 						pairedItem: { item: i },
 					});

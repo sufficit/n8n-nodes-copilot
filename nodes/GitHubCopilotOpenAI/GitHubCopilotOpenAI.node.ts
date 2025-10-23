@@ -21,7 +21,7 @@ export class GitHubCopilotOpenAI implements INodeType {
     icon: "file:../../shared/icons/copilot.svg",
     group: ["transform"],
     version: 1,
-    subtitle: "={{$parameter[\"operation\"] + \": \" + $parameter[\"model\"]}}",
+    subtitle: "={{$parameter[\"model\"]}}",
     description:
 			"OpenAI-compatible GitHub Copilot Chat API with full support for messages, tools, and all OpenAI parameters",
     defaults: {
@@ -52,10 +52,7 @@ export class GitHubCopilotOpenAI implements INodeType {
 
     for (let i = 0; i < items.length; i++) {
       try {
-        const operation = this.getNodeParameter("operation", i) as string;
-
-        if (operation === "chat") {
-          // Get model based on source (fromList or custom)
+        // Get model based on source (fromList or custom)
           const modelSource = this.getNodeParameter("modelSource", i, "fromList") as string;
           let model: string;
           
@@ -137,8 +134,8 @@ export class GitHubCopilotOpenAI implements INodeType {
                   content: msg.content as string,
                 };
                 
-                // Add type if provided (for file attachments)
-                if (msg.type && msg.type !== 'text') {
+                // Add type if provided and valid (for file attachments)
+                if (msg.type && (msg.type === 'text' || msg.type === 'image_url')) {
                   message.type = msg.type;
                 }
                 
@@ -168,18 +165,27 @@ export class GitHubCopilotOpenAI implements INodeType {
           
           if (tools) {
             try {
-              if (typeof tools === 'object' && Array.isArray(tools)) {
-                // Already an array, use directly
+              if (typeof tools === 'object' && Array.isArray(tools) && tools.length > 0) {
+                // Already an array with items, use directly
                 parsedTools = tools;
                 console.log('📥 Received tools as direct array (no parsing needed)');
               } else if (typeof tools === 'string' && tools.trim()) {
                 // String, parse it
-                parsedTools = JSON.parse(tools);
-                console.log('📥 Parsed tools from JSON string');
+                const parsed = JSON.parse(tools);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  parsedTools = parsed;
+                  console.log('📥 Parsed tools from JSON string');
+                } else {
+                  console.log('📥 Tools string parsed but empty or not an array');
+                }
+              } else {
+                console.log('📥 Tools field present but empty or invalid');
               }
             } catch (error) {
-              throw new Error(`Failed to parse tools JSON: ${error instanceof Error ? error.message : "Unknown error"}`);
+              console.log('⚠️ Failed to parse tools, ignoring:', error instanceof Error ? error.message : "Unknown error");
             }
+          } else {
+            console.log('📥 No tools specified');
           }
 
           // Get OpenAI parameters from advancedOptions (all now optional)
@@ -444,10 +450,7 @@ export class GitHubCopilotOpenAI implements INodeType {
             json: openAIResponse,
             pairedItem: { item: i },
           });
-        } else {
-          throw new Error(`Unknown operation: ${operation}`);
-        }
-      } catch (error) {
+        } catch (error) {
         if (this.continueOnFail()) {
           const errorMessage = error instanceof Error ? error.message : "Unknown error";
           const errorString = JSON.stringify(error);

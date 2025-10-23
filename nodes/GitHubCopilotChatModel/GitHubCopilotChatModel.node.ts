@@ -14,6 +14,7 @@ import {
 } from "../../shared/models/GitHubCopilotModels";
 import { GITHUB_COPILOT_API } from "../../shared/utils/GitHubCopilotEndpoints";
 import { loadAvailableModels } from "../../shared/models/DynamicModelLoader";
+import { CHAT_MODEL_PROPERTIES } from "../../shared/properties/ModelProperties";
 
 export class GitHubCopilotChatModel implements INodeType {
   description: INodeTypeDescription = {
@@ -51,30 +52,8 @@ export class GitHubCopilotChatModel implements INodeType {
       },
     ],
     properties: [
-      {
-        displayName: "Model",
-        name: "model",
-        type: "options",
-        typeOptions: {
-          loadOptionsMethod: "getAvailableModels",
-        },
-        default: DEFAULT_MODELS.GENERAL,
-        description: "Select the GitHub Copilot model to use (loaded dynamically based on your subscription)",
-      },
-      {
-        displayName: "Custom Model Name",
-        name: "customModel",
-        type: "string",
-        default: "",
-        placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
-        description: "Enter the model name manually. This is useful for new/beta models not yet in the list.",
-        hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
-        displayOptions: {
-          show: {
-            model: ["__manual__"],
-          },
-        },
-      },
+      // Model properties (shared across nodes)
+      ...CHAT_MODEL_PROPERTIES,
       {
         displayName: "Options",
         name: "options",
