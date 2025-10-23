@@ -13,6 +13,7 @@ export const GITHUB_COPILOT_API = {
     // GitHub Copilot API
     MODELS: "/models",
     CHAT_COMPLETIONS: "/chat/completions",
+    EMBEDDINGS: "/embeddings",
         
     // GitHub API (for billing and organization info)
     ORG_BILLING: (org: string) => `/orgs/${org}/copilot/billing`,
@@ -25,6 +26,7 @@ export const GITHUB_COPILOT_API = {
     // GitHub Copilot API URLs
     MODELS: "https://api.githubcopilot.com/models",
     CHAT_COMPLETIONS: "https://api.githubcopilot.com/chat/completions",
+    EMBEDDINGS: "https://api.githubcopilot.com/embeddings",
         
     // GitHub API URLs
     ORG_BILLING: (org: string) => `https://api.github.com/orgs/${org}/copilot/billing`,
@@ -99,6 +101,13 @@ export class GitHubCopilotEndpoints {
   }
     
   /**
+     * Get full URL for embeddings endpoint
+     */
+  static getEmbeddingsUrl(): string {
+    return GITHUB_COPILOT_API.URLS.EMBEDDINGS;
+  }
+    
+  /**
      * Get GitHub API URL for organization billing
      */
   static getOrgBillingUrl(org: string): string {
@@ -133,6 +142,36 @@ export class GitHubCopilotEndpoints {
     }
         
     return headers;
+  }
+    
+  /**
+     * Get headers for embeddings endpoint (requires additional headers)
+     */
+  static getEmbeddingsHeaders(token: string): Record<string, string> {
+    // Generate unique session ID (UUID + timestamp)
+    const sessionId = `${this.generateUUID()}-${Date.now()}`;
+        
+    return {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Editor-Version": "vscode/1.95.0",
+      "Editor-Plugin-Version": "copilot/1.0.0",
+      "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
+      "Vscode-Sessionid": sessionId,
+      "X-GitHub-Api-Version": "2025-08-20",
+    };
+  }
+    
+  /**
+     * Generate a simple UUID v4
+     */
+  private static generateUUID(): string {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
     
   /**

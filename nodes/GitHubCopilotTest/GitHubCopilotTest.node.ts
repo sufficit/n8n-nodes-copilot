@@ -11,12 +11,19 @@ import {
   GitHubCopilotEndpoints,
 } from "../../shared/utils/GitHubCopilotEndpoints";
 
+import { DynamicModelsManager } from "../../shared/utils/DynamicModelsManager";
+import { OAuthTokenManager } from "../../shared/utils/OAuthTokenManager";
+import { executeEmbeddingsRequestSimple, EmbeddingRequest } from "../../shared/utils/EmbeddingsApiUtils";
+
 interface GitHubCopilotModel {
 	id: string;
 	name: string;
 	display_name: string;
 	model_picker_enabled?: boolean;
-	capabilities?: string[];
+	capabilities?: any;
+	vendor?: string;
+	version?: string;
+	preview?: boolean;
 }
 
 interface GitHubCopilotModelsResponse {
@@ -128,6 +135,125 @@ async function listAvailableModels(
   };
 }
 
+/**
+ * Refresh Models Cache
+ * Forces a cache clear and fetches fresh models from the API
+ */
+async function refreshModelsCache(
+  githubToken: string,
+  enableRetry = true,
+  maxRetries = 3,
+): Promise<IDataObject> {
+  const startTime = Date.now();
+  
+  try {
+    console.log("🔄 Starting models cache refresh...");
+
+    // Generate OAuth token from GitHub CLI token
+    console.log("🔑 Generating OAuth token...");
+    const oauthToken = await OAuthTokenManager.getValidOAuthToken(githubToken);
+    
+    // Get cache info BEFORE clearing
+    const cacheInfoBefore = DynamicModelsManager.getCacheInfo(oauthToken);
+    
+    console.log("🗑️ Clearing existing cache...");
+    DynamicModelsManager.clearCache(oauthToken);
+    
+    console.log("📥 Fetching fresh models from API...");
+    const models = await DynamicModelsManager.getAvailableModels(oauthToken);
+    
+    // Get cache info AFTER refresh
+    const cacheInfoAfter = DynamicModelsManager.getCacheInfo(oauthToken);
+    
+    const executionTime = Date.now() - startTime;
+    
+    // Group models by vendor
+    const modelsByVendor: Record<string, number> = {};
+    const capabilitiesCount: Record<string, number> = {
+      streaming: 0,
+      tools: 0,
+      vision: 0,
+      structured: 0,
+      parallel: 0,
+      reasoning: 0,
+    };
+    
+    models.forEach((model: any) => {
+      // Count by vendor
+      const vendor = model.vendor || "Unknown";
+      modelsByVendor[vendor] = (modelsByVendor[vendor] || 0) + 1;
+      
+      // Count capabilities
+      if (model.capabilities?.supports) {
+        const supports = model.capabilities.supports;
+        if (supports.streaming) capabilitiesCount.streaming++;
+        if (supports.tool_calls) capabilitiesCount.tools++;
+        if (supports.vision) capabilitiesCount.vision++;
+        if (supports.structured_outputs) capabilitiesCount.structured++;
+        if (supports.parallel_tool_calls) capabilitiesCount.parallel++;
+        if (supports.max_thinking_budget) capabilitiesCount.reasoning++;
+      }
+    });
+    
+    return {
+      success: true,
+      operation: "refreshCache",
+      timestamp: new Date().toISOString(),
+      executionTime: `${executionTime}ms`,
+      message: "✅ Models cache refreshed successfully",
+      
+      summary: {
+        totalModels: models.length,
+        modelsByVendor,
+        capabilities: capabilitiesCount,
+      },
+      
+      cache: {
+        before: cacheInfoBefore ? {
+          cached: true,
+          modelsCount: cacheInfoBefore.modelsCount,
+          expiresIn: `${Math.round((cacheInfoBefore.expiresIn as number) / 1000)}s`,
+          fetchedAt: cacheInfoBefore.fetchedAt,
+        } : {
+          cached: false,
+          message: "No cache existed before refresh",
+        },
+        after: cacheInfoAfter ? {
+          cached: true,
+          modelsCount: cacheInfoAfter.modelsCount,
+          expiresIn: `${Math.round((cacheInfoAfter.expiresIn as number) / 1000)}s`,
+          fetchedAt: cacheInfoAfter.fetchedAt,
+        } : {
+          cached: false,
+          message: "Cache refresh failed",
+        },
+      },
+      
+      // Include full models list
+      models: models.map((model: any) => ({
+        id: model.id,
+        name: model.name || model.id,
+        vendor: model.vendor,
+        capabilities: model.capabilities?.supports || {},
+      })),
+    };
+    
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    
+    return {
+      success: false,
+      operation: "refreshCache",
+      timestamp: new Date().toISOString(),
+      executionTime: `${executionTime}ms`,
+      error: errorMessage,
+      message: "❌ Failed to refresh models cache",
+      details: error instanceof Error ? error.stack : String(error),
+    };
+  }
+}
+
 // Consolidated test function - tests all models multiple times
 async function consolidatedModelTest(
   token: string,
@@ -156,10 +282,19 @@ async function consolidatedModelTest(
       };
     }
 
-    const availableModels = modelsResponse.data as unknown[];
+    const allModels = modelsResponse.data as unknown[];
+    
+    // Filter ONLY chat models (exclude embeddings)
+    const availableModels = allModels.filter((modelItem) => {
+      const model = modelItem as Record<string, unknown>;
+      const modelType = ((model.capabilities as any)?.type);
+      // Only include chat models, exclude embeddings
+      return modelType !== "embeddings";
+    });
+
     const testMessage = "Hello! Please respond with just 'OK' to confirm you're working.";
 
-    console.log(`📊 Testing ${availableModels.length} models, ${testsPerModel} times each...`);
+    console.log(`📊 Testing ${availableModels.length} chat models, ${testsPerModel} times each...`);
 
     // Test each model multiple times
     for (const modelItem of availableModels) {
@@ -407,6 +542,175 @@ function generateTestRecommendations(testResults: Record<string, unknown>): unkn
   return recommendations;
 }
 
+// Test embedding models specifically
+async function testEmbeddingModels(
+  githubToken: string,
+  enableRetry = true,
+  maxRetries = 3,
+): Promise<IDataObject> {
+  const testStartTime = Date.now();
+
+  try {
+    console.log("🧪 Testing embedding models...");
+
+    // Fetch all models using GitHub token
+    const modelsUrl = `${GITHUB_COPILOT_API.URLS.MODELS}`;
+    const modelsResponse = await fetch(modelsUrl, {
+      method: "GET",
+      headers: GitHubCopilotEndpoints.getAuthHeaders(githubToken),
+    });
+
+    if (!modelsResponse.ok) {
+      throw new Error(`Failed to fetch models: ${modelsResponse.status}`);
+    }
+
+    const modelsData = (await modelsResponse.json()) as GitHubCopilotModelsResponse;
+
+    // Filter embedding models only
+    const embeddingModels = modelsData.data.filter((model) => {
+      const modelType = (model.capabilities as any)?.type;
+      return modelType === "embeddings";
+    });
+
+    console.log(`📊 Found ${embeddingModels.length} embedding models to test`);
+
+    // Generate OAuth token for embeddings API requests (required)
+    const oauthToken = await OAuthTokenManager.getValidOAuthToken(githubToken);
+
+    const testResults: Record<string, unknown> = {};
+    const testText = "This is a test sentence for embeddings generation.";
+
+    // Test each embedding model
+    for (const model of embeddingModels) {
+      console.log(`\n🔬 Testing model: ${model.name} (${model.id})`);
+
+      const modelResults = {
+        modelId: model.id,
+        modelName: model.name,
+        vendor: model.vendor,
+        tests: [] as unknown[],
+        summary: {
+          successCount: 0,
+          failureCount: 0,
+          avgResponseTime: 0,
+          totalResponseTime: 0,
+          successRate: 0,
+        },
+      };
+
+      // Test multiple times
+      const testsPerModel = 3;
+      for (let testNum = 1; testNum <= testsPerModel; testNum++) {
+        const testStart = Date.now();
+
+        try {
+          const requestBody: EmbeddingRequest = {
+            model: model.id,
+            input: [testText],
+          };
+
+          const data = await executeEmbeddingsRequestSimple(oauthToken, requestBody);
+          
+          const testDuration = Date.now() - testStart;
+          const embeddingLength = data.data?.[0]?.embedding?.length || 0;
+
+          modelResults.tests.push({
+            testNumber: testNum,
+            success: true,
+            responseTime: testDuration,
+            embeddingDimensions: embeddingLength,
+            tokensUsed: data.usage?.total_tokens || 0,
+          });
+
+          modelResults.summary.successCount++;
+          modelResults.summary.totalResponseTime += testDuration;
+
+          console.log(
+            `  ✅ Test ${testNum}/${testsPerModel}: Success (${testDuration}ms, ${embeddingLength}D)`,
+          );
+        } catch (error) {
+          const testDuration = Date.now() - testStart;
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+          modelResults.tests.push({
+            testNumber: testNum,
+            success: false,
+            responseTime: testDuration,
+            error: errorMessage,
+          });
+
+          modelResults.summary.failureCount++;
+
+          console.log(
+            `  ❌ Test ${testNum}/${testsPerModel}: Error - ${errorMessage}`,
+          );
+        }
+
+        // Small delay between tests
+        if (testNum < testsPerModel) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
+      // Calculate summary stats
+      const successCount = modelResults.summary.successCount;
+      if (successCount > 0) {
+        modelResults.summary.avgResponseTime = Math.round(
+          modelResults.summary.totalResponseTime / successCount,
+        );
+      }
+      modelResults.summary.successRate = Math.round(
+        (successCount / testsPerModel) * 100,
+      );
+
+      testResults[model.id] = modelResults;
+    }
+
+    const testDuration = Date.now() - testStartTime;
+
+    // Calculate overall statistics
+    const allModels = Object.values(testResults);
+    const totalTests = allModels.length * 3;
+    const successfulTests = allModels.reduce(
+      (sum, m: any) => sum + m.summary.successCount,
+      0,
+    ) as number;
+
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      testDuration: testDuration,
+      testDurationFormatted: `${Math.floor(testDuration / 1000)}s`,
+      testConfig: {
+        testsPerModel: 3,
+        totalModels: embeddingModels.length,
+        totalTests: totalTests,
+        retryEnabled: enableRetry,
+        maxRetries: maxRetries,
+      },
+      overallResults: {
+        totalTests: totalTests,
+        successfulTests: successfulTests,
+        failedTests: totalTests - successfulTests,
+        overallSuccessRate: Math.round((successfulTests / totalTests) * 100),
+      },
+      modelResults: testResults,
+      availableModels: embeddingModels.map((m) => ({
+        id: m.id,
+        name: m.name,
+        vendor: m.vendor,
+      })),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : "Unknown error in embedding models test",
+      testDuration: Date.now() - testStartTime,
+    };
+  }
+}
+
 export class GitHubCopilotTest implements INodeType {
   description: INodeTypeDescription = {
     displayName: "GitHub Copilot Test",
@@ -440,10 +744,20 @@ export class GitHubCopilotTest implements INodeType {
             description: "Get all models available for your GitHub Copilot subscription",
           },
           {
-            name: "Consolidated Model Test",
+            name: "Refresh Models Cache",
+            value: "refreshCache",
+            description: "Force refresh the cached models list (clears cache and fetches fresh data from API)",
+          },
+          {
+            name: "Test Embedding Models",
+            value: "testEmbeddings",
+            description: "Test all embedding models (text-embedding-*) with sample text generation",
+          },
+          {
+            name: "Test Chat Models",
             value: "consolidatedTest",
             description:
-							"Test all available models 5 times each and generate comprehensive report ⚠️ This test may take up to 2 minutes to complete",
+							"Test all available chat models 5 times each and generate comprehensive report ⚠️ This test may take up to 2 minutes to complete",
           },
         ],
         default: "listModels",
@@ -537,6 +851,13 @@ export class GitHubCopilotTest implements INodeType {
         switch (testFunction) {
         case "listModels":
           result = await listAvailableModels(token, enableRetry, maxRetries);
+          break;
+        case "refreshCache":
+          // Force refresh the models cache
+          result = await refreshModelsCache(token, enableRetry, maxRetries);
+          break;
+        case "testEmbeddings":
+          result = await testEmbeddingModels(token, enableRetry, maxRetries);
           break;
         case "consolidatedTest":
           result = await consolidatedModelTest(token, enableRetry, maxRetries, testsPerModel);

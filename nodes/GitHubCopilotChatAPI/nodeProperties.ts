@@ -1,8 +1,6 @@
 import { INodeProperties } from "n8n-workflow";
-import {
-  GitHubCopilotModelsManager,
-  DEFAULT_MODELS,
-} from "../../shared/models/GitHubCopilotModels";
+import { DEFAULT_MODELS } from "../../shared/models/GitHubCopilotModels";
+import { loadAvailableModels } from "../../shared/models/DynamicModelLoader";
 
 export const nodeProperties: INodeProperties[] = [
   {
@@ -20,12 +18,67 @@ export const nodeProperties: INodeProperties[] = [
     default: "chat",
   },
   {
+    displayName: "Model Source",
+    name: "modelSource",
+    type: "options",
+    options: [
+      {
+        name: "From List (Auto-Discovered)",
+        value: "fromList",
+        description: "Select from available models based on your subscription",
+      },
+      {
+        name: "Custom (Manual Entry)",
+        value: "custom",
+        description: "Enter model name manually (use at your own risk)",
+      },
+    ],
+    default: "fromList",
+    description: "Choose how to specify the model",
+  },
+  {
     displayName: "Model",
     name: "model",
     type: "options",
-    options: GitHubCopilotModelsManager.toN8nOptions(),
+    typeOptions: {
+      loadOptionsMethod: "getAvailableModels",
+    },
     default: DEFAULT_MODELS.GENERAL,
-    description: "Select the GitHub Copilot model to use",
+    description: "Select the GitHub Copilot model to use (loaded dynamically based on your subscription)",
+    displayOptions: {
+      show: {
+        modelSource: ["fromList"],
+      },
+    },
+  },
+  {
+    displayName: "Custom Model Name",
+    name: "customModel",
+    type: "string",
+    default: "",
+    placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
+    description: "Enter the model name manually. Use at your own risk if the model is not available in your subscription.",
+    hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
+    displayOptions: {
+      show: {
+        modelSource: ["custom"],
+      },
+    },
+  },
+  {
+    displayName: "Custom Model Name",
+    name: "customModel",
+    type: "string",
+    default: "",
+    placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
+    description: "Enter the model name manually. This is useful for new/beta models not yet in the list.",
+    hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
+    displayOptions: {
+      show: {
+        modelSource: ["fromList"],
+        model: ["__manual__"],
+      },
+    },
   },
   {
     displayName: "Message",

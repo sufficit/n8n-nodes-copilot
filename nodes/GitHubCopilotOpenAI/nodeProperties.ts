@@ -1,8 +1,5 @@
 import { INodeProperties } from "n8n-workflow";
-// import {
-//   GitHubCopilotModelsManager,
-//   DEFAULT_MODELS,
-// } from "../../shared/models/GitHubCopilotModels";
+import { DEFAULT_MODELS } from "../../shared/models/GitHubCopilotModels";
 
 export const nodeProperties: INodeProperties[] = [
   {
@@ -20,13 +17,67 @@ export const nodeProperties: INodeProperties[] = [
     default: "chat",
   },
   {
+    displayName: "Model Source",
+    name: "modelSource",
+    type: "options",
+    options: [
+      {
+        name: "From List (Auto-Discovered)",
+        value: "fromList",
+        description: "Select from available models based on your subscription",
+      },
+      {
+        name: "Custom (Manual Entry)",
+        value: "custom",
+        description: "Enter model name manually (use at your own risk)",
+      },
+    ],
+    default: "fromList",
+    description: "Choose how to specify the model",
+  },
+  {
     displayName: "Model",
     name: "model",
+    type: "options",
+    typeOptions: {
+      loadOptionsMethod: "getAvailableModels",
+    },
+    default: DEFAULT_MODELS.GENERAL,
+    description: "Select the GitHub Copilot model to use (loaded dynamically based on your subscription)",
+    displayOptions: {
+      show: {
+        modelSource: ["fromList"],
+      },
+    },
+  },
+  {
+    displayName: "Custom Model Name",
+    name: "customModel",
     type: "string",
-    default: "gpt-4o",
-    placeholder: "gpt-4o",
-    description:
-			"The model to use for the completion. Supports all OpenAI model names that map to GitHub Copilot models.",
+    default: "",
+    placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
+    description: "Enter the model name manually. Use at your own risk if the model is not available in your subscription.",
+    hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
+    displayOptions: {
+      show: {
+        modelSource: ["custom"],
+      },
+    },
+  },
+  {
+    displayName: "Custom Model Name",
+    name: "customModel",
+    type: "string",
+    default: "",
+    placeholder: "gpt-4o, claude-3.5-sonnet, grok-code-fast-1, etc.",
+    description: "Enter the model name manually. This is useful for new/beta models not yet in the list.",
+    hint: "Examples: gpt-4o, gpt-4o-mini, claude-3.5-sonnet, gemini-2.0-flash-exp, grok-code-fast-1",
+    displayOptions: {
+      show: {
+        modelSource: ["fromList"],
+        model: ["__manual__"],
+      },
+    },
   },
   {
     displayName: "Messages Input Mode",
@@ -129,20 +180,159 @@ export const nodeProperties: INodeProperties[] = [
             placeholder: "Enter message content...",
             description: "The content of the message",
           },
+          {
+            displayName: "Type",
+            name: "type",
+            type: "options",
+            options: [
+              {
+                name: "Text",
+                value: "text",
+                description: "Regular text message",
+              },
+              {
+                name: "File",
+                value: "file",
+                description: "File attachment (use content as data URL or base64)",
+              },
+            ],
+            default: "text",
+            description: "The type of message content (optional)",
+          },
         ],
       },
     ],
     description: "Array of messages for the conversation",
   },
+  // Advanced Options
   {
-    displayName: "Tools (Optional)",
-    name: "tools",
-    type: "string",
-    default: "",
-    typeOptions: {
-      rows: 10,
-    },
-    placeholder: `[
+    displayName: "Advanced Options",
+    name: "advancedOptions",
+    type: "collection",
+    placeholder: "Add Advanced Option",
+    default: {},
+    options: [
+      {
+        displayName: "Response Format",
+        name: "response_format",
+        type: "options",
+        options: [
+          {
+            name: "Text",
+            value: "text",
+            description: "Return response as plain text",
+          },
+          {
+            name: "JSON Object",
+            value: "json_object",
+            description: "Return response as JSON object",
+          },
+        ],
+        default: "text",
+        description: "The format of the response",
+      },
+      {
+        displayName: "Temperature",
+        name: "temperature",
+        type: "number",
+        typeOptions: {
+          minValue: 0,
+          maxValue: 2,
+          numberPrecision: 2,
+        },
+        default: 1,
+        description:
+          "Controls randomness in the response. Lower values make responses more focused and deterministic.",
+      },
+      {
+        displayName: "Max Tokens",
+        name: "max_tokens",
+        type: "number",
+        typeOptions: {
+          minValue: 1,
+          maxValue: 16384,
+        },
+        default: 4096,
+        placeholder: "4096",
+        description: "Maximum number of tokens to generate in the response",
+        hint: "Default: 4096 tokens. Increase for longer responses, decrease for shorter ones.",
+      },
+      {
+        displayName: "Top P",
+        name: "top_p",
+        type: "number",
+        typeOptions: {
+          minValue: 0,
+          maxValue: 1,
+          numberPrecision: 2,
+        },
+        default: 1,
+        description: "Controls diversity via nucleus sampling",
+      },
+      {
+        displayName: "Frequency Penalty",
+        name: "frequency_penalty",
+        type: "number",
+        typeOptions: {
+          minValue: -2,
+          maxValue: 2,
+          numberPrecision: 2,
+        },
+        default: 0,
+        description: "Penalty for repeated tokens based on their frequency",
+      },
+      {
+        displayName: "Presence Penalty",
+        name: "presence_penalty",
+        type: "number",
+        typeOptions: {
+          minValue: -2,
+          maxValue: 2,
+          numberPrecision: 2,
+        },
+        default: 0,
+        description: "Penalty for repeated tokens based on their presence",
+      },
+      {
+        displayName: "Stop Sequences",
+        name: "stop",
+        type: "string",
+        default: "",
+        placeholder: "[\"\\n\", \"Human:\", \"AI:\"]",
+        description: "JSON array of strings where the API will stop generating tokens",
+      },
+      {
+        displayName: "Stream",
+        name: "stream",
+        type: "boolean",
+        default: false,
+        description: "Whether to stream the response",
+      },
+      {
+        displayName: "Seed",
+        name: "seed",
+        type: "number",
+        default: 0,
+        placeholder: "12345",
+        description: "Seed for deterministic sampling (0 = disabled)",
+      },
+      {
+        displayName: "User ID",
+        name: "user",
+        type: "string",
+        default: "",
+        placeholder: "user-123",
+        description: "Unique identifier for the end-user",
+      },
+      {
+        displayName: "Tools (Function Calling)",
+        name: "tools",
+        type: "string",
+        default: "",
+        typeOptions: {
+          rows: 10,
+        },
+        placeholder: `[
   {
     "type": "function",
     "function": {
@@ -161,157 +351,38 @@ export const nodeProperties: INodeProperties[] = [
     }
   }
 ]`,
-    description: "Optional: Array of tools/functions available to the model (OpenAI format). Leave empty if not using function calling.",
-    hint: "JSON array of tool definitions in OpenAI format. Leave this field empty if you don't need function calling.",
-  },
-  {
-    displayName: "Tool Choice",
-    name: "tool_choice",
-    type: "options",
-    options: [
-      {
-        name: "Auto",
-        value: "auto",
-        description: "Let the model decide whether to call functions",
+        description: "Optional: Array of tools/functions available to the model (OpenAI format). Leave empty if not using function calling.",
+        hint: "JSON array of tool definitions in OpenAI format. Leave this field empty if you don't need function calling.",
       },
       {
-        name: "None",
-        value: "none",
-        description: "Force the model to not call any functions",
+        displayName: "Tool Choice",
+        name: "tool_choice",
+        type: "options",
+        options: [
+          {
+            name: "Auto",
+            value: "auto",
+            description: "Let the model decide whether to call functions",
+          },
+          {
+            name: "None",
+            value: "none",
+            description: "Force the model to not call any functions",
+          },
+          {
+            name: "Required",
+            value: "required",
+            description: "Force the model to call at least one function",
+          },
+        ],
+        default: "auto",
+        description: "Control how the model uses tools",
+        displayOptions: {
+          show: {
+            tools: ["/.+/"],
+          },
+        },
       },
-      {
-        name: "Required",
-        value: "required",
-        description: "Force the model to call at least one function",
-      },
-    ],
-    default: "auto",
-    description: "Control how the model uses tools",
-    displayOptions: {
-      show: {
-        tools: ["/.+/"],
-      },
-    },
-  },
-  {
-    displayName: "Response Format",
-    name: "response_format",
-    type: "options",
-    options: [
-      {
-        name: "Text",
-        value: "text",
-        description: "Return response as plain text",
-      },
-      {
-        name: "JSON Object",
-        value: "json_object",
-        description: "Return response as JSON object",
-      },
-    ],
-    default: "text",
-    description: "The format of the response",
-  },
-  {
-    displayName: "Temperature",
-    name: "temperature",
-    type: "number",
-    typeOptions: {
-      minValue: 0,
-      maxValue: 2,
-      numberPrecision: 2,
-    },
-    default: 1,
-    description:
-			"Controls randomness in the response. Lower values make responses more focused and deterministic.",
-  },
-  {
-    displayName: "Max Tokens",
-    name: "max_tokens",
-    type: "number",
-    typeOptions: {
-      minValue: 1,
-      maxValue: 4096,
-    },
-    default: "",
-    placeholder: "1000",
-    description: "Maximum number of tokens to generate",
-  },
-  {
-    displayName: "Top P",
-    name: "top_p",
-    type: "number",
-    typeOptions: {
-      minValue: 0,
-      maxValue: 1,
-      numberPrecision: 2,
-    },
-    default: 1,
-    description: "Controls diversity via nucleus sampling",
-  },
-  {
-    displayName: "Frequency Penalty",
-    name: "frequency_penalty",
-    type: "number",
-    typeOptions: {
-      minValue: -2,
-      maxValue: 2,
-      numberPrecision: 2,
-    },
-    default: 0,
-    description: "Penalty for repeated tokens based on their frequency",
-  },
-  {
-    displayName: "Presence Penalty",
-    name: "presence_penalty",
-    type: "number",
-    typeOptions: {
-      minValue: -2,
-      maxValue: 2,
-      numberPrecision: 2,
-    },
-    default: 0,
-    description: "Penalty for repeated tokens based on their presence",
-  },
-  {
-    displayName: "Stop Sequences",
-    name: "stop",
-    type: "string",
-    default: "",
-    placeholder: "[\"\\n\", \"Human:\", \"AI:\"]",
-    description: "JSON array of strings where the API will stop generating tokens",
-  },
-  {
-    displayName: "Stream",
-    name: "stream",
-    type: "boolean",
-    default: false,
-    description: "Whether to stream the response",
-  },
-  {
-    displayName: "Seed",
-    name: "seed",
-    type: "number",
-    default: "",
-    placeholder: "12345",
-    description: "Seed for deterministic sampling",
-  },
-  {
-    displayName: "User ID",
-    name: "user",
-    type: "string",
-    default: "",
-    placeholder: "user-123",
-    description: "Unique identifier for the end-user",
-  },
-  // Advanced Options
-  {
-    displayName: "Advanced Options",
-    name: "advancedOptions",
-    type: "collection",
-    placeholder: "Add Advanced Option",
-    default: {},
-    options: [
       {
         displayName: "Enable Retry",
         name: "enableRetry",

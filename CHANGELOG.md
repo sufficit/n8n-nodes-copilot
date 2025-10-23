@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.38.10] - 2025-10-23
+
+### Fixed
+
+#### 🔧 Node Interface Improvements
+
+- **GitHub Copilot OpenAI**: Added optional "Type" field to manual messages for file attachments
+- **GitHub Copilot Chat Model**: Fixed model loading to use dynamic discovery like other nodes
+- Both nodes now have consistent model selection interface with dynamic loading based on user subscription
+
+### Changed
+
+- Model selection now loads dynamically from API instead of static list
+- Added support for file type messages in OpenAI-compatible node
+- Improved consistency across all nodes in the package
+
+---
+
 ## [3.31.1] - 2025-10-01
 
 ### Added

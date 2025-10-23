@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "3.31.31",
+  "version": "3.38.10",
   "description": "n8n community node for GitHub Copilot with CLI integration, Chat API access, and AI Chat Model for workflows - access GPT-5, Claude, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
@@ -33,6 +33,7 @@
       "dist/nodes/GitHubCopilotAuthHelper/GitHubCopilotAuthHelper.node.js",
       "dist/nodes/GitHubCopilotChatAPI/GitHubCopilotChatAPI.node.js",
       "dist/nodes/GitHubCopilotChatModel/GitHubCopilotChatModel.node.js",
+      "dist/nodes/GitHubCopilotEmbeddings/GitHubCopilotEmbeddings.node.js",
       "dist/nodes/GitHubCopilotOpenAI/GitHubCopilotOpenAI.node.js",
       "dist/nodes/GitHubCopilotTest/GitHubCopilotTest.node.js"
     ]

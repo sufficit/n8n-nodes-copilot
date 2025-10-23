@@ -1,5 +1,7 @@
 import { IExecuteFunctions } from "n8n-workflow";
 import { GITHUB_COPILOT_API } from "./GitHubCopilotEndpoints";
+import { OAuthTokenManager } from "./OAuthTokenManager";
+import { DynamicModelsManager } from "./DynamicModelsManager";
 
 // Interface for OAuth2 credentials
 interface OAuth2Credentials {
@@ -39,6 +41,12 @@ export interface CopilotResponse {
         prompt_tokens: number;
         completion_tokens: number;
         total_tokens: number;
+    };
+    // Retry metadata (added by wrapper)
+    _retryMetadata?: {
+        attempts: number;
+        retries: number;
+        succeeded: boolean;
     };
 }
 
@@ -88,14 +96,40 @@ export async function makeGitHubCopilotRequest(
     
   // Debug: Log credential structure for OAuth2
   console.log(`🔍 ${credentialType} Credentials Debug:`, Object.keys(credentials));
+  
+  // Get GitHub token and auto-generate OAuth token
+  const githubToken = credentials.token as string;
+  
+  if (!githubToken) {
+    throw new Error("GitHub token not found in credentials");
+  }
+  
+  // Validate GitHub token format (ghu_*, github_pat_*, or gho_*)
+  if (!githubToken.startsWith("ghu_") && !githubToken.startsWith("github_pat_") && !githubToken.startsWith("gho_")) {
+    throw new Error("Invalid GitHub token format. Must start with ghu_, github_pat_, or gho_");
+  }
+  
+  console.log(`🔄 Using GitHub token to generate OAuth token...`);
+  
+  let token: string;
+  try {
+    // Auto-generate OAuth token (uses cache if still valid)
+    token = await OAuthTokenManager.getValidOAuthToken(githubToken);
+    console.log(`✅ OAuth token ready (auto-generated from GitHub token)`);
     
-  // OAuth2 credentials might have different property names
-  const token = (
-        credentials.accessToken || 
-        credentials.access_token || 
-        credentials.oauthTokenData?.access_token ||
-        credentials.token
-    ) as string;
+    // Fetch available models in background (don't block the request)
+    DynamicModelsManager.getAvailableModels(token)
+      .then((models) => {
+        console.log(`✅ Models list updated: ${models.length} models available`);
+      })
+      .catch((error) => {
+        console.warn(`⚠️ Failed to update models list: ${error instanceof Error ? error.message : String(error)}`);
+      });
+  } catch (error) {
+    throw new Error(
+      `Failed to generate OAuth token: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 
   // Validate OAuth2 token exists
   if (!token) {
@@ -178,11 +212,21 @@ export async function makeGitHubCopilotRequest(
         throw new Error(enhancedError);
       }
       
-      // Success! Return the response
+      // Success! Return the response with retry metadata
       if (attempt > 1) {
         console.log(`✅ GitHub Copilot API succeeded on attempt ${attempt}/${MAX_RETRIES}`);
       }
-      return await response.json() as CopilotResponse;
+      
+      const responseData = await response.json() as CopilotResponse;
+      
+      // Add retry metadata to response
+      responseData._retryMetadata = {
+        attempts: attempt,
+        retries: attempt - 1,
+        succeeded: true
+      };
+      
+      return responseData;
       
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));

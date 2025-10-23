@@ -5,11 +5,14 @@ import {
   INodeTypeDescription,
   IDataObject,
   NodeOperationError,
+  ILoadOptionsFunctions,
+  INodePropertyOptions,
 } from "n8n-workflow";
 
 import { nodeProperties } from "./nodeProperties";
 import { makeApiRequest, CopilotResponse } from "../GitHubCopilotChatAPI/utils";
 import { GITHUB_COPILOT_API } from "../../shared/utils/GitHubCopilotEndpoints";
+import { loadAvailableModels } from "../../shared/models/DynamicModelLoader";
 
 export class GitHubCopilotOpenAI implements INodeType {
   description: INodeTypeDescription = {
@@ -35,6 +38,14 @@ export class GitHubCopilotOpenAI implements INodeType {
     properties: nodeProperties,
   };
 
+  methods = {
+    loadOptions: {
+      async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+        return await loadAvailableModels.call(this);
+      },
+    },
+  };
+
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
@@ -44,11 +55,37 @@ export class GitHubCopilotOpenAI implements INodeType {
         const operation = this.getNodeParameter("operation", i) as string;
 
         if (operation === "chat") {
+          // Get model based on source (fromList or custom)
+          const modelSource = this.getNodeParameter("modelSource", i, "fromList") as string;
+          let model: string;
+          
+          if (modelSource === "custom") {
+            // User chose "Custom (Manual Entry)" mode
+            model = this.getNodeParameter("customModel", i) as string;
+            if (!model || model.trim() === "") {
+              throw new Error("Custom model name is required when using 'Custom (Manual Entry)' mode");
+            }
+            console.log(`🔧 Using custom model: ${model}`);
+          } else {
+            // User chose "From List (Auto-Discovered)" mode
+            const selectedModel = this.getNodeParameter("model", i) as string;
+            
+            if (selectedModel === "__manual__") {
+              // User selected "✏️ Enter Custom Model Name" from dropdown
+              model = this.getNodeParameter("customModel", i) as string;
+              if (!model || model.trim() === "") {
+                throw new Error("Custom model name is required when selecting '✏️ Enter Custom Model Name'");
+              }
+              console.log(`✏️ Using manually entered model: ${model}`);
+            } else {
+              // Normal model selection from dropdown
+              model = selectedModel;
+              console.log(`📋 Using model from list: ${model}`);
+            }
+          }
+
           // Get OpenAI-style parameters from n8n UI
-          const model = this.getNodeParameter("model", i, "gpt-4o") as string;
           const messagesInputMode = this.getNodeParameter("messagesInputMode", i, "manual") as string;
-          const temperature = this.getNodeParameter("temperature", i, 1) as number;
-          const tools = this.getNodeParameter("tools", i, "") as string;
 
           // Parse messages based on input mode
           let messages: Array<{ role: string; content: string }> = [];
@@ -91,14 +128,25 @@ export class GitHubCopilotOpenAI implements INodeType {
               message: [],
             }) as IDataObject;
             
+            console.log('📥 Manual mode - messagesParam:', JSON.stringify(messagesParam, null, 2));
+            
             if (messagesParam.message && Array.isArray(messagesParam.message)) {
               for (const msg of messagesParam.message as IDataObject[]) {
-                messages.push({
+                const message: any = {
                   role: msg.role as string,
                   content: msg.content as string,
-                });
+                };
+                
+                // Add type if provided (for file attachments)
+                if (msg.type && msg.type !== 'text') {
+                  message.type = msg.type;
+                }
+                
+                messages.push(message);
               }
             }
+            
+            console.log('📥 Manual mode - parsed messages:', JSON.stringify(messages, null, 2));
           }
 
           // Default message if none provided
@@ -108,9 +156,16 @@ export class GitHubCopilotOpenAI implements INodeType {
               content: "Hello! How can you help me?",
             });
           }
+          
+          console.log('📤 Final messages being sent to API:', JSON.stringify(messages, null, 2));
 
-          // Parse tools if provided - accept both string or direct array
-          let parsedTools: unknown[] = [];
+                    // Get advanced options
+          const advancedOptions = this.getNodeParameter("advancedOptions", i, {}) as IDataObject;
+          
+          // Parse tools (if provided) - now from advancedOptions
+          let parsedTools: Array<Record<string, unknown>> = [];
+          const tools = advancedOptions.tools as string | Array<Record<string, unknown>> | undefined;
+          
           if (tools) {
             try {
               if (typeof tools === 'object' && Array.isArray(tools)) {
@@ -127,11 +182,24 @@ export class GitHubCopilotOpenAI implements INodeType {
             }
           }
 
-          // Get other OpenAI parameters
-          const max_tokens = this.getNodeParameter("max_tokens", i, 4096) as number;
-          const seed = this.getNodeParameter("seed", i, 0) as number;
-          const response_format_ui = this.getNodeParameter("response_format", i, "text") as string;
-          const advancedOptions = this.getNodeParameter("advancedOptions", i, {}) as IDataObject;
+          // Get OpenAI parameters from advancedOptions (all now optional)
+          let max_tokens = (advancedOptions.max_tokens as number) || 4096;
+          
+          // Validate max_tokens (ensure it's a valid positive number)
+          if (!max_tokens || max_tokens <= 0 || isNaN(max_tokens)) {
+            max_tokens = 4096; // Default to 4096 if invalid
+            console.log('⚠️ Invalid max_tokens value, using default: 4096');
+          }
+          
+          const temperature = (advancedOptions.temperature as number) ?? 1;
+          const top_p = (advancedOptions.top_p as number) ?? 1;
+          const frequency_penalty = (advancedOptions.frequency_penalty as number) ?? 0;
+          const presence_penalty = (advancedOptions.presence_penalty as number) ?? 0;
+          const seed = (advancedOptions.seed as number) || 0;
+          const stream = (advancedOptions.stream as boolean) ?? false;
+          const user = (advancedOptions.user as string) || undefined;
+          const stop = (advancedOptions.stop as string) || undefined;
+          const response_format_ui = (advancedOptions.response_format as string) || "text";
           
           // Parse response_format - prioritize: JSON request body → UI field → advancedOptions
           let response_format: { type?: string } | undefined = undefined;
@@ -182,25 +250,88 @@ export class GitHubCopilotOpenAI implements INodeType {
           const requestBody: Record<string, unknown> = {
             model: copilotModel,
             messages,
-            stream: false,
+            stream,
             temperature,
             max_tokens,
           };
+          
+          // Add optional parameters only if they differ from defaults
+          if (top_p !== 1) {
+            requestBody.top_p = top_p;
+          }
+          if (frequency_penalty !== 0) {
+            requestBody.frequency_penalty = frequency_penalty;
+          }
+          if (presence_penalty !== 0) {
+            requestBody.presence_penalty = presence_penalty;
+          }
+          if (user) {
+            requestBody.user = user;
+          }
+          if (stop) {
+            try {
+              requestBody.stop = JSON.parse(stop);
+            } catch {
+              // If parse fails, use as single string
+              requestBody.stop = stop;
+            }
+          }
 
           // Add tools if provided
           if (parsedTools.length > 0) {
             requestBody.tools = parsedTools;
+            
+            // Add tool_choice if tools are present
+            const tool_choice = (advancedOptions.tool_choice as string) || "auto";
+            if (tool_choice !== "auto") {
+              requestBody.tool_choice = tool_choice;
+            }
           }
 
           // Add response_format if provided
           if (response_format) {
             requestBody.response_format = response_format;
+            
+            // NOTE: OpenAI API requires the word "json" in messages when using json_object format
+            // User must include "json" in their system message or user prompt
+            // Example: "Respond in JSON format" or "Return as json"
+            
+            /* DISABLED: Auto-injection of "json" keyword - user should handle this manually
+            // Auto-inject "json" requirement for json_object format
+            if (response_format.type === 'json_object') {
+              const allMessagesText = messages.map(m => m.content).join(' ').toLowerCase();
+              
+              // If "json" is not mentioned in any message, inject it automatically
+              if (!allMessagesText.includes('json')) {
+                // Try to find existing system message and append
+                const systemMessageIndex = messages.findIndex(m => m.role === 'system');
+                
+                if (systemMessageIndex !== -1) {
+                  // Append to existing system message
+                  messages[systemMessageIndex].content += '\n\nResponse format: json';
+                  console.log('ℹ️ Auto-injected "json" keyword into existing system message for json_object format');
+                } else {
+                  // Add new system message at the beginning
+                  messages.unshift({
+                    role: 'system',
+                    content: 'Response format: json'
+                  });
+                  console.log('ℹ️ Auto-injected system message with "json" keyword for json_object format');
+                }
+              }
+            }
+            */
           }
 
           // Add seed if provided
           if (seed > 0) {
             requestBody.seed = seed;
           }
+
+          console.log('🚀 Sending request to GitHub Copilot API:');
+          console.log('  Model:', copilotModel);
+          console.log('  Messages count:', messages.length);
+          console.log('  Request body:', JSON.stringify(requestBody, null, 2));
 
           // Make API request to GitHub Copilot
           const response: CopilotResponse = await makeApiRequest(
@@ -209,6 +340,13 @@ export class GitHubCopilotOpenAI implements INodeType {
             requestBody,
             false, // hasMedia
           );
+          
+          // Extract retry information from response metadata
+          const retriesUsed = response._retryMetadata?.retries || 0;
+          
+          if (retriesUsed > 0) {
+            console.log(`ℹ️ Request completed with ${retriesUsed} retry(ies)`);
+          }
 
           // Helper function to parse JSON from markdown code blocks and return as object
           // Function to clean JSON from markdown blocks (but keep as string)
@@ -240,11 +378,11 @@ export class GitHubCopilotOpenAI implements INodeType {
               console.error('❌ cleanJsonFromMarkdown - Error:', error);
               return content;
             }
-          };          // Build OpenAI-compatible response
+          };          // Build OpenAI-compatible response (EXACT OpenAI format)
           console.log('🔨 Building OpenAI response...');
           console.log('🔍 response_format check:', response_format?.type === 'json_object' ? 'WILL CLEAN MARKDOWN' : 'WILL KEEP AS IS');
           
-          const openAIResponse = {
+          const openAIResponse: Record<string, any> = {
             id: response.id || `chatcmpl-${Date.now()}`,
             object: response.object || "chat.completion",
             created: response.created || Math.floor(Date.now() / 1000),
@@ -269,24 +407,26 @@ export class GitHubCopilotOpenAI implements INodeType {
                 }
               }
               
-              return {
+              // Build choice in EXACT OpenAI format
+              const choiceObj: Record<string, any> = {
                 index: choice.index,
                 message: {
                   role: choice.message.role,
-                  // Content as STRING (never parse to object)
-                  // When tool_calls is present, content should be null
-                  ...(choice.message.content !== null && choice.message.content !== undefined && { 
-                    content: processedContent
-                  }),
-                  // OpenAI standard fields - must be present
+                  content: processedContent,
+                  // OpenAI required fields (must be present even if null/empty)
                   refusal: (choice.message as any).refusal || null,
                   annotations: (choice.message as any).annotations || [],
-                  // Only include tool_calls if present (standard OpenAI field)
-                  ...(choice.message.tool_calls && { tool_calls: choice.message.tool_calls }),
                 },
                 logprobs: (choice as any).logprobs || null,
                 finish_reason: choice.finish_reason,
               };
+              
+              // Add tool_calls if present (OpenAI standard field)
+              if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
+                choiceObj.message.tool_calls = choice.message.tool_calls;
+              }
+              
+              return choiceObj;
             }),
             usage: response.usage || {
               prompt_tokens: 0,
@@ -294,6 +434,11 @@ export class GitHubCopilotOpenAI implements INodeType {
               total_tokens: 0,
             },
           };
+          
+          // Add system_fingerprint if available (OpenAI standard field)
+          if ((response as any).system_fingerprint) {
+            openAIResponse.system_fingerprint = (response as any).system_fingerprint;
+          }
 
           returnData.push({
             json: openAIResponse,

@@ -3,6 +3,8 @@ import {
   INodeTypeDescription,
   ISupplyDataFunctions,
   SupplyData,
+  ILoadOptionsFunctions,
+  INodePropertyOptions,
 } from "n8n-workflow";
 
 import { ChatOpenAI } from "@langchain/openai";
@@ -11,6 +13,7 @@ import {
   DEFAULT_MODELS,
 } from "../../shared/models/GitHubCopilotModels";
 import { GITHUB_COPILOT_API } from "../../shared/utils/GitHubCopilotEndpoints";
+import { loadAvailableModels } from "../../shared/models/DynamicModelLoader";
 
 export class GitHubCopilotChatModel implements INodeType {
   description: INodeTypeDescription = {
@@ -52,9 +55,11 @@ export class GitHubCopilotChatModel implements INodeType {
         displayName: "Model",
         name: "model",
         type: "options",
+        typeOptions: {
+          loadOptionsMethod: "getAvailableModels",
+        },
         default: DEFAULT_MODELS.GENERAL,
-        description: "The GitHub Copilot model to use",
-        options: GitHubCopilotModelsManager.toN8nOptions(),
+        description: "Select the GitHub Copilot model to use (loaded dynamically based on your subscription)",
       },
       {
         displayName: "Options",
@@ -130,6 +135,14 @@ export class GitHubCopilotChatModel implements INodeType {
         ],
       },
     ],
+  };
+
+  methods = {
+    loadOptions: {
+      async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+        return await loadAvailableModels.call(this);
+      },
+    },
   };
 
   async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData> {
