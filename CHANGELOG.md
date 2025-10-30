@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.38.26] - 2025-10-30
+
+### Fixed
+- **GitHubCopilotChatModel**: Fixed response format compatibility with LangChain/n8n - Chat Model now displays output correctly in n8n editor
+- **Response Structure**: Corrected `_generate` method to return proper LangChain format with `generations` array and `llmOutput.tokenUsage`
+- **invocationParams Method**: Added missing `invocationParams` method for full ChatOpenAI compatibility
+
+### Technical Details
+- Changed response format from `generations: [[{...}]]` to `generations: [{...}]`
+- Moved `tokenUsage` from root level to `llmOutput.tokenUsage`
+- Added `invocationParams` override method to ensure proper parameter handling
+
+## [3.38.22] - 2025-10-24
+
+### Fixed
+- **GitHubCopilotChatModel**: Fixed 403 Forbidden errors by implementing proper API infrastructure
+- **API Infrastructure**: Migrated from direct LangChain calls to `makeGitHubCopilotRequest` with OAuth token generation and retry logic
+- **Retry Logic**: Added automatic retry for 403 errors with exponential backoff
+- **OAuth Tokens**: Implemented automatic OAuth token generation from GitHub tokens
+
+### Added
+- **GitHubCopilotChatModel**: Added full support for tools and function calling, matching OpenAI-compatible format
+- **Tools Support**: Added `tools` and `tool_choice` properties to enable function calling capabilities
+- **Enhanced Description**: Updated node description to highlight tools and function calling support
+
 ## [3.38.11] - 2025-10-23
 
 ### Fixed

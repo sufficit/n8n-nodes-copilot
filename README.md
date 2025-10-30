@@ -17,7 +17,6 @@ Este é um **community node** para [n8n](https://n8n.io/) que integra o **GitHub
 ### 2. GitHub Copilot Chat API (Novo! ⭐)
 - **Chat Completion**: Conversas diretas com modelos avançados de IA
 - **Análise de Imagens**: Processamento de imagens com modelos de visão
-- **Transcrição de Áudio**: Conversão de áudio para texto (planejado)
 - **Modelos Disponíveis**: GPT-5, GPT-5 Mini, Claude Opus 4.1, Gemini 2.5 Pro, Grok Code Fast 1, GPT-4.1 Copilot
 - **Sem Custos Extras**: Usa seus créditos existentes do GitHub Copilot
 

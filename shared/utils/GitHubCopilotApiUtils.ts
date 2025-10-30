@@ -2,6 +2,7 @@ import { IExecuteFunctions } from "n8n-workflow";
 import { GITHUB_COPILOT_API } from "./GitHubCopilotEndpoints";
 import { OAuthTokenManager } from "./OAuthTokenManager";
 import { DynamicModelsManager } from "./DynamicModelsManager";
+import { getMinVSCodeVersion, getAdditionalHeaders } from "../models/ModelVersionRequirements";
 
 // Interface for OAuth2 credentials
 interface OAuth2Credentials {
@@ -82,6 +83,10 @@ export async function makeGitHubCopilotRequest(
   const MAX_RETRIES = retryConfig?.maxRetries ?? 3;
   const BASE_DELAY = retryConfig?.baseDelay ?? 500;
   const RETRY_ON_403 = retryConfig?.retryOn403 ?? true;
+  
+  // Extract model from request body for version-specific headers
+  const model = body.model as string | undefined;
+  
   // Determine credential type dynamically
   let credentialType = "githubCopilotApi"; // default
   try {
@@ -147,6 +152,14 @@ export async function makeGitHubCopilotRequest(
   if (!token.startsWith("gho_") && !token.startsWith("ghu_") && !token.startsWith("github_pat_")) {
     console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
   }
+  
+  // Get model-specific version requirements
+  const minVSCodeVersion = model ? getMinVSCodeVersion(model) : "1.95.0";
+  const additionalHeaders = model ? getAdditionalHeaders(model) : {};
+  
+  if (model) {
+    console.log(`🔧 Model: ${model} requires VS Code version: ${minVSCodeVersion}`);
+  }
     
   // Prepare headers using centralized configuration
   const headers: Record<string, string> = {
@@ -154,8 +167,9 @@ export async function makeGitHubCopilotRequest(
     // Add VS Code client headers for better compatibility and reduced 403 errors
     "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
     // Note: X-GitHub-Api-Version removed - causes "invalid apiVersion" errors
-    "Editor-Version": "vscode/1.95.0",
+    "Editor-Version": `vscode/${minVSCodeVersion}`,
     "Editor-Plugin-Version": "copilot/1.0.0",
+    ...additionalHeaders,
   };
 
   // Add required headers for vision/audio requests

@@ -1,37 +1,19 @@
 {
-  "timestamp": "2025-10-22T14:50:17.899Z",
+  "timestamp": "2025-10-30T22:26:32.409Z",
   "endpoint": "https://api.githubcopilot.com/chat/completions",
-  "total_tested": 13,
+  "total_tested": 19,
   "successful": 7,
-  "failed": 6,
-  "success_rate": 54,
+  "failed": 12,
+  "success_rate": 37,
   "results": {
     "success": [
-      {
-        "model": "gpt-4.1",
-        "name": "GPT-4.1",
-        "vendor": "Azure OpenAI",
-        "response": "OK",
-        "usage": {
-          "completion_tokens": 2,
-          "completion_tokens_details": {
-            "accepted_prediction_tokens": 0,
-            "rejected_prediction_tokens": 0
-          },
-          "prompt_tokens": 17,
-          "prompt_tokens_details": {
-            "cached_tokens": 0
-          },
-          "total_tokens": 19
-        }
-      },
       {
         "model": "gpt-5-mini",
         "name": "GPT-5 mini",
         "vendor": "Azure OpenAI",
         "response": "OK",
         "usage": {
-          "completion_tokens": 74,
+          "completion_tokens": 10,
           "completion_tokens_details": {
             "accepted_prediction_tokens": 0,
             "rejected_prediction_tokens": 0
@@ -40,7 +22,7 @@
           "prompt_tokens_details": {
             "cached_tokens": 0
           },
-          "total_tokens": 90
+          "total_tokens": 26
         }
       },
       {
@@ -49,7 +31,7 @@
         "vendor": "Azure OpenAI",
         "response": "OK",
         "usage": {
-          "completion_tokens": 266,
+          "completion_tokens": 10,
           "completion_tokens_details": {
             "accepted_prediction_tokens": 0,
             "rejected_prediction_tokens": 0
@@ -58,30 +40,58 @@
           "prompt_tokens_details": {
             "cached_tokens": 0
           },
-          "total_tokens": 282
+          "total_tokens": 26
         }
       },
       {
-        "model": "gpt-4o",
-        "name": "GPT-4o",
-        "vendor": "Azure OpenAI",
+        "model": "grok-code-fast-1",
+        "name": "Grok Code Fast 1",
+        "vendor": "xAI",
         "response": "OK",
         "usage": {
-          "completion_tokens": 2,
+          "completion_tokens": 1,
           "completion_tokens_details": {
             "accepted_prediction_tokens": 0,
             "rejected_prediction_tokens": 0
           },
-          "prompt_tokens": 17,
+          "prompt_tokens": 214,
           "prompt_tokens_details": {
-            "cached_tokens": 0
+            "cached_tokens": 192
           },
-          "total_tokens": 19
+          "total_tokens": 364
         }
       },
       {
         "model": "claude-sonnet-4",
         "name": "Claude Sonnet 4",
+        "vendor": "Anthropic",
+        "response": "OK",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 17,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 21
+        }
+      },
+      {
+        "model": "claude-sonnet-4.5",
+        "name": "Claude Sonnet 4.5",
+        "vendor": "Anthropic",
+        "response": "OK",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 17,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 21
+        }
+      },
+      {
+        "model": "claude-haiku-4.5",
+        "name": "Claude Haiku 4.5",
         "vendor": "Anthropic",
         "response": "OK",
         "usage": {
@@ -107,34 +117,40 @@
           "total_tokens": 19,
           "reasoning_tokens": 9
         }
-      },
-      {
-        "model": "o4-mini",
-        "name": "o4-mini (Preview)",
-        "vendor": "Azure OpenAI",
-        "response": "OK",
-        "usage": {
-          "completion_tokens": 20,
-          "completion_tokens_details": {
-            "accepted_prediction_tokens": 0,
-            "rejected_prediction_tokens": 0
-          },
-          "prompt_tokens": 16,
-          "prompt_tokens_details": {
-            "cached_tokens": 0
-          },
-          "total_tokens": 36
-        }
       }
     ],
     "failed": [
       {
-        "model": "o3-mini",
-        "name": "o3-mini",
+        "model": "gpt-4.1",
+        "name": "GPT-4.1",
         "vendor": "Azure OpenAI",
         "status": 403,
         "error": "Forbidden",
         "details": "Access to this endpoint is forbidden. Please review our [Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service).\n"
+      },
+      {
+        "model": "gpt-4o",
+        "name": "GPT-4o",
+        "vendor": "Azure OpenAI",
+        "status": 403,
+        "error": "Forbidden",
+        "details": "Access to this endpoint is forbidden. Please review our [Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service).\n"
+      },
+      {
+        "model": "o3-mini",
+        "name": "o3-mini",
+        "vendor": "Azure OpenAI",
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
+      },
+      {
+        "model": "gpt-5-codex",
+        "name": "GPT-5-Codex (Preview)",
+        "vendor": "OpenAI",
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"model gpt-5-codex is not accessible via the /chat/completions endpoint\",\"code\":\"unsupported_api_for_model\"}}\n"
       },
       {
         "model": "claude-3.5-sonnet",
@@ -148,9 +164,9 @@
         "model": "claude-3.7-sonnet",
         "name": "Claude Sonnet 3.7",
         "vendor": "Anthropic",
-        "status": 403,
-        "error": "Forbidden",
-        "details": "Access to this endpoint is forbidden. Please review our [Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service).\n"
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
       },
       {
         "model": "claude-3.7-sonnet-thought",
@@ -158,11 +174,19 @@
         "vendor": "Anthropic",
         "status": 400,
         "error": "Bad Request",
-        "details": "Bad Request\n"
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
       },
       {
         "model": "claude-opus-4",
         "name": "Claude Opus 4",
+        "vendor": "Anthropic",
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
+      },
+      {
+        "model": "claude-opus-41",
+        "name": "Claude Opus 4.1",
         "vendor": "Anthropic",
         "status": 403,
         "error": "Forbidden",
@@ -172,21 +196,43 @@
         "model": "gemini-2.0-flash-001",
         "name": "Gemini 2.0 Flash",
         "vendor": "Google",
-        "status": 403,
-        "error": "Forbidden",
-        "details": "Access to this endpoint is forbidden. Please review our [Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service).\n"
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
+      },
+      {
+        "model": "o3",
+        "name": "o3 (Preview)",
+        "vendor": "Azure OpenAI",
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
+      },
+      {
+        "model": "o4-mini",
+        "name": "o4-mini (Preview)",
+        "vendor": "Azure OpenAI",
+        "status": 400,
+        "error": "Bad Request",
+        "details": "{\"error\":{\"message\":\"The requested model is not supported.\",\"code\":\"model_not_supported\",\"param\":\"model\",\"type\":\"invalid_request_error\"}}\n"
       }
     ],
     "errors": {
       "400": [
-        "Anthropic"
+        "Azure OpenAI",
+        "OpenAI",
+        "Anthropic",
+        "Anthropic",
+        "Anthropic",
+        "Google",
+        "Azure OpenAI",
+        "Azure OpenAI"
       ],
       "403": [
         "Azure OpenAI",
+        "Azure OpenAI",
         "Anthropic",
-        "Anthropic",
-        "Anthropic",
-        "Google"
+        "Anthropic"
       ]
     }
   }

@@ -1,12 +1,12 @@
-import { IExecuteFunctions } from "n8n-workflow";
-import { CopilotResponse } from "../../../shared/utils/GitHubCopilotApiUtils";
+import { IExecuteFunctions } from 'n8n-workflow';
+import { CopilotResponse } from '../../../shared/utils/GitHubCopilotApiUtils';
 
 export { CopilotResponse };
 
 export interface ChatMessage {
-	role: "system" | "user" | "assistant";
+	role: 'system' | 'user' | 'assistant';
 	content: string | Array<ChatMessageContent>;
-	type?: "file"; // Only for file attachments in GitHub Copilot API
+	type?: 'file'; // Only for file attachments in GitHub Copilot API
 }
 
 export interface ChatMessageContent {
@@ -20,7 +20,7 @@ export interface ChatMessageContent {
 export interface FileProcessOptions {
 	context: IExecuteFunctions;
 	itemIndex: number;
-	source: "manual" | "url" | "binary";
+	source: 'manual' | 'url' | 'binary';
 	filePath?: string;
 	url?: string;
 	binaryProperty?: string;

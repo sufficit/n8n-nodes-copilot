@@ -7,18 +7,14 @@ Installation:
     pip install mitmproxy
 
 Usage:
-    1. Run: mitmdump -s scripts/proxy.py --ssl-insecure [--filter <text>]
+    1. Run: mitmdump -s scripts/proxy.py --ssl-insecure
     2. Install mitmproxy CA certificate (follow terminal instructions)
     3. Configure VS Code proxy: http://localhost:8080
     4. Use Copilot Chat in VS Code
     5. Check temp/mitm-captured-*.json files
 
-Options:
-    --filter <text>: Only capture requests containing this text in URL/path
-    (if not specified, captures all GitHub Copilot requests)
-
 Features:
-    - Captures all GitHub Copilot API requests (or filtered subset)
+    - Captures all GitHub Copilot API requests
     - Extracts OAuth tokens, HMAC signatures, metadata headers
     - Saves separate files for embeddings vs chat requests
     - Pretty-prints important authentication details
@@ -28,50 +24,19 @@ from mitmproxy import http
 import json
 from datetime import datetime
 import os
-import sys
 
 class CopilotInterceptor:
     def __init__(self):
-        self.filter_text = None
         self.embeddings_requests = []
         self.chat_requests = []
         self.other_requests = []
         
-        print("\n🎯 GitHub Copilot Request Interceptor Started")
-        print("💡 Use --set filter=<text> to filter requests")
-    
-    def load(self, loader):
-        """Load options from mitmproxy"""
-        loader.add_option(
-            name="filter",
-            typespec=str,
-            default="",
-            help="Only capture requests containing this text in URL/path"
-        )
-    
-    def configure(self, updated):
-        """Configure interceptor with options"""
-        if "filter" in updated:
-            self.filter_text = self.filter_text or ""
-            if self.filter_text:
-                print(f"\n🎯 FILTER ACTIVE: Only capturing requests containing '{self.filter_text}'")
-            else:
-                print("\n🎯 NO FILTER: Capturing all GitHub Copilot requests")
-    
-    def should_capture_request(self, flow: http.HTTPFlow) -> bool:
-        """Check if request should be captured based on filter"""
-        
-        print(f"🔍 Checking request: {flow.request.method} {flow.request.pretty_url}")
-        print(f"   Host: {flow.request.pretty_host}")
-        
-        # For now, capture ALL requests to debug
-        print("   ✅ Capturing ALL requests for debugging")
-        return True
-    
     def request(self, flow: http.HTTPFlow) -> None:
         """Intercept outgoing requests"""
         
-        if not self.should_capture_request(flow):
+        # Only process GitHub Copilot requests
+        if 'githubcopilot.com' not in flow.request.pretty_host and \
+           'api.github.com' not in flow.request.pretty_host:
             return
             
         print("\n" + "="*80)
@@ -119,14 +84,12 @@ class CopilotInterceptor:
         else:
             self.other_requests.append(request_data)
             print("📂 Category: OTHER")
-        
-        # Save immediately when request is captured
-        self._save_data()
     
     def response(self, flow: http.HTTPFlow) -> None:
         """Intercept incoming responses"""
         
-        if not self.should_capture_request(flow):
+        if 'githubcopilot.com' not in flow.request.pretty_host and \
+           'api.github.com' not in flow.request.pretty_host:
             return
         
         print(f"\n📥 Response Status: {flow.response.status_code}")

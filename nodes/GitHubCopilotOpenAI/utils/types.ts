@@ -1,10 +1,10 @@
-import { IDataObject, IExecuteFunctions } from "n8n-workflow";
-import { CopilotResponse } from "../../../shared/utils/GitHubCopilotApiUtils";
+import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { CopilotResponse } from '../../../shared/utils/GitHubCopilotApiUtils';
 
 export { CopilotResponse };
 
 export interface OpenAIMessage {
-	role: "system" | "user" | "assistant" | "tool";
+	role: 'system' | 'user' | 'assistant' | 'tool';
 	content: string;
 	name?: string;
 	tool_calls?: ToolCall[];
@@ -13,7 +13,7 @@ export interface OpenAIMessage {
 
 export interface ToolCall {
 	id: string;
-	type: "function";
+	type: 'function';
 	function: {
 		name: string;
 		arguments: string;
@@ -21,7 +21,7 @@ export interface ToolCall {
 }
 
 export interface OpenAITool {
-	type: "function";
+	type: 'function';
 	function: {
 		name: string;
 		description: string;
@@ -33,8 +33,8 @@ export interface OpenAIRequest {
 	model: string;
 	messages: OpenAIMessage[];
 	tools?: OpenAITool[];
-	tool_choice?: "auto" | "none" | "required" | { type: "function"; function: { name: string } };
-	response_format?: { type: "text" | "json_object" };
+	tool_choice?: 'auto' | 'none' | 'required' | { type: 'function'; function: { name: string } };
+	response_format?: { type: 'text' | 'json_object' };
 	temperature?: number;
 	max_tokens?: number;
 	top_p?: number;
@@ -48,17 +48,17 @@ export interface OpenAIRequest {
 
 export interface OpenAIResponse {
 	id: string;
-	object: "chat.completion";
+	object: 'chat.completion';
 	created: number;
 	model: string;
 	choices: Array<{
 		index: number;
 		message: {
-			role: "assistant";
+			role: 'assistant';
 			content: string | null;
 			tool_calls?: ToolCall[];
 		};
-		finish_reason: "stop" | "length" | "tool_calls" | "content_filter";
+		finish_reason: 'stop' | 'length' | 'tool_calls' | 'content_filter';
 	}>;
 	usage: {
 		prompt_tokens: number;
@@ -70,7 +70,7 @@ export interface OpenAIResponse {
 export interface FileProcessOptions {
 	context: IExecuteFunctions;
 	itemIndex: number;
-	source: "manual" | "url" | "binary";
+	source: 'manual' | 'url' | 'binary';
 	filePath?: string;
 	url?: string;
 	binaryProperty?: string;

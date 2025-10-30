@@ -1,9 +1,9 @@
 import {
-  IWebhookFunctions,
-  IWebhookResponseData,
-  INodeType,
-  INodeTypeDescription,
-} from "n8n-workflow";
+	IWebhookFunctions,
+	IWebhookResponseData,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
 
 /**
  * GitHub Copilot Auth Helper - Webhook Node
@@ -11,175 +11,180 @@ import {
  * Solves CORS issues by making requests from n8n server
  */
 export class GitHubCopilotAuthHelper implements INodeType {
-  description: INodeTypeDescription = {
-    displayName: "GitHub Copilot Auth Helper",
-    name: "githubCopilotAuthHelper",
-    icon: "file:../../shared/icons/copilot.svg",
-    group: ["trigger"],
-    version: 1,
-    description: "Interactive OAuth Device Flow - serves HTML page with proxy to avoid CORS",
-    defaults: {
-      name: "GitHub Copilot Auth",
-    },
-    inputs: [],
-    outputs: [],
-    webhooks: [
-      {
-        name: "default",
-        httpMethod: "GET",
-        responseMode: "onReceived",
-        path: "github-auth",
-      },
-      {
-        name: "default",
-        httpMethod: "POST",
-        responseMode: "onReceived",
-        path: "github-auth",
-      },
-    ],
-    properties: [
-      {
-        displayName: "✨ Autenticação Visual - Sem Terminal!",
-        name: "notice1",
-        type: "notice",
-        default: "Este node permite que usuários finais obtenham tokens GitHub Copilot sem usar terminal.",
-      },
-      {
-        displayName: "📋 Passo 1: Ativar Workflow",
-        name: "notice2",
-        type: "notice",
-        default: "Clique no botão 'Active' no canto superior direito para ativar o workflow. A Production URL só funciona com workflow ativo!",
-      },
-      {
-        displayName: "🔗 Passo 2: Copiar URL",
-        name: "notice3",
-        type: "notice",
-        default: "Copie a 'Production URL' que aparece abaixo (em Webhook URLs) e envie para o usuário final.",
-      },
-      {
-        displayName: "🌐 Passo 3: Usuário Acessa URL",
-        name: "notice4",
-        type: "notice",
-        default: "O usuário abre a URL no navegador e segue as instruções visuais: 1) Clica 'Começar', 2) Copia o código, 3) Autoriza no GitHub, 4) Copia o token gerado automaticamente.",
-      },
-      {
-        displayName: "💡 Sem CORS!",
-        name: "notice5",
-        type: "notice",
-        default: "O n8n faz proxy das requisições para GitHub API, então não há problemas de CORS quando usuário acessa a página pelo navegador.",
-      },
-      {
-        displayName: "Client ID",
-        name: "clientId",
-        type: "string",
-        default: "01ab8ac9400c4e429b23",
-        required: true,
-        description: "GitHub OAuth Client ID (VS Code official)",
-      },
-      {
-        displayName: "Scopes",
-        name: "scopes",
-        type: "string",
-        default: "repo user:email",
-        required: true,
-        description: "OAuth scopes required for GitHub Copilot",
-      },
-    ],
-  };
+	description: INodeTypeDescription = {
+		displayName: 'GitHub Copilot Auth Helper',
+		name: 'githubCopilotAuthHelper',
+		icon: 'file:../../shared/icons/copilot.svg',
+		group: ['trigger'],
+		version: 1,
+		description: 'Interactive OAuth Device Flow - serves HTML page with proxy to avoid CORS',
+		defaults: {
+			name: 'GitHub Copilot Auth',
+		},
+		inputs: [],
+		outputs: [],
+		webhooks: [
+			{
+				name: 'default',
+				httpMethod: 'GET',
+				responseMode: 'onReceived',
+				path: 'github-auth',
+			},
+			{
+				name: 'default',
+				httpMethod: 'POST',
+				responseMode: 'onReceived',
+				path: 'github-auth',
+			},
+		],
+		properties: [
+			{
+				displayName: '✨ Autenticação Visual - Sem Terminal!',
+				name: 'notice1',
+				type: 'notice',
+				default:
+					'Este node permite que usuários finais obtenham tokens GitHub Copilot sem usar terminal.',
+			},
+			{
+				displayName: '📋 Passo 1: Ativar Workflow',
+				name: 'notice2',
+				type: 'notice',
+				default:
+					"Clique no botão 'Active' no canto superior direito para ativar o workflow. A Production URL só funciona com workflow ativo!",
+			},
+			{
+				displayName: '🔗 Passo 2: Copiar URL',
+				name: 'notice3',
+				type: 'notice',
+				default:
+					"Copie a 'Production URL' que aparece abaixo (em Webhook URLs) e envie para o usuário final.",
+			},
+			{
+				displayName: '🌐 Passo 3: Usuário Acessa URL',
+				name: 'notice4',
+				type: 'notice',
+				default:
+					"O usuário abre a URL no navegador e segue as instruções visuais: 1) Clica 'Começar', 2) Copia o código, 3) Autoriza no GitHub, 4) Copia o token gerado automaticamente.",
+			},
+			{
+				displayName: '💡 Sem CORS!',
+				name: 'notice5',
+				type: 'notice',
+				default:
+					'O n8n faz proxy das requisições para GitHub API, então não há problemas de CORS quando usuário acessa a página pelo navegador.',
+			},
+			{
+				displayName: 'Client ID',
+				name: 'clientId',
+				type: 'string',
+				default: '01ab8ac9400c4e429b23',
+				required: true,
+				description: 'GitHub OAuth Client ID (VS Code official)',
+			},
+			{
+				displayName: 'Scopes',
+				name: 'scopes',
+				type: 'string',
+				default: 'repo user:email',
+				required: true,
+				description: 'OAuth scopes required for GitHub Copilot',
+			},
+		],
+	};
 
-  async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-    const req = this.getRequestObject();
-    const res = this.getResponseObject();
-    const clientId = this.getNodeParameter("clientId") as string;
-    const scopes = this.getNodeParameter("scopes") as string;
+	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+		const req = this.getRequestObject();
+		const res = this.getResponseObject();
+		const clientId = this.getNodeParameter('clientId') as string;
+		const scopes = this.getNodeParameter('scopes') as string;
 
-    // Handle proxy POST requests
-    if (req.method === "POST") {
-      const body = this.getBodyData();
-      const action = body.action as string;
+		// Handle proxy POST requests
+		if (req.method === 'POST') {
+			const body = this.getBodyData();
+			const action = body.action as string;
 
-      try {
-        if (action === "device_code") {
-          // Request device code from GitHub
-          const response = await fetch("https://github.com/login/device/code", {
-            method: "POST",
-            headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              client_id: clientId,
-              scope: scopes,
-            }),
-          });
+			try {
+				if (action === 'device_code') {
+					// Request device code from GitHub
+					const response = await fetch('https://github.com/login/device/code', {
+						method: 'POST',
+						headers: {
+							Accept: 'application/json',
+							'Content-Type': 'application/x-www-form-urlencoded',
+						},
+						body: new URLSearchParams({
+							client_id: clientId,
+							scope: scopes,
+						}),
+					});
 
-          const data = await response.json();
-          
-          res.setHeader("Content-Type", "application/json");
-          res.status(200).json(data);
-          
-          return {
-            noWebhookResponse: true,
-          };
-        }
+					const data = await response.json();
 
-        if (action === "poll_token") {
-          // Poll for access token
-          const deviceCode = body.device_code as string;
-          
-          const response = await fetch("https://github.com/login/oauth/access_token", {
-            method: "POST",
-            headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              client_id: clientId,
-              device_code: deviceCode,
-              grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-            }),
-          });
+					res.setHeader('Content-Type', 'application/json');
+					res.status(200).json(data);
 
-          const data = await response.json();
-          
-          res.setHeader("Content-Type", "application/json");
-          res.status(200).json(data);
-          
-          return {
-            noWebhookResponse: true,
-          };
-        }
+					return {
+						noWebhookResponse: true,
+					};
+				}
 
-        throw new Error(`Unknown action: ${action}`);
-      } catch (error: any) {
-        res.setHeader("Content-Type", "application/json");
-        res.status(500).json({ error: error.message });
-        
-        return {
-          noWebhookResponse: true,
-        };
-      }
-    }
+				if (action === 'poll_token') {
+					// Poll for access token
+					const deviceCode = body.device_code as string;
 
-    // Handle GET requests - serve HTML page
-    const webhookUrl = this.getNodeWebhookUrl("default") as string;
-    const html = generateAuthPage(webhookUrl);
+					const response = await fetch('https://github.com/login/oauth/access_token', {
+						method: 'POST',
+						headers: {
+							Accept: 'application/json',
+							'Content-Type': 'application/x-www-form-urlencoded',
+						},
+						body: new URLSearchParams({
+							client_id: clientId,
+							device_code: deviceCode,
+							grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+						}),
+					});
 
-    // Use response object directly to ensure proper content-type
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(html);
+					const data = await response.json();
 
-    return {
-      noWebhookResponse: true,
-    };
-  }
+					res.setHeader('Content-Type', 'application/json');
+					res.status(200).json(data);
+
+					return {
+						noWebhookResponse: true,
+					};
+				}
+
+				throw new Error(`Unknown action: ${action}`);
+			} catch (error: any) {
+				res.setHeader('Content-Type', 'application/json');
+				res.status(500).json({ error: error.message });
+
+				return {
+					noWebhookResponse: true,
+				};
+			}
+		}
+
+		// Handle GET requests - serve HTML page
+		const webhookUrl = this.getNodeWebhookUrl('default') as string;
+		const html = generateAuthPage(webhookUrl);
+
+		// Use response object directly to ensure proper content-type
+		res.setHeader('Content-Type', 'text/html; charset=utf-8');
+		res.status(200).send(html);
+
+		return {
+			noWebhookResponse: true,
+		};
+	}
 }
 
 /**
  * Generates the HTML page with proxy support
  */
 function generateAuthPage(proxyUrl: string): string {
-  return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
