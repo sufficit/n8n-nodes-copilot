@@ -1,13 +1,12 @@
 import {
+	ISupplyDataFunctions,
 	INodeType,
 	INodeTypeDescription,
-	ISupplyDataFunctions,
 	SupplyData,
-	ILoadOptionsFunctions,
-	INodePropertyOptions,
 } from 'n8n-workflow';
-
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, ChatOpenAICallOptions } from '@langchain/openai';
+import { BaseMessage, AIMessage } from '@langchain/core/messages';
+import type { ChatResult, ChatGeneration } from '@langchain/core/outputs';
 import {
 	GitHubCopilotModelsManager,
 	DEFAULT_MODELS,
@@ -21,35 +20,115 @@ import {
 } from '../../shared/models/ModelVersionRequirements';
 import { makeGitHubCopilotRequest } from '../../shared/utils/GitHubCopilotApiUtils';
 
-// Custom ChatOpenAI-compatible class that uses GitHub Copilot API with proper retry and OAuth
+/**
+ * Options for configuring the GitHub Copilot Chat Model
+ */
+interface IOptions {
+	temperature?: number;
+	maxTokens?: number;
+	topP?: number;
+	enableStreaming?: boolean;
+	systemMessage?: string;
+	enableRetry?: boolean;
+	timeout?: number;
+	tools?: string;
+	tool_choice?: string;
+	enableVision?: boolean;
+	maxRetries?: number;
+}
+
+/**
+ * Content part for multimodal messages (text or image)
+ * Used for vision requests with image_url content
+ */
+interface IMessageContentPart {
+	type: 'text' | 'image_url';
+	text?: string;
+	image_url?: {
+		url: string;
+		detail?: 'auto' | 'low' | 'high';
+	};
+}
+
+/**
+ * Message format for GitHub Copilot API
+ * Supports both text-only and multimodal (vision) content
+ */
+interface ICopilotMessage {
+	role: 'system' | 'user' | 'assistant';
+	content: string | IMessageContentPart[];
+}
+
+/**
+ * Configuration for the ChatOpenAI model instance
+ */
+interface IModelConfig {
+	model: string;
+	temperature: number;
+	maxTokens: number;
+	topP: number;
+	maxRetries: number;
+	tools?: object[];
+	tool_choice?: string;
+	configuration: {
+		baseURL: string;
+		apiKey: string;
+		defaultHeaders: Record<string, string>;
+	};
+}
+
+/**
+ * Extended ChatOpenAI class for GitHub Copilot API
+ * Overrides _generate to use GitHub Copilot endpoints with proper vision support
+ */
 class GitHubCopilotChatOpenAI extends ChatOpenAI {
 	private context: ISupplyDataFunctions;
-	private options: any;
+	private options: IOptions;
 
-	constructor(context: ISupplyDataFunctions, options: any, config: any) {
-		super(config);
+	constructor(context: ISupplyDataFunctions, options: IOptions, config: IModelConfig) {
+		super(config as unknown as ConstructorParameters<typeof ChatOpenAI>[0]);
 		this.context = context;
 		this.options = options;
 	}
 
-	// Override invocationParams to ensure proper parameter handling
-	invocationParams(options?: any) {
+	/**
+	 * Override invocation params to ensure model name is correctly set
+	 */
+	invocationParams(options?: Partial<ChatOpenAICallOptions>) {
 		const params = super.invocationParams(options);
-		// Ensure model is properly set
-		params.model = this.model;
+		(params as { model: string }).model = this.model;
 		return params;
 	}
 
-	async _generate(messages: any[], options?: any): Promise<any> {
-		// Validate input messages
+	/**
+	 * Generate a response from GitHub Copilot API
+	 * 
+	 * This method handles:
+	 * - Converting LangChain messages to Copilot format
+	 * - Detecting vision content (images) and setting appropriate headers
+	 * - Adding the required Copilot-Vision-Request header for image requests
+	 * - Tool/function calling support
+	 * 
+	 * @param messages - Array of LangChain BaseMessage objects
+	 * @param options - Optional ChatOpenAI call options
+	 * @returns ChatResult with generated response
+	 */
+	async _generate(
+		messages: BaseMessage[],
+		options?: Partial<ChatOpenAICallOptions>,
+	): Promise<ChatResult> {
 		if (!messages || messages.length === 0) {
 			throw new Error('No messages provided for generation');
 		}
 
-		// Convert LangChain messages to GitHub Copilot format
-		let copilotMessages = messages.map((msg) => {
-			// Map LangChain message types to OpenAI-compatible roles
-			let role: string;
+		// Track if any message contains images for vision header
+		// GitHub Copilot requires the Copilot-Vision-Request header for image requests
+		let hasVisionContent = false;
+
+		// Convert LangChain messages to Copilot API format
+		let copilotMessages: ICopilotMessage[] = messages.map((msg) => {
+			// Map LangChain message types to Copilot roles
+			let role: 'system' | 'user' | 'assistant';
 			switch (msg._getType()) {
 				case 'human':
 					role = 'user';
@@ -62,24 +141,57 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 					break;
 				default:
 					console.warn(`⚠️ Unknown message type: ${msg._getType()}, defaulting to 'user'`);
-					role = 'user'; // fallback
+					role = 'user';
 			}
 
-			// Handle different content types properly
-			let content: any = msg.content;
-			if (typeof content === 'string') {
-				// String content - use as is
-			} else if (Array.isArray(content)) {
-				// Multimodal content (images, etc.) - GitHub Copilot expects specific format
-				// For now, stringify but log warning
-				console.warn(`⚠️ Complex content detected, stringifying:`, content);
-				content = JSON.stringify(content);
-			} else if (content === null || content === undefined) {
+			let content: string | IMessageContentPart[] = '';
+			const rawContent = msg.content;
+			
+			if (typeof rawContent === 'string') {
+				content = rawContent;
+			} else if (Array.isArray(rawContent)) {
+				// Check if this is a vision content array (contains image_url)
+				const hasImageContent = rawContent.some((part: unknown) => {
+					if (typeof part === 'object' && part !== null) {
+						const p = part as Record<string, unknown>;
+						return p.type === 'image_url' || p.image_url !== undefined;
+					}
+					return false;
+				});
+				
+				if (hasImageContent) {
+					hasVisionContent = true;
+					console.log(`👁️ Vision content detected in message`);
+					// Keep the array format for vision - map to proper structure
+					content = rawContent.map((part: unknown) => {
+						if (typeof part === 'object' && part !== null) {
+							const p = part as Record<string, unknown>;
+							if (p.type === 'text') {
+								return { type: 'text' as const, text: String(p.text || '') };
+							} else if (p.type === 'image_url' || p.image_url) {
+								const imageUrl = p.image_url as Record<string, unknown> | undefined;
+								return {
+									type: 'image_url' as const,
+									image_url: {
+										url: String(imageUrl?.url || p.url || ''),
+										detail: (imageUrl?.detail as 'auto' | 'low' | 'high') || 'auto',
+									},
+								};
+							}
+						}
+						// Fallback to text
+						return { type: 'text' as const, text: String(part) };
+					});
+				} else {
+					// Regular array content - stringify
+					console.warn(`⚠️ Complex content detected, stringifying:`, rawContent);
+					content = JSON.stringify(rawContent);
+				}
+			} else if (rawContent === null || rawContent === undefined) {
 				content = '';
 			} else {
-				// Other complex objects
-				console.warn(`⚠️ Non-string content detected, stringifying:`, typeof content);
-				content = JSON.stringify(content);
+				console.warn(`⚠️ Non-string content detected, stringifying:`, typeof rawContent);
+				content = JSON.stringify(rawContent);
 			}
 
 			return {
@@ -88,7 +200,6 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			};
 		});
 
-		// Add system message from options if provided and not already present
 		if (this.options.systemMessage && this.options.systemMessage.trim()) {
 			const hasSystemMessage = copilotMessages.some((msg) => msg.role === 'system');
 			if (!hasSystemMessage) {
@@ -100,9 +211,13 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			}
 		}
 
-		// Validate message content
 		const validMessages = copilotMessages.filter((msg) => {
-			if (!msg.content || msg.content.trim() === '') {
+			// Check if content is empty (handle both string and array)
+			const isEmpty = Array.isArray(msg.content) 
+				? msg.content.length === 0 
+				: (!msg.content || (typeof msg.content === 'string' && msg.content.trim() === ''));
+			
+			if (isEmpty) {
 				console.warn(`⚠️ Filtering out empty message with role: ${msg.role}`);
 				return false;
 			}
@@ -113,39 +228,40 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			throw new Error('No valid messages after filtering empty content');
 		}
 
-		// Build request body
-		const requestBody: any = {
-			model: (this as any).modelName || this.model,
+		const requestBody: Record<string, unknown> = {
+			model: this.model,
 			messages: validMessages,
 			temperature: this.temperature,
 			max_tokens: this.maxTokens,
 			top_p: this.topP,
-			stream: this.options.enableStreaming || false, // Support streaming if enabled
+			stream: this.options.enableStreaming || false,
 		};
 
-		// Add tools if configured
-		if (this.options.tools && this.options.tools.length > 0) {
-			requestBody.tools = this.options.tools;
+		if (this.options.tools && (JSON.parse(this.options.tools) as unknown[]).length > 0) {
+			requestBody.tools = JSON.parse(this.options.tools);
 			requestBody.tool_choice = this.options.tool_choice || 'auto';
-			console.log(`🔧 Request includes ${this.options.tools.length} tools`);
+			console.log(`🔧 Request includes ${(requestBody.tools as unknown[]).length} tools`);
 		}
 
 		const startTime = Date.now();
 
+		// Log vision request if detected
+		if (hasVisionContent) {
+			console.log(`👁️ Sending vision request with Copilot-Vision-Request header`);
+		}
+
 		try {
-			// Use our robust API request function with retry logic
 			const response = await makeGitHubCopilotRequest(
-				this.context as any, // Cast to avoid type issues
+				this.context as unknown as import('n8n-workflow').IExecuteFunctions,
 				GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS,
 				requestBody,
-				false, // hasMedia
+				hasVisionContent, // Pass vision flag for proper headers
 			);
 
 			const endTime = Date.now();
 			const latency = endTime - startTime;
 			console.log(`⏱️ GitHub Copilot API call completed in ${latency}ms`);
 
-			// Validate response structure
 			if (!response.choices || response.choices.length === 0) {
 				throw new Error('GitHub Copilot API returned no choices in response');
 			}
@@ -155,28 +271,24 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 				throw new Error('GitHub Copilot API returned choice without message');
 			}
 
-			// Convert GitHub Copilot response to LangChain format
-			const langchainMessage = {
-				_getType: () => choice.message.role,
+			const langchainMessage = new AIMessage({
 				content: choice.message.content || '',
-				tool_calls: choice.message.tool_calls,
-			};
+			});
 
-			// Log response details for debugging
 			console.log(
 				`📝 Response: role=${choice.message.role}, content_length=${choice.message.content?.length || 0}, finish_reason=${choice.finish_reason}`,
 			);
 
+			const generation: ChatGeneration = {
+				text: choice.message.content || '',
+				generationInfo: {
+					finish_reason: choice.finish_reason,
+				},
+				message: langchainMessage,
+			};
+
 			return {
-				generations: [
-					{
-						text: choice.message.content || '',
-						generationInfo: {
-							finish_reason: choice.finish_reason,
-						},
-						message: langchainMessage,
-					},
-				],
+				generations: [generation],
 				llmOutput: {
 					tokenUsage: response.usage,
 				},
@@ -218,8 +330,10 @@ export class GitHubCopilotChatModel implements INodeType {
 				],
 			},
 		},
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
-		outputs: ['ai_languageModel'],
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
+		outputs: ['ai_languageModel'] as unknown as INodeTypeDescription['outputs'],
 		outputNames: ['Model'],
 		credentials: [
 			{
@@ -228,7 +342,6 @@ export class GitHubCopilotChatModel implements INodeType {
 			},
 		],
 		properties: [
-			// Model properties (shared across nodes)
 			...CHAT_MODEL_PROPERTIES,
 			{
 				displayName: 'Options',
@@ -243,7 +356,8 @@ export class GitHubCopilotChatModel implements INodeType {
 						name: 'temperature',
 						default: 0.7,
 						typeOptions: { maxValue: 2, minValue: 0, numberPrecision: 1 },
-						description: 'Controls randomness in output. Lower values make responses more focused.',
+						description:
+							'Controls randomness in output. Lower values make responses more focused.',
 						type: 'number',
 					},
 					{
@@ -269,7 +383,8 @@ export class GitHubCopilotChatModel implements INodeType {
 						name: 'enableStreaming',
 						type: 'boolean',
 						default: false,
-						description: 'Enable streaming responses for real-time output (experimental)',
+						description:
+							'Enable streaming responses for real-time output (experimental)',
 					},
 					{
 						displayName: 'System Message',
@@ -348,7 +463,7 @@ export class GitHubCopilotChatModel implements INodeType {
 
 	methods = {
 		loadOptions: {
-			async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+			async getAvailableModels(this: import('n8n-workflow').ILoadOptionsFunctions) {
 				return await loadAvailableModels.call(this);
 			},
 		},
@@ -357,9 +472,7 @@ export class GitHubCopilotChatModel implements INodeType {
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData> {
 		let model = this.getNodeParameter('model', itemIndex) as string;
 
-		// Check if user selected manual entry
 		if (model === '__manual__') {
-			// User selected "✏️ Enter Custom Model Name" from dropdown
 			const customModel = this.getNodeParameter('customModel', itemIndex) as string;
 			if (!customModel || customModel.trim() === '') {
 				throw new Error(
@@ -372,26 +485,10 @@ export class GitHubCopilotChatModel implements INodeType {
 			console.log(`✅ Using model from list: ${model}`);
 		}
 
-		const options = this.getNodeParameter('options', itemIndex, {}) as {
-			temperature?: number;
-			maxTokens?: number;
-			topP?: number;
-			enableVision?: boolean;
-			systemMessage?: string;
-			enableRetry?: boolean;
-			maxRetries?: number;
-			tools?: string;
-			tool_choice?: string;
-		};
-
-		// Get model information from centralized manager
+		const options = this.getNodeParameter('options', itemIndex, {}) as IOptions;
 		const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
-
-		// Get credentials
-		const credentials = (await this.getCredentials('githubCopilotApi')) as Record<string, unknown>;
-
-		// Get token from credential
-		const token = credentials.token as string;
+		const credentials = (await this.getCredentials('githubCopilotApi')) as { token: string };
+		const token = credentials.token;
 
 		if (!token) {
 			console.error('❌ Available credential properties:', Object.keys(credentials));
@@ -401,7 +498,6 @@ export class GitHubCopilotChatModel implements INodeType {
 			);
 		}
 
-		// Debug: Show token info for troubleshooting
 		const tokenPrefix =
 			token.substring(0, Math.min(4, token.indexOf('_') + 1)) || token.substring(0, 4);
 		const tokenSuffix = token.substring(Math.max(0, token.length - 5));
@@ -409,7 +505,6 @@ export class GitHubCopilotChatModel implements INodeType {
 			`🔍 GitHub Copilot ChatModel OAuth2 Debug: Using token ${tokenPrefix}...${tokenSuffix}`,
 		);
 
-		// Note: GitHub Copilot accepts different token formats
 		if (
 			!token.startsWith('gho_') &&
 			!token.startsWith('ghu_') &&
@@ -420,19 +515,16 @@ export class GitHubCopilotChatModel implements INodeType {
 			);
 		}
 
-		// Fallback to gpt-4o-mini if model not found or use a safe default
 		const safeModel = modelInfo ? model : DEFAULT_MODELS.GENERAL;
 		const safeModelInfo =
 			modelInfo || GitHubCopilotModelsManager.getModelByValue(DEFAULT_MODELS.GENERAL);
 
-		// Get model-specific version requirements
 		const minVSCodeVersion = getMinVSCodeVersion(safeModel);
 		const additionalHeaders = getAdditionalHeaders(safeModel);
 
 		console.log(`🔧 Model: ${safeModel} requires VS Code version: ${minVSCodeVersion}`);
 
-		// Parse tools if provided
-		let parsedTools: Array<Record<string, unknown>> = [];
+		let parsedTools: object[] = [];
 		if (options.tools && options.tools.trim()) {
 			try {
 				const parsed = JSON.parse(options.tools);
@@ -449,9 +541,7 @@ export class GitHubCopilotChatModel implements INodeType {
 			}
 		}
 
-		// Configure model based on capabilities
-		const modelConfig = {
-			// Don't use apiKey directly, use configuration instead
+		const modelConfig: IModelConfig = {
 			model: safeModel,
 			temperature: options.temperature || 0.7,
 			maxTokens: Math.min(
@@ -460,14 +550,13 @@ export class GitHubCopilotChatModel implements INodeType {
 			),
 			topP: options.topP || 1,
 			maxRetries: options.enableRetry !== false ? options.maxRetries || 3 : 0,
-			// Add tools support
 			...(parsedTools.length > 0 && {
 				tools: parsedTools,
 				tool_choice: options.tool_choice || 'auto',
 			}),
 			configuration: {
 				baseURL: GITHUB_COPILOT_API.BASE_URL,
-				apiKey: token, // Use validated token
+				apiKey: token,
 				defaultHeaders: {
 					'User-Agent': 'GitHubCopilotChat/1.0.0 n8n/3.10.1',
 					Accept: 'application/json',
@@ -484,7 +573,6 @@ export class GitHubCopilotChatModel implements INodeType {
 			},
 		};
 
-		// Create a customized ChatOpenAI instance for GitHub Copilot
 		const chatModel = new GitHubCopilotChatOpenAI(this, options, modelConfig);
 
 		return {
