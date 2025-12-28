@@ -45,31 +45,44 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             let content = '';
             const rawContent = msg.content;
             if (typeof rawContent === 'string') {
+                if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i)) {
+                    hasVisionContent = true;
+                    console.log(`👁️ Vision content detected in string message (data URL or image reference)`);
+                }
                 content = rawContent;
             }
             else if (Array.isArray(rawContent)) {
                 const hasImageContent = rawContent.some((part) => {
                     if (typeof part === 'object' && part !== null) {
                         const p = part;
-                        return p.type === 'image_url' || p.image_url !== undefined;
+                        if (p.type === 'image_url' || p.type === 'image' || p.image_url !== undefined) {
+                            return true;
+                        }
+                        if (typeof p.url === 'string' && p.url.startsWith('data:image/')) {
+                            return true;
+                        }
+                        if (p.image || p.imageUrl || p.image_data) {
+                            return true;
+                        }
                     }
                     return false;
                 });
                 if (hasImageContent) {
                     hasVisionContent = true;
-                    console.log(`👁️ Vision content detected in message`);
+                    console.log(`👁️ Vision content detected in array message`);
                     content = rawContent.map((part) => {
                         if (typeof part === 'object' && part !== null) {
                             const p = part;
                             if (p.type === 'text') {
                                 return { type: 'text', text: String(p.text || '') };
                             }
-                            else if (p.type === 'image_url' || p.image_url) {
-                                const imageUrl = p.image_url;
+                            else if (p.type === 'image_url' || p.type === 'image' || p.image_url) {
+                                const imageUrl = (p.image_url || p.image || p);
+                                const url = String((imageUrl === null || imageUrl === void 0 ? void 0 : imageUrl.url) || p.url || p.imageUrl || p.image_data || '');
                                 return {
                                     type: 'image_url',
                                     image_url: {
-                                        url: String((imageUrl === null || imageUrl === void 0 ? void 0 : imageUrl.url) || p.url || ''),
+                                        url,
                                         detail: (imageUrl === null || imageUrl === void 0 ? void 0 : imageUrl.detail) || 'auto',
                                     },
                                 };
@@ -132,11 +145,12 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             console.log(`🔧 Request includes ${requestBody.tools.length} tools`);
         }
         const startTime = Date.now();
-        if (hasVisionContent) {
-            console.log(`👁️ Sending vision request with Copilot-Vision-Request header`);
+        const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+        if (shouldUseVision) {
+            console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
         }
         try {
-            const response = await (0, GitHubCopilotApiUtils_1.makeGitHubCopilotRequest)(this.context, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, hasVisionContent);
+            const response = await (0, GitHubCopilotApiUtils_1.makeGitHubCopilotRequest)(this.context, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, shouldUseVision);
             const endTime = Date.now();
             const latency = endTime - startTime;
             console.log(`⏱️ GitHub Copilot API call completed in ${latency}ms`);
@@ -318,6 +332,13 @@ class GitHubCopilotChatModel {
                                     tools: ['/.+/'],
                                 },
                             },
+                        },
+                        {
+                            displayName: 'Enable Vision (Image Processing)',
+                            name: 'enableVision',
+                            type: 'boolean',
+                            default: false,
+                            description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
                         },
                     ],
                 },

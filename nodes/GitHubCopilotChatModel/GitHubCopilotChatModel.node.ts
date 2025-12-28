@@ -147,33 +147,52 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			let content: string | IMessageContentPart[] = '';
 			const rawContent = msg.content;
 			
+			// Check for image data in string content (data:image/... format)
 			if (typeof rawContent === 'string') {
+				// Detect base64 image data URLs in string content
+				if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i)) {
+					hasVisionContent = true;
+					console.log(`👁️ Vision content detected in string message (data URL or image reference)`);
+				}
 				content = rawContent;
 			} else if (Array.isArray(rawContent)) {
-				// Check if this is a vision content array (contains image_url)
+				// Check if this is a vision content array (contains image_url or image data)
 				const hasImageContent = rawContent.some((part: unknown) => {
 					if (typeof part === 'object' && part !== null) {
 						const p = part as Record<string, unknown>;
-						return p.type === 'image_url' || p.image_url !== undefined;
+						// Check various image content formats
+						if (p.type === 'image_url' || p.type === 'image' || p.image_url !== undefined) {
+							return true;
+						}
+						// Check for data URL in url field
+						if (typeof p.url === 'string' && p.url.startsWith('data:image/')) {
+							return true;
+						}
+						// Check for LangChain image format
+						if (p.image || p.imageUrl || p.image_data) {
+							return true;
+						}
 					}
 					return false;
 				});
 				
 				if (hasImageContent) {
 					hasVisionContent = true;
-					console.log(`👁️ Vision content detected in message`);
+					console.log(`👁️ Vision content detected in array message`);
 					// Keep the array format for vision - map to proper structure
 					content = rawContent.map((part: unknown) => {
 						if (typeof part === 'object' && part !== null) {
 							const p = part as Record<string, unknown>;
 							if (p.type === 'text') {
 								return { type: 'text' as const, text: String(p.text || '') };
-							} else if (p.type === 'image_url' || p.image_url) {
-								const imageUrl = p.image_url as Record<string, unknown> | undefined;
+							} else if (p.type === 'image_url' || p.type === 'image' || p.image_url) {
+								// Handle various image URL formats
+								const imageUrl = (p.image_url || p.image || p) as Record<string, unknown>;
+								const url = String(imageUrl?.url || p.url || p.imageUrl || p.image_data || '');
 								return {
 									type: 'image_url' as const,
 									image_url: {
-										url: String(imageUrl?.url || p.url || ''),
+										url,
 										detail: (imageUrl?.detail as 'auto' | 'low' | 'high') || 'auto',
 									},
 								};
@@ -245,9 +264,12 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 
 		const startTime = Date.now();
 
-		// Log vision request if detected
-		if (hasVisionContent) {
-			console.log(`👁️ Sending vision request with Copilot-Vision-Request header`);
+		// Check if vision should be enabled (auto-detected OR manually enabled)
+		const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+
+		// Log vision request if detected or enabled
+		if (shouldUseVision) {
+			console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
 		}
 
 		try {
@@ -255,7 +277,7 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 				this.context as unknown as import('n8n-workflow').IExecuteFunctions,
 				GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS,
 				requestBody,
-				hasVisionContent, // Pass vision flag for proper headers
+				shouldUseVision, // Pass vision flag for proper headers
 			);
 
 			const endTime = Date.now();
@@ -455,6 +477,13 @@ export class GitHubCopilotChatModel implements INodeType {
 								tools: ['/.+/'],
 							},
 						},
+					},
+					{
+						displayName: 'Enable Vision (Image Processing)',
+						name: 'enableVision',
+						type: 'boolean',
+						default: false,
+						description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
 					},
 				],
 			},
