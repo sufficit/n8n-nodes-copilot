@@ -22,4 +22,5 @@ package-lock.json
 *-lock.json
 .token
 .token.oauth
-.token.oauth.generated.json
+.token.oauth.generated.json.token.oauth.info.json
+.machine-id
