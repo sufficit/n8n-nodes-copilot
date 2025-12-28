@@ -1,11 +1,13 @@
 {
-  "token": "tid=07a8362f96297dd0915704bb34ecd317;exp=1761284885;sku=plus_monthly_subscriber_quota;proxy-ep=proxy.individual.githubcopilot.com;st=dotcom;chat=1;cit=1;malfil=1;editor_preview_features=1;agent_mode=1;mcp=1;ccr=1;8kp=1;ip=177.36.188.73;asn=AS53062:2f29646519a36f80c4037913e6d4ae02ba55828a248ffc0684872c3c8942051a",
-  "generatedAt": "2025-10-24T05:18:05.165Z",
-  "githubToken": "gho_PEN2UqBbvngMUJEi...",
+  "token": "tid=73ae9a71c7a08c70712a188bbb2f4b69;exp=1766891044;sku=plus_monthly_subscriber_quota;proxy-ep=proxy.individual.githubcopilot.com;st=dotcom;chat=1;cit=1;malfil=1;editor_preview_features=1;agent_mode=1;agent_mode_auto_approval=1;mcp=1;ccr=1;rt=1;8kp=1;ip=177.155.91.183;asn=AS263586:d0cc1cf9f6dade838024c3150e6e7285ea5d0980626d9aff7044e7016fef75be",
+  "generatedAt": "2025-12-28T02:34:04.259Z",
+  "githubToken": "gho_xFBCuIOZ8Ear6qWh...",
   "machineId": "579823533754bc72e0b580f142347d81f4383173ee0c7a71a428641ed6e76d8a",
-  "sessionId": "5b7204ae-f12b-4bdd-a54f-6f3be9d4ed941761283084761",
+  "sessionId": "8ba991af-fbf0-4808-af20-9baa1e5d5b411766889243605",
   "response": {
+    "agent_mode_auto_approval": true,
     "annotations_enabled": true,
+    "azure_only": false,
     "blackbird_clientside_indexing": false,
     "chat_enabled": true,
     "chat_jetbrains_enabled": true,
@@ -19,7 +21,7 @@
       "proxy": "https://proxy.individual.githubcopilot.com",
       "telemetry": "https://telemetry.individual.githubcopilot.com"
     },
-    "expires_at": 1761284885,
+    "expires_at": 1766891044,
     "individual": true,
     "limited_user_quotas": null,
     "limited_user_reset_date": null,
@@ -29,15 +31,15 @@
     "sku": "plus_monthly_subscriber_quota",
     "snippy_load_test_enabled": false,
     "telemetry": "disabled",
-    "token": "tid=07a8362f96297dd0915704bb34ecd317;exp=1761284885;sku=plus_monthly_subscriber_quota;proxy-ep=proxy.individual.githubcopilot.com;st=dotcom;chat=1;cit=1;malfil=1;editor_preview_features=1;agent_mode=1;mcp=1;ccr=1;8kp=1;ip=177.36.188.73;asn=AS53062:2f29646519a36f80c4037913e6d4ae02ba55828a248ffc0684872c3c8942051a",
-    "tracking_id": "07a8362f96297dd0915704bb34ecd317",
+    "token": "tid=73ae9a71c7a08c70712a188bbb2f4b69;exp=1766891044;sku=plus_monthly_subscriber_quota;proxy-ep=proxy.individual.githubcopilot.com;st=dotcom;chat=1;cit=1;malfil=1;editor_preview_features=1;agent_mode=1;agent_mode_auto_approval=1;mcp=1;ccr=1;rt=1;8kp=1;ip=177.155.91.183;asn=AS263586:d0cc1cf9f6dade838024c3150e6e7285ea5d0980626d9aff7044e7016fef75be",
+    "tracking_id": "73ae9a71c7a08c70712a188bbb2f4b69",
     "vsc_electron_fetcher_v2": false,
     "xcode": true,
     "xcode_chat": false
   },
   "parameters": {
-    "tid": "07a8362f96297dd0915704bb34ecd317",
-    "exp": "1761284885",
+    "tid": "73ae9a71c7a08c70712a188bbb2f4b69",
+    "exp": "1766891044",
     "sku": "plus_monthly_subscriber_quota",
     "proxy-ep": "proxy.individual.githubcopilot.com",
     "st": "dotcom",
@@ -46,10 +48,12 @@
     "malfil": "1",
     "editor_preview_features": "1",
     "agent_mode": "1",
+    "agent_mode_auto_approval": "1",
     "mcp": "1",
     "ccr": "1",
+    "rt": "1",
     "8kp": "1",
-    "ip": "177.36.188.73",
-    "asn": "AS53062:2f29646519a36f80c4037913e6d4ae02ba55828a248ffc0684872c3c8942051a"
+    "ip": "177.155.91.183",
+    "asn": "AS263586:d0cc1cf9f6dade838024c3150e6e7285ea5d0980626d9aff7044e7016fef75be"
   }
 }

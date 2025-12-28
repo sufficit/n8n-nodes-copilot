@@ -1,0 +1,33 @@
+interface CopilotModel {
+    id: string;
+    name: string;
+    display_name?: string;
+    model_picker_enabled?: boolean;
+    capabilities?: any;
+    vendor?: string;
+    version?: string;
+    preview?: boolean;
+}
+export declare class DynamicModelsManager {
+    private static cache;
+    private static readonly CACHE_DURATION_MS;
+    private static readonly MIN_REFRESH_INTERVAL_MS;
+    private static hashToken;
+    private static fetchModelsFromAPI;
+    static getAvailableModels(oauthToken: string): Promise<CopilotModel[]>;
+    static filterModelsByType(models: CopilotModel[], type: string): CopilotModel[];
+    static modelsToN8nOptions(models: CopilotModel[]): Array<{
+        name: string;
+        value: string;
+        description?: string;
+    }>;
+    static clearCache(oauthToken: string): void;
+    static clearAllCache(): void;
+    static getCacheInfo(oauthToken: string): {
+        cached: boolean;
+        modelsCount: number;
+        expiresIn: number;
+        fetchedAt: string;
+    } | null;
+}
+export {};
