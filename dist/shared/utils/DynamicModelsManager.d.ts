@@ -8,6 +8,13 @@ interface CopilotModel {
     vendor?: string;
     version?: string;
     preview?: boolean;
+    billing?: {
+        is_premium: boolean;
+        multiplier: number;
+        restricted_to?: string[];
+    };
+    is_chat_default?: boolean;
+    is_chat_fallback?: boolean;
 }
 export declare class DynamicModelsManager {
     private static cache;

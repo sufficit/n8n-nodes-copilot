@@ -21,9 +21,13 @@ class DynamicModelsManager {
                 Authorization: `Bearer ${oauthToken}`,
                 Accept: "application/json",
                 "Content-Type": "application/json",
-                "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
-                "Editor-Version": "vscode/1.95.0",
-                "Editor-Plugin-Version": "copilot/1.0.0",
+                "User-Agent": "GitHubCopilotChat/0.35.0",
+                "Editor-Version": "vscode/1.96.0",
+                "Editor-Plugin-Version": "copilot-chat/0.35.0",
+                "X-GitHub-Api-Version": "2025-05-01",
+                "X-Interaction-Type": "model-access",
+                "OpenAI-Intent": "model-access",
+                "Copilot-Integration-Id": "vscode-chat",
             },
         });
         if (!response.ok) {
@@ -77,6 +81,10 @@ class DynamicModelsManager {
         });
     }
     static getCostMultiplier(model) {
+        var _a;
+        if (((_a = model.billing) === null || _a === void 0 ? void 0 : _a.multiplier) !== undefined) {
+            return `${model.billing.multiplier}x`;
+        }
         const id = model.id.toLowerCase();
         if (id === 'gpt-4.1' || id.startsWith('gpt-4.1-'))
             return '0x';
@@ -90,7 +98,7 @@ class DynamicModelsManager {
             return '0x';
         if (id.includes('grok') && id.includes('fast'))
             return '0x';
-        if (id.includes('raptor') && id.includes('mini'))
+        if (id === 'oswe-vscode-prime' || id.includes('oswe-vscode'))
             return '0x';
         if (id.includes('haiku'))
             return '0.33x';

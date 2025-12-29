@@ -20,6 +20,14 @@ interface CopilotModel {
   vendor?: string;
   version?: string;
   preview?: boolean;
+  /** Billing information - only available with X-GitHub-Api-Version: 2025-05-01 header */
+  billing?: {
+    is_premium: boolean;
+    multiplier: number;
+    restricted_to?: string[];
+  };
+  is_chat_default?: boolean;
+  is_chat_fallback?: boolean;
 }
 
 /**
@@ -76,9 +84,15 @@ export class DynamicModelsManager {
         Authorization: `Bearer ${oauthToken}`,
         Accept: "application/json",
         "Content-Type": "application/json",
-        "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
-        "Editor-Version": "vscode/1.95.0",
-        "Editor-Plugin-Version": "copilot/1.0.0",
+        "User-Agent": "GitHubCopilotChat/0.35.0",
+        "Editor-Version": "vscode/1.96.0",
+        "Editor-Plugin-Version": "copilot-chat/0.35.0",
+        // CRITICAL: This API version returns billing.multiplier field
+        // Source: microsoft/vscode-copilot-chat networking.ts
+        "X-GitHub-Api-Version": "2025-05-01",
+        "X-Interaction-Type": "model-access",
+        "OpenAI-Intent": "model-access",
+        "Copilot-Integration-Id": "vscode-chat",
       },
     });
 
@@ -157,20 +171,22 @@ export class DynamicModelsManager {
   }
 
   /**
-   * Get cost multiplier based on model ID
-   * Based on actual VS Code Copilot Chat pricing display (Dec 2025)
+   * Get cost multiplier from API billing data or fallback to estimation
    * 
-   * Pricing tiers:
-   * - 0x: Free tier (included in subscription)
-   * - 0.33x: Economy tier
-   * - 1x: Standard tier
-   * - 3x: Premium tier
-   * - 10x: Ultra premium tier (Claude Opus 4.1)
+   * With X-GitHub-Api-Version: 2025-05-01, the API returns:
+   * - billing.multiplier: 0, 0.33, 1, 3, or 10
+   * - billing.is_premium: boolean
    * 
-   * Note: These values are based on VS Code's "Language Models" settings page.
-   * The multiplier indicates relative cost compared to standard models.
+   * Display format: "0x", "0.33x", "1x", "3x", "10x"
    */
   private static getCostMultiplier(model: CopilotModel): string {
+    // BEST: Use API billing data if available (requires 2025-05-01 header)
+    if (model.billing?.multiplier !== undefined) {
+      return `${model.billing.multiplier}x`;
+    }
+    
+    // FALLBACK: Estimate based on model ID patterns
+    // This is used when API doesn't return billing data
     const id = model.id.toLowerCase();
     
     // === 0x FREE TIER ===
@@ -183,8 +199,8 @@ export class DynamicModelsManager {
     if (id === 'gpt-4o-mini' || id.startsWith('gpt-4o-mini-')) return '0x';
     // Grok fast models
     if (id.includes('grok') && id.includes('fast')) return '0x';
-    // Raptor mini
-    if (id.includes('raptor') && id.includes('mini')) return '0x';
+    // Raptor mini (ID: oswe-vscode-prime)
+    if (id === 'oswe-vscode-prime' || id.includes('oswe-vscode')) return '0x';
     
     // === 0.33x ECONOMY TIER ===
     // Claude Haiku (economy)
