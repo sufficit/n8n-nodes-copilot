@@ -69,9 +69,13 @@ async function makeGitHubCopilotRequest(context, endpoint, body, hasMedia = fals
     }
     const headers = {
         ...GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
-        "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
+        "User-Agent": "GitHubCopilotChat/0.35.0",
         "Editor-Version": `vscode/${minVSCodeVersion}`,
-        "Editor-Plugin-Version": "copilot/1.0.0",
+        "Editor-Plugin-Version": "copilot-chat/0.35.0",
+        "X-GitHub-Api-Version": "2025-05-01",
+        "X-Interaction-Type": "copilot-chat",
+        "OpenAI-Intent": "conversation-panel",
+        "Copilot-Integration-Id": "vscode-chat",
         ...additionalHeaders,
     };
     if (hasMedia) {
