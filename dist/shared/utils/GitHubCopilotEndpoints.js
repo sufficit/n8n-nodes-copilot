@@ -76,7 +76,16 @@ class GitHubCopilotEndpoints {
         return exports.GITHUB_COPILOT_API.URLS.USER_COPILOT;
     }
     static getAuthHeaders(token, includeVSCodeHeaders = false) {
-        const headers = exports.GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token);
+        const headers = {
+            ...exports.GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+            "User-Agent": "GitHubCopilotChat/0.35.0",
+            "Editor-Version": "vscode/1.96.0",
+            "Editor-Plugin-Version": "copilot-chat/0.35.0",
+            "X-GitHub-Api-Version": "2025-05-01",
+            "X-Interaction-Type": "copilot-chat",
+            "OpenAI-Intent": "conversation-panel",
+            "Copilot-Integration-Id": "vscode-chat",
+        };
         if (includeVSCodeHeaders) {
             return {
                 ...headers,
