@@ -76,6 +76,34 @@ class DynamicModelsManager {
             return modelType === type;
         });
     }
+    static getCostMultiplier(model) {
+        const id = model.id.toLowerCase();
+        if (id === 'gpt-4.1' || id.startsWith('gpt-4.1-'))
+            return '0x';
+        if (id === 'gpt-4o' || id.startsWith('gpt-4o-'))
+            return '0x';
+        if (id === 'gpt-4' || id === 'gpt-4-0613')
+            return '0x';
+        if (id === 'gpt-5-mini')
+            return '0x';
+        if (id === 'gpt-4o-mini' || id.startsWith('gpt-4o-mini-'))
+            return '0x';
+        if (id.includes('grok') && id.includes('fast'))
+            return '0x';
+        if (id.includes('raptor') && id.includes('mini'))
+            return '0x';
+        if (id.includes('haiku'))
+            return '0.33x';
+        if (id.includes('flash'))
+            return '0.33x';
+        if (id.includes('codex-mini'))
+            return '0.33x';
+        if (id === 'claude-opus-41' || id === 'claude-opus-4.1')
+            return '10x';
+        if (id.includes('opus'))
+            return '3x';
+        return '1x';
+    }
     static modelsToN8nOptions(models) {
         const nameCount = new Map();
         models.forEach((model) => {
@@ -100,8 +128,12 @@ class DynamicModelsManager {
                     badges.push("🧠 Reasoning");
             }
             const displayName = model.display_name || model.name || model.id;
+            const costMultiplier = this.getCostMultiplier(model);
             const badgesText = badges.length > 0 ? ` [${badges.join(" • ")}]` : "";
             const hasDuplicates = (nameCount.get(displayName) || 0) > 1;
+            const category = model.model_picker_category || "";
+            const categoryLabel = category ? ` - ${category.charAt(0).toUpperCase() + category.slice(1)}` : "";
+            const multiplierDisplay = ` • ${costMultiplier}${categoryLabel}`;
             let description = "";
             if (model.capabilities) {
                 const limits = model.capabilities.limits || {};
@@ -120,11 +152,13 @@ class DynamicModelsManager {
                 }
                 description = parts.join(" • ");
             }
-            else if (hasDuplicates) {
-                description = `ID: ${model.id}`;
+            else {
+                if (hasDuplicates) {
+                    description = `ID: ${model.id}`;
+                }
             }
             return {
-                name: `${displayName}${badgesText}`,
+                name: `${displayName}${multiplierDisplay}${badgesText}`,
                 value: model.id,
                 description: description || undefined,
             };

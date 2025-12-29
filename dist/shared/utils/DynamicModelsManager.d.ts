@@ -3,6 +3,7 @@ interface CopilotModel {
     name: string;
     display_name?: string;
     model_picker_enabled?: boolean;
+    model_picker_category?: "lightweight" | "versatile" | "powerful" | string;
     capabilities?: any;
     vendor?: string;
     version?: string;
@@ -16,6 +17,7 @@ export declare class DynamicModelsManager {
     private static fetchModelsFromAPI;
     static getAvailableModels(oauthToken: string): Promise<CopilotModel[]>;
     static filterModelsByType(models: CopilotModel[], type: string): CopilotModel[];
+    private static getCostMultiplier;
     static modelsToN8nOptions(models: CopilotModel[]): Array<{
         name: string;
         value: string;

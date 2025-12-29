@@ -15,6 +15,7 @@ interface CopilotModel {
   name: string;
   display_name?: string;
   model_picker_enabled?: boolean;
+  model_picker_category?: "lightweight" | "versatile" | "powerful" | string;
   capabilities?: any;
   vendor?: string;
   version?: string;
@@ -156,6 +157,60 @@ export class DynamicModelsManager {
   }
 
   /**
+   * Get cost multiplier based on model ID
+   * Based on actual VS Code Copilot Chat pricing display (Dec 2025)
+   * 
+   * Pricing tiers:
+   * - 0x: Free tier (included in subscription)
+   * - 0.33x: Economy tier
+   * - 1x: Standard tier
+   * - 3x: Premium tier
+   * - 10x: Ultra premium tier (Claude Opus 4.1)
+   * 
+   * Note: These values are based on VS Code's "Language Models" settings page.
+   * The multiplier indicates relative cost compared to standard models.
+   */
+  private static getCostMultiplier(model: CopilotModel): string {
+    const id = model.id.toLowerCase();
+    
+    // === 0x FREE TIER ===
+    // GPT-4 series (legacy, included in subscription)
+    if (id === 'gpt-4.1' || id.startsWith('gpt-4.1-')) return '0x';
+    if (id === 'gpt-4o' || id.startsWith('gpt-4o-')) return '0x';
+    if (id === 'gpt-4' || id === 'gpt-4-0613') return '0x';
+    // Mini models
+    if (id === 'gpt-5-mini') return '0x';
+    if (id === 'gpt-4o-mini' || id.startsWith('gpt-4o-mini-')) return '0x';
+    // Grok fast models
+    if (id.includes('grok') && id.includes('fast')) return '0x';
+    // Raptor mini
+    if (id.includes('raptor') && id.includes('mini')) return '0x';
+    
+    // === 0.33x ECONOMY TIER ===
+    // Claude Haiku (economy)
+    if (id.includes('haiku')) return '0.33x';
+    // Gemini Flash models
+    if (id.includes('flash')) return '0.33x';
+    // Codex-Mini models
+    if (id.includes('codex-mini')) return '0.33x';
+    
+    // === 10x ULTRA PREMIUM ===
+    // Claude Opus 4.1 specifically
+    if (id === 'claude-opus-41' || id === 'claude-opus-4.1') return '10x';
+    
+    // === 3x PREMIUM TIER ===
+    // Claude Opus 4.5
+    if (id.includes('opus')) return '3x';
+    
+    // === 1x STANDARD TIER (default for most models) ===
+    // GPT-5 series (including Codex variants - they are 1x, not 3x!)
+    // Claude Sonnet
+    // Gemini Pro
+    // Everything else
+    return '1x';
+  }
+
+  /**
    * Convert models to n8n options format with capability badges
    */
   public static modelsToN8nOptions(models: CopilotModel[]): Array<{
@@ -188,12 +243,20 @@ export class DynamicModelsManager {
         if (supports.max_thinking_budget) badges.push("🧠 Reasoning");
       }
       
-      // Build display name with badges
+      // Build display name with badges and cost multiplier (VS Code style: "Model Name • 1x")
       const displayName = model.display_name || model.name || model.id;
+      const costMultiplier = this.getCostMultiplier(model);
       const badgesText = badges.length > 0 ? ` [${badges.join(" • ")}]` : "";
       
       // Check if this display name has duplicates
       const hasDuplicates = (nameCount.get(displayName) || 0) > 1;
+      
+      // Get category label (capitalize first letter)
+      const category = model.model_picker_category || "";
+      const categoryLabel = category ? ` - ${category.charAt(0).toUpperCase() + category.slice(1)}` : "";
+      
+      // Format: "Model Name • 0x - Lightweight [badges]"
+      const multiplierDisplay = ` • ${costMultiplier}${categoryLabel}`;
       
       // Build description with more details
       let description = "";
@@ -201,7 +264,7 @@ export class DynamicModelsManager {
         const limits = (model.capabilities as any).limits || {};
         const parts: string[] = [];
         
-        // If duplicates exist, add model ID at the start of description
+        // If duplicates exist, add model ID
         if (hasDuplicates) {
           parts.push(`ID: ${model.id}`);
         }
@@ -217,13 +280,15 @@ export class DynamicModelsManager {
         }
         
         description = parts.join(" • ");
-      } else if (hasDuplicates) {
-        // If no capabilities but has duplicates, still show ID
-        description = `ID: ${model.id}`;
+      } else {
+        // No capabilities, just show ID if duplicates
+        if (hasDuplicates) {
+          description = `ID: ${model.id}`;
+        }
       }
 
       return {
-        name: `${displayName}${badgesText}`,
+        name: `${displayName}${multiplierDisplay}${badgesText}`,
         value: model.id,
         description: description || undefined,
       };
