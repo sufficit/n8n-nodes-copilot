@@ -361,6 +361,66 @@ async function consolidatedModelTest(token, enableRetry = true, maxRetries = 3, 
         };
     }
 }
+async function testSingleModel(token, modelId, testMessage, enableRetry = true, maxRetries = 3) {
+    const testStart = Date.now();
+    try {
+        console.log(`🧪 Testing single model: ${modelId}`);
+        const response = await fetch(GitHubCopilotEndpoints_1.GitHubCopilotEndpoints.getChatCompletionsUrl(), {
+            method: 'POST',
+            headers: GitHubCopilotEndpoints_1.GitHubCopilotEndpoints.getAuthHeaders(token),
+            body: JSON.stringify({
+                model: modelId,
+                messages: [
+                    {
+                        role: 'user',
+                        content: testMessage,
+                    },
+                ],
+                max_tokens: 100,
+                temperature: 0.1,
+            }),
+        });
+        const testEnd = Date.now();
+        const responseTime = testEnd - testStart;
+        if (response.ok) {
+            const data = (await response.json());
+            const choices = data.choices || [];
+            const firstChoice = choices[0] || {};
+            const message = firstChoice.message || {};
+            const usage = data.usage || {};
+            return {
+                success: true,
+                modelId: modelId,
+                responseTime: `${responseTime}ms`,
+                response: message.content || 'No content',
+                usage: usage,
+                finishReason: firstChoice.finish_reason || 'unknown',
+                timestamp: new Date().toISOString(),
+                rawResponse: data,
+            };
+        }
+        else {
+            const errorText = await response.text();
+            return {
+                success: false,
+                modelId: modelId,
+                responseTime: `${responseTime}ms`,
+                error: `HTTP ${response.status}: ${errorText}`,
+                timestamp: new Date().toISOString(),
+            };
+        }
+    }
+    catch (error) {
+        const testEnd = Date.now();
+        return {
+            success: false,
+            modelId: modelId,
+            responseTime: `${testEnd - testStart}ms`,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString(),
+        };
+    }
+}
 function generateTestRecommendations(testResults) {
     const recommendations = [];
     const modelStats = Object.entries(testResults).map(([modelId, results]) => {
@@ -589,9 +649,40 @@ class GitHubCopilotTest {
                             value: 'consolidatedTest',
                             description: 'Test all available chat models 5 times each and generate comprehensive report ⚠️ This test may take up to 2 minutes to complete',
                         },
+                        {
+                            name: 'Test Single Chat Model',
+                            value: 'testSingleModel',
+                            description: 'Test a specific chat model with a custom message',
+                        },
                     ],
                     default: 'listModels',
                     description: 'Select the test function to execute',
+                },
+                {
+                    displayName: 'Model Name or ID',
+                    name: 'modelId',
+                    type: 'options',
+                    description: 'Select the model to test. Choose from the list, or specify an ID using an expression.',
+                    typeOptions: {
+                        loadOptionsMethod: 'getModels',
+                    },
+                    displayOptions: {
+                        show: {
+                            testFunction: ['testSingleModel'],
+                        },
+                    },
+                    default: '',
+                },
+                {
+                    displayName: 'Test Message',
+                    name: 'testMessage',
+                    type: 'string',
+                    default: "Hello! Please respond with just 'OK' to confirm you're working.",
+                    displayOptions: {
+                        show: {
+                            testFunction: ['testSingleModel'],
+                        },
+                    },
                 },
                 {
                     displayName: 'Tests Per Model',
@@ -640,6 +731,43 @@ class GitHubCopilotTest {
                 },
             ],
         };
+        this.methods = {
+            loadOptions: {
+                async getModels() {
+                    const credentials = await this.getCredentials('githubCopilotApi');
+                    const token = credentials.token;
+                    if (!token) {
+                        throw new Error('Credentials are required to load models');
+                    }
+                    try {
+                        const oauthToken = await OAuthTokenManager_1.OAuthTokenManager.getValidOAuthToken(token);
+                        const models = await DynamicModelsManager_1.DynamicModelsManager.getAvailableModels(oauthToken);
+                        return models
+                            .filter((model) => {
+                            var _a;
+                            const type = (_a = model.capabilities) === null || _a === void 0 ? void 0 : _a.type;
+                            return type !== 'embeddings';
+                        })
+                            .map((model) => {
+                            var _a;
+                            const multiplier = ((_a = model.billing) === null || _a === void 0 ? void 0 : _a.multiplier)
+                                ? ` (${model.billing.multiplier}x)`
+                                : '';
+                            return {
+                                name: `${model.name || model.id}${multiplier}`,
+                                value: model.id,
+                                description: `${model.vendor || 'GitHub'} - ${model.id}`,
+                            };
+                        })
+                            .sort((a, b) => a.name.localeCompare(b.name));
+                    }
+                    catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        throw new Error(`Failed to load models: ${errorMessage}`);
+                    }
+                },
+            },
+        };
     }
     async execute() {
         const items = this.getInputData();
@@ -674,6 +802,11 @@ class GitHubCopilotTest {
                         break;
                     case 'consolidatedTest':
                         result = await consolidatedModelTest(token, enableRetry, maxRetries, testsPerModel);
+                        break;
+                    case 'testSingleModel':
+                        const modelId = this.getNodeParameter('modelId', i);
+                        const testMessage = this.getNodeParameter('testMessage', i);
+                        result = await testSingleModel(token, modelId, testMessage, enableRetry, maxRetries);
                         break;
                     default:
                         throw new Error(`Unknown test function: ${testFunction}`);

@@ -51,24 +51,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
-          body: |
-            ## 🚀 n8n-nodes-github-copilot ${{ steps.get_version.outputs.version }}
-            
-            ### ✅ Changes in this release:
-            - Fixed Copilot-Vision-Request header for vision/image requests
-            - Added automatic detection of image_url content in messages
-            - New GitHubCopilotSpeech node for audio transcription
-            - New FileChunkingApiUtils and FileOptimizationUtils
-            
-            ### 📦 Installation (Docker)
-            ```bash
-            # Inside n8n container:
-            cd /home/node/.n8n/custom
-            curl -L -o dist.zip https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.version }}/n8n-nodes-github-copilot-dist.zip
-            unzip -o dist.zip
-            rm dist.zip
-            ```
-            Then restart your n8n container.
+          generate_release_notes: true
           files: |
             n8n-nodes-github-copilot-dist.zip
           draft: false
