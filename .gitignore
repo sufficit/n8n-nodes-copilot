@@ -24,3 +24,4 @@ package-lock.json
 .token.oauth
 .token.oauth.generated.json.token.oauth.info.json
 .machine-id
+dist/package.json
