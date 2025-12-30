@@ -2,9 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.38.41] - 2025-12-30
+
+### Fixed
+
+- **Vision Fallback**: Improved detection of vision content in text messages (data URLs and `copilot-file://` references)
+- **Vision Fallback**: Fixed static capability check in `Chat Model` node
+- **Vision Fallback**: Added `multimodal` capability check for broader model support
+- **Vision Fallback**: Fallback now triggers even if "Include Media" is false but vision content is found in message
+
+## [3.38.40] - 2025-12-30
+
+### Added
+
+- **Dynamic Model Management**: Implemented `DynamicModelsManager` with 1-hour caching
+- **Dynamic Capabilities**: System now prioritizes API-provided capabilities over static definitions
+- **Model Sync**: Synchronized static model list with June 2025 API data (GPT-5, Claude 4.5, Grok)
+- **Billing Multiplier**: Added support for `billing.multiplier` via `X-GitHub-Api-Version: 2025-05-01`
+
 ## [3.38.36] - 2025-12-30
 
 ### Added
+
 - **GitHubCopilotChatAPI**: Vision Fallback feature
   - **Enable Vision Fallback** in Advanced Options
   - **Vision Fallback Model** dropdown (vision-capable models only)
@@ -16,6 +35,7 @@ All notable changes to this project will be documented in this file.
   - Proper Copilot-Vision-Request header when images detected
 
 ### Fixed
+
 - **GitHubCopilotApiUtils**: Removed duplicated code causing TypeScript compilation errors
 - **Vision Fallback UI**: Options now properly appear in Advanced Options collection
 - **Response metadata**: Added `usedVisionFallback` and `originalModel` fields when fallback is used
@@ -23,6 +43,7 @@ All notable changes to this project will be documented in this file.
 ## [3.38.35] - 2025-12-30
 
 ### Added
+
 - **GitHubCopilotChatModel**: Vision Fallback feature
   - **Enable Vision Fallback** checkbox to use a separate vision-capable model when the primary model doesn't support vision
   - **Vision Fallback Model** dropdown (loads only models with Vision capability)
@@ -30,16 +51,19 @@ All notable changes to this project will be documented in this file.
   - Automatic upload/integration with GitHub Copilot Files endpoint for image processing
 
 ### Fixed
+
 - **GitHubCopilotChatModel**: Auto-enable vision for models that support vision; fallback to configured model for images when needed
 - **Upload**: Added `uploadFileToCopilot` helper to handle multipart uploads and replace image URLs with file references
 
 ### Updated
+
 - **temp_models.json**: Refreshed with complete model list (39 models)
 
 
 ## [3.38.34] - 2025-12-30
 
 ### Fixed
+
 - **GitHubCopilotChatModel**: Added critical headers to `defaultHeaders` for premium model access
   - `X-GitHub-Api-Version: 2025-05-01`
   - `X-Interaction-Type: copilot-chat`

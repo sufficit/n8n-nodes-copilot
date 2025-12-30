@@ -159,7 +159,7 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			// Check for image data in string content (data:image/... format)
 			if (typeof rawContent === 'string') {
 				// Detect base64 image data URLs in string content
-				if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i)) {
+				if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i) || rawContent.startsWith('copilot-file://')) {
 					hasVisionContent = true;
 					console.log(`👁️ Vision content detected in string message (data URL or image reference)`);
 				}
@@ -274,7 +274,7 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			// Fallback to static model list if not found in API cache
 			if (baseSupportsVision === null) {
 				const baseModelInfo = GitHubCopilotModelsManager.getModelByValue(this.model);
-				baseSupportsVision = !!(baseModelInfo?.capabilities?.vision);
+				baseSupportsVision = !!(baseModelInfo?.capabilities?.vision || baseModelInfo?.capabilities?.multimodal);
 				console.log(`👁️ Vision check for model ${this.model}: using static list, supportsVision=${baseSupportsVision}`);
 			} else {
 				console.log(`👁️ Vision check for model ${this.model}: using API cache, supportsVision=${baseSupportsVision}`);
@@ -706,7 +706,7 @@ export class GitHubCopilotChatModel implements INodeType {
 		console.log(`🔧 Model: ${safeModel} requires VS Code version: ${minVSCodeVersion}`);
 
 		// Auto-enable vision if model supports vision
-		if ((safeModelInfo as any)?.capabilities?.supports?.vision) {
+		if (safeModelInfo?.capabilities?.vision || safeModelInfo?.capabilities?.multimodal) {
 			options.enableVision = true;
 			console.log(`👁️ Model ${safeModel} supports vision - enabling vision automatically`);
 		}

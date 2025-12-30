@@ -107,6 +107,14 @@ export class GitHubCopilotChatAPI implements INodeType {
 					const credentials = await this.getCredentials('githubCopilotApi');
 					const oauthToken = credentials.oauthToken as string;
 
+					// Detect vision content in user message (data URLs or image references)
+					const hasVisionInMessage = userMessage.includes('data:image/') || !!userMessage.match(/\[.*image.*\]/i) || userMessage.startsWith('copilot-file://');
+					const hasVisionContent = includeMedia || hasVisionInMessage;
+
+					if (hasVisionInMessage) {
+						console.log(`👁️ Vision content detected in message text (data URL or image reference)`);
+					}
+
 					// Check vision support: first try dynamic API cache, then static list
 					let supportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(oauthToken, model);
 					
@@ -122,8 +130,8 @@ export class GitHubCopilotChatAPI implements INodeType {
 					// Track actual model to use (may change via fallback)
 					let effectiveModel = model;
 
-					// Handle vision fallback when model doesn't support vision but media is included
-					if (includeMedia && !supportsVision) {
+					// Handle vision fallback when model doesn't support vision but vision content is detected
+					if (hasVisionContent && !supportsVision) {
 						const enableVisionFallback = advancedOptions.enableVisionFallback as boolean || false;
 						if (enableVisionFallback) {
 							const fallbackModelRaw = advancedOptions.visionFallbackModel as string;
@@ -230,7 +238,7 @@ export class GitHubCopilotChatAPI implements INodeType {
 					delete requestBody.visionFallbackCustomModel;
 
 					// Make API request with retry logic
-					const hasMedia = includeMedia;
+					const hasMedia = hasVisionContent;
 					let response: CopilotResponse | null = null;
 					let attempt = 1;
 					const totalAttempts = maxRetries + 1;

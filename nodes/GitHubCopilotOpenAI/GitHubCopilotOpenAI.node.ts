@@ -314,14 +314,22 @@ export class GitHubCopilotOpenAI implements INodeType {
 				let hasVisionContent = false;
 				for (const msg of messages) {
 					const content = (msg as any).content;
+					const type = (msg as any).type;
+					
+					// Check for type: 'file' at message level (GitHub Copilot format)
+					if (type === 'file' || type === 'image') {
+						hasVisionContent = true;
+						break;
+					}
+
 					if (typeof content === 'string') {
-						if (content.includes('data:image/') || content.match(/\[.*image.*\]/i)) {
+						if (content.includes('data:image/') || content.match(/\[.*image.*\]/i) || content.startsWith('copilot-file://')) {
 							hasVisionContent = true;
 							break;
 						}
 					} else if (Array.isArray(content)) {
 						for (const part of content) {
-							if (part?.type === 'image_url' || part?.type === 'image' || part?.image_url) {
+							if (part?.type === 'image_url' || part?.type === 'image' || part?.image_url || part?.type === 'file') {
 								hasVisionContent = true;
 								break;
 							}
