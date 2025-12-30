@@ -191,6 +191,55 @@ export async function makeGitHubCopilotRequest(
     body: JSON.stringify(body),
   };
 
+  // Helper: Upload a file (multipart/form-data) to GitHub Copilot Files endpoint
+  // Note: Endpoint may enforce size limits and multipart format. Returns parsed JSON on success.
+  async function uploadFile(buffer: Buffer, filename: string, mimeType = 'application/octet-stream') {
+    const url = `${GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+
+    // Prepare form-data
+    // Use global FormData + Blob (Node 18+) or fallback to Buffer-based FormData
+    let form: any;
+    try {
+      form = new FormData();
+      const blob = new Blob([buffer], { type: mimeType });
+      // @ts-ignore - Node FormData typings
+      form.append('file', blob, filename);
+    } catch (err) {
+      // Fallback for environments without Blob
+      const FormData = require('form-data');
+      form = new FormData();
+      form.append('file', buffer, { filename, contentType: mimeType });
+    }
+
+    const uploadHeaders: Record<string, string> = {
+      ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+      'X-GitHub-Api-Version': '2025-05-01',
+      'X-Interaction-Type': 'copilot-chat',
+      'OpenAI-Intent': 'conversation-panel',
+      'Copilot-Integration-Id': 'vscode-chat',
+      // 'Content-Type' will be set by FormData
+    } as Record<string, string>;
+
+    // If using form.getHeaders (form-data package), merge those headers
+    if (typeof form.getHeaders === 'function') {
+      Object.assign(uploadHeaders, (form as any).getHeaders());
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: uploadHeaders as any,
+      body: form as any,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+    }
+
+    const json = await res.json();
+    return json;
+  }
+
   // Use centralized endpoint construction
   const fullUrl = `${GITHUB_COPILOT_API.BASE_URL}${endpoint}`;
   
@@ -198,6 +247,75 @@ export async function makeGitHubCopilotRequest(
   let lastError: Error | null = null;
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    // End for loop
+  }
+}
+
+/**
+ * Upload a file (e.g., image) to GitHub Copilot Files endpoint.
+ * Returns the parsed JSON response from the API.
+ */
+export async function uploadFileToCopilot(
+  context: IExecuteFunctions,
+  buffer: Buffer,
+  filename: string,
+  mimeType = 'application/octet-stream',
+): Promise<any> {
+  // Determine credential type dynamically
+  let credentialType = 'githubCopilotApi';
+  try {
+    credentialType = context.getNodeParameter('credentialType', 0, 'githubCopilotApi') as string;
+  } catch {}
+
+  const credentials = await context.getCredentials(credentialType) as OAuth2Credentials;
+  if (!credentials || !credentials.token) {
+    throw new Error('GitHub Copilot: No token found in credentials for file upload');
+  }
+
+  const githubToken = credentials.token as string;
+  const token = await OAuthTokenManager.getValidOAuthToken(githubToken);
+
+  const url = `${GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+
+  // Prepare form data
+  let form: any;
+  try {
+    form = new FormData();
+    const blob = new Blob([buffer], { type: mimeType });
+    form.append('file', blob, filename);
+  } catch (err) {
+    const FormData = require('form-data');
+    form = new FormData();
+    form.append('file', buffer, { filename, contentType: mimeType });
+  }
+
+  const headers: Record<string, string> = {
+    ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+    'X-GitHub-Api-Version': '2025-05-01',
+    'X-Interaction-Type': 'copilot-chat',
+    'OpenAI-Intent': 'conversation-panel',
+    'Copilot-Integration-Id': 'vscode-chat',
+    'Copilot-Vision-Request': 'true',
+    'Copilot-Media-Request': 'true',
+  } as Record<string, string>;
+
+  if (typeof form.getHeaders === 'function') {
+    Object.assign(headers, (form as any).getHeaders());
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: headers as any,
+    body: form as any,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+  }
+
+  return await res.json();
+}
     try {
       const response = await fetch(fullUrl, options);
       

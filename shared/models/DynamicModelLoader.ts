@@ -23,6 +23,27 @@ export async function loadAvailableModels(
 }
 
 /**
+ * Load available chat models that support vision (for vision fallback selection)
+ */
+export async function loadAvailableVisionModels(
+  this: ILoadOptionsFunctions,
+  forceRefresh = false,
+): Promise<INodePropertyOptions[]> {
+  // Load all chat models and filter to those with vision support
+  const allOptions = await loadModelsWithFilter.call(this, "chat", forceRefresh);
+  const visionOptions = allOptions.filter((opt) => opt.name.includes("👁️") || opt.description?.includes("Vision"));
+  // Ensure manual input option at top exists
+  const manualOption = {
+    name: "✏️ Enter Custom Model Name",
+    value: "__manual__",
+    description: "Type your own model name (for new/beta models)",
+  };
+  // If manual is already present, keep as-is, else prepend
+  const hasManual = visionOptions.some((o) => o.value === "__manual__");
+  return hasManual ? visionOptions : [manualOption, ...visionOptions];
+}
+
+/**
  * Load available embedding models dynamically
  * Use this in embedding nodes with `loadOptions` method
  * 

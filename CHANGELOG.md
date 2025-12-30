@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.38.35] - 2025-12-30
+
+### Added
+- **GitHubCopilotChatModel**: Vision Fallback feature
+  - **Enable Vision Fallback** checkbox to use a separate vision-capable model when the primary model doesn't support vision
+  - **Vision Fallback Model** dropdown (loads only models with Vision capability)
+  - **Vision Fallback Custom Model Name** field for manual model id entry
+  - Automatic upload/integration with GitHub Copilot Files endpoint for image processing
+
+### Fixed
+- **GitHubCopilotChatModel**: Auto-enable vision for models that support vision; fallback to configured model for images when needed
+- **Upload**: Added `uploadFileToCopilot` helper to handle multipart uploads and replace image URLs with file references
+
+### Updated
+- **temp_models.json**: Refreshed with complete model list (39 models)
+
+
 ## [3.38.34] - 2025-12-30
 
 ### Fixed

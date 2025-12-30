@@ -21,7 +21,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         return params;
     }
     async _generate(messages, options) {
-        var _a;
+        var _a, _b, _c;
         if (!messages || messages.length === 0) {
             throw new Error('No messages provided for generation');
         }
@@ -139,6 +139,24 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             top_p: this.topP,
             stream: this.options.enableStreaming || false,
         };
+        if (hasVisionContent) {
+            const baseModelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(this.model);
+            const baseSupportsVision = !!((_b = (_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.supports) === null || _b === void 0 ? void 0 : _b.vision);
+            if (!baseSupportsVision) {
+                if (this.options.enableVisionFallback) {
+                    const fallbackRaw = this.options.visionFallbackModel;
+                    const fallbackModel = fallbackRaw === '__manual__' ? this.options.visionFallbackCustomModel : fallbackRaw;
+                    if (!fallbackModel || fallbackModel.trim() === '') {
+                        throw new Error('Vision fallback enabled but no fallback model was selected or provided');
+                    }
+                    requestBody.model = fallbackModel;
+                    console.log(`👁️ Using vision fallback model ${fallbackModel} for image processing`);
+                }
+                else {
+                    throw new Error('Selected model does not support vision; enable Vision Fallback and pick a fallback model to process images.');
+                }
+            }
+        }
         if (this.options.tools && JSON.parse(this.options.tools).length > 0) {
             requestBody.tools = JSON.parse(this.options.tools);
             requestBody.tool_choice = this.options.tool_choice || 'auto';
@@ -164,7 +182,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             const langchainMessage = new messages_1.AIMessage({
                 content: choice.message.content || '',
             });
-            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_a = choice.message.content) === null || _a === void 0 ? void 0 : _a.length) || 0}, finish_reason=${choice.finish_reason}`);
+            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_c = choice.message.content) === null || _c === void 0 ? void 0 : _c.length) || 0}, finish_reason=${choice.finish_reason}`);
             const generation = {
                 text: choice.message.content || '',
                 generationInfo: {
@@ -349,10 +367,14 @@ class GitHubCopilotChatModel {
                 async getAvailableModels() {
                     return await DynamicModelLoader_1.loadAvailableModels.call(this);
                 },
+                async getVisionFallbackModels() {
+                    return await DynamicModelLoader_1.loadAvailableVisionModels.call(this);
+                },
             },
         };
     }
     async supplyData(itemIndex) {
+        var _a, _b;
         let model = this.getNodeParameter('model', itemIndex);
         if (model === '__manual__') {
             const customModel = this.getNodeParameter('customModel', itemIndex);
@@ -387,6 +409,10 @@ class GitHubCopilotChatModel {
         const minVSCodeVersion = (0, ModelVersionRequirements_1.getMinVSCodeVersion)(safeModel);
         const additionalHeaders = (0, ModelVersionRequirements_1.getAdditionalHeaders)(safeModel);
         console.log(`🔧 Model: ${safeModel} requires VS Code version: ${minVSCodeVersion}`);
+        if ((_b = (_a = safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.supports) === null || _b === void 0 ? void 0 : _b.vision) {
+            options.enableVision = true;
+            console.log(`👁️ Model ${safeModel} supports vision - enabling vision automatically`);
+        }
         let parsedTools = [];
         if (options.tools && options.tools.trim()) {
             try {
