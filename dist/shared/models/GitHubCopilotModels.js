@@ -14,7 +14,7 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 16384,
             streaming: true,
             provider: "OpenAI",
-            category: "chat"
+            category: "versatile"
         },
         recommended: true,
         status: "stable"
@@ -22,41 +22,151 @@ exports.GITHUB_COPILOT_MODELS = [
     {
         value: "gpt-5",
         name: "GPT-5",
-        description: "Latest generation GPT model with enhanced capabilities",
+        description: "Latest generation GPT model with vision (400K context, 128K output) - PREMIUM",
         capabilities: {
             toolsCalling: true,
             vision: true,
             multimodal: true,
-            maxContextTokens: 128000,
-            maxOutputTokens: 64000,
+            maxContextTokens: 400000,
+            maxOutputTokens: 128000,
             streaming: true,
             provider: "OpenAI",
-            category: "chat"
+            category: "versatile"
         },
         recommended: true,
-        status: "stable"
+        status: "stable",
+        isPremium: true
     },
     {
         value: "gpt-5-mini",
         name: "GPT-5 Mini",
-        description: "Faster and more efficient GPT-5 model",
+        description: "Faster GPT-5 model with vision (264K context, 64K output) - PREMIUM",
         capabilities: {
             toolsCalling: true,
             vision: true,
             multimodal: true,
-            maxContextTokens: 128000,
+            maxContextTokens: 264000,
             maxOutputTokens: 64000,
             streaming: true,
             provider: "OpenAI",
-            category: "chat"
+            category: "versatile"
         },
         recommended: true,
-        status: "stable"
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "gpt-5.1",
+        name: "GPT-5.1",
+        description: "Enhanced GPT-5 model with vision (264K context, 64K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 264000,
+            maxOutputTokens: 64000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "versatile"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "gpt-5.2",
+        name: "GPT-5.2",
+        description: "Latest GPT-5.2 model with vision (264K context, 64K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 264000,
+            maxOutputTokens: 64000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "versatile"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "gpt-5-codex",
+        name: "GPT-5-Codex (Preview)",
+        description: "GPT-5 optimized for coding with vision (400K context, 128K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 400000,
+            maxOutputTokens: 128000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "powerful"
+        },
+        recommended: true,
+        status: "preview",
+        isPremium: true
+    },
+    {
+        value: "gpt-5.1-codex",
+        name: "GPT-5.1-Codex",
+        description: "GPT-5.1 optimized for coding with vision (400K context, 128K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 400000,
+            maxOutputTokens: 128000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "powerful"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "gpt-5.1-codex-mini",
+        name: "GPT-5.1-Codex-Mini",
+        description: "Smaller GPT-5.1-Codex with vision (400K context, 128K output) - PREMIUM (0.33x)",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 400000,
+            maxOutputTokens: 128000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "powerful"
+        },
+        recommended: true,
+        status: "preview",
+        isPremium: true
+    },
+    {
+        value: "gpt-5.1-codex-max",
+        name: "GPT-5.1-Codex-Max",
+        description: "Largest GPT-5.1-Codex with vision (400K context, 128K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 400000,
+            maxOutputTokens: 128000,
+            streaming: true,
+            provider: "OpenAI",
+            category: "powerful"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
     },
     {
         value: "gpt-4.1",
         name: "GPT-4.1",
-        description: "Enhanced GPT-4 model with improved capabilities",
+        description: "Enhanced GPT-4 with vision (128K context, 16K output) - Chat Fallback Model",
         capabilities: {
             toolsCalling: true,
             vision: true,
@@ -65,7 +175,7 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 16384,
             streaming: true,
             provider: "OpenAI",
-            category: "chat"
+            category: "versatile"
         },
         recommended: true,
         status: "stable"
@@ -73,7 +183,7 @@ exports.GITHUB_COPILOT_MODELS = [
     {
         value: "gpt-4o",
         name: "GPT-4o",
-        description: "Most capable GPT-4 model with vision, optimized for chat and complex reasoning",
+        description: "GPT-4 Omni with vision (128K context, 4K output)",
         capabilities: {
             toolsCalling: true,
             vision: true,
@@ -82,7 +192,7 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 4096,
             streaming: true,
             provider: "OpenAI",
-            category: "multimodal"
+            category: "versatile"
         },
         recommended: true,
         status: "stable"
@@ -90,7 +200,7 @@ exports.GITHUB_COPILOT_MODELS = [
     {
         value: "gpt-4o-mini",
         name: "GPT-4o Mini",
-        description: "Faster and more cost-effective GPT-4o - VERIFIED WORKING",
+        description: "Faster GPT-4o - ⚠️ NO VISION SUPPORT (128K context, 4K output)",
         capabilities: {
             toolsCalling: true,
             vision: false,
@@ -99,15 +209,32 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 4096,
             streaming: true,
             provider: "OpenAI",
-            category: "chat"
+            category: "lightweight"
         },
         recommended: true,
         status: "stable"
     },
     {
+        value: "gpt-41-copilot",
+        name: "GPT-4.1 Copilot",
+        description: "GPT-4.1 fine-tuned for Copilot (completion type, not chat)",
+        capabilities: {
+            toolsCalling: false,
+            vision: false,
+            multimodal: false,
+            maxContextTokens: 128000,
+            maxOutputTokens: 16384,
+            streaming: true,
+            provider: "OpenAI",
+            category: "versatile"
+        },
+        recommended: false,
+        status: "stable"
+    },
+    {
         value: "o3-mini",
         name: "o3 Mini",
-        description: "New reasoning model optimized for coding and complex tasks",
+        description: "Reasoning model optimized for coding (200K context, 100K output) - PREMIUM",
         capabilities: {
             toolsCalling: true,
             vision: false,
@@ -119,12 +246,13 @@ exports.GITHUB_COPILOT_MODELS = [
             category: "reasoning"
         },
         recommended: true,
-        status: "stable"
+        status: "stable",
+        isPremium: true
     },
     {
         value: "oswe-vscode-prime",
         name: "Raptor mini (Preview)",
-        description: "Fast and versatile model optimized for VS Code by Microsoft (Azure OpenAI)",
+        description: "Microsoft model optimized for VS Code with vision (264K context, 64K output)",
         capabilities: {
             toolsCalling: true,
             vision: true,
@@ -133,32 +261,104 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 64000,
             streaming: true,
             provider: "Microsoft",
-            category: "chat"
+            category: "versatile"
         },
         recommended: true,
         status: "preview"
     },
     {
-        value: "claude-sonnet-4",
-        name: "Claude Sonnet 4",
-        description: "Latest Claude model with advanced reasoning capabilities",
+        value: "grok-code-fast-1",
+        name: "Grok Code Fast 1",
+        description: "xAI Grok model for fast coding (128K context, 64K output) - ⚠️ NO vision",
         capabilities: {
             toolsCalling: true,
-            vision: true,
-            multimodal: true,
+            vision: false,
+            multimodal: false,
             maxContextTokens: 128000,
-            maxOutputTokens: 16000,
+            maxOutputTokens: 64000,
             streaming: true,
-            provider: "Anthropic",
-            category: "chat"
+            provider: "xAI",
+            category: "lightweight"
         },
         recommended: true,
         status: "stable"
     },
     {
-        value: "claude-opus-4",
-        name: "Claude Opus 4",
-        description: "Most powerful Claude model for complex reasoning (may have performance issues)",
+        value: "claude-sonnet-4",
+        name: "Claude Sonnet 4",
+        description: "Claude Sonnet 4 with vision (216K context, 16K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 216000,
+            maxOutputTokens: 16000,
+            streaming: true,
+            provider: "Anthropic",
+            category: "versatile"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "claude-sonnet-4.5",
+        name: "Claude Sonnet 4.5",
+        description: "Claude Sonnet 4.5 with vision (144K context, 16K output) - PREMIUM",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 144000,
+            maxOutputTokens: 16000,
+            streaming: true,
+            provider: "Anthropic",
+            category: "versatile"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "claude-haiku-4.5",
+        name: "Claude Haiku 4.5",
+        description: "Fast Claude model with vision (144K context, 16K output) - PREMIUM (0.33x)",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 144000,
+            maxOutputTokens: 16000,
+            streaming: true,
+            provider: "Anthropic",
+            category: "versatile"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "claude-opus-4.5",
+        name: "Claude Opus 4.5",
+        description: "Most powerful Claude with vision (144K context, 16K output) - PREMIUM (3x)",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 144000,
+            maxOutputTokens: 16000,
+            streaming: true,
+            provider: "Anthropic",
+            category: "powerful"
+        },
+        recommended: true,
+        status: "stable",
+        isPremium: true
+    },
+    {
+        value: "claude-opus-41",
+        name: "Claude Opus 4.1",
+        description: "Claude Opus 4.1 with vision (80K context, 16K output) - PREMIUM (10x) - Limited",
         capabilities: {
             toolsCalling: false,
             vision: true,
@@ -167,66 +367,16 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 16000,
             streaming: true,
             provider: "Anthropic",
-            category: "reasoning"
+            category: "powerful"
         },
         recommended: false,
-        status: "stable"
-    },
-    {
-        value: "claude-3.7-sonnet",
-        name: "Claude 3.7 Sonnet",
-        description: "Enhanced Claude 3.5 with improved capabilities",
-        capabilities: {
-            toolsCalling: true,
-            vision: true,
-            multimodal: true,
-            maxContextTokens: 200000,
-            maxOutputTokens: 16384,
-            streaming: true,
-            provider: "Anthropic",
-            category: "chat"
-        },
-        recommended: true,
-        status: "stable"
-    },
-    {
-        value: "claude-3.7-sonnet-thought",
-        name: "Claude 3.7 Sonnet Thinking",
-        description: "Claude with visible reasoning process",
-        capabilities: {
-            toolsCalling: false,
-            vision: true,
-            multimodal: true,
-            maxContextTokens: 200000,
-            maxOutputTokens: 16384,
-            streaming: true,
-            provider: "Anthropic",
-            category: "reasoning"
-        },
-        recommended: false,
-        status: "stable"
-    },
-    {
-        value: "claude-3.5-sonnet",
-        name: "Claude 3.5 Sonnet",
-        description: "Anthropic's balanced model with excellent reasoning and creativity",
-        capabilities: {
-            toolsCalling: true,
-            vision: true,
-            multimodal: true,
-            maxContextTokens: 90000,
-            maxOutputTokens: 8192,
-            streaming: true,
-            provider: "Anthropic",
-            category: "chat"
-        },
-        recommended: true,
-        status: "stable"
+        status: "stable",
+        isPremium: true
     },
     {
         value: "gemini-2.5-pro",
         name: "Gemini 2.5 Pro",
-        description: "Most advanced Gemini model with reasoning capabilities",
+        description: "Gemini 2.5 Pro with vision (128K context, 64K output) - PREMIUM",
         capabilities: {
             toolsCalling: true,
             vision: true,
@@ -235,27 +385,47 @@ exports.GITHUB_COPILOT_MODELS = [
             maxOutputTokens: 64000,
             streaming: true,
             provider: "Google",
-            category: "reasoning"
+            category: "powerful"
         },
         recommended: true,
-        status: "stable"
+        status: "stable",
+        isPremium: true
     },
     {
-        value: "gemini-2.0-flash-001",
-        name: "Gemini 2.0 Flash",
-        description: "Fast and efficient Gemini model with large context window",
+        value: "gemini-3-pro-preview",
+        name: "Gemini 3 Pro (Preview)",
+        description: "Gemini 3 Pro with vision (128K context, 64K output) - PREMIUM",
         capabilities: {
             toolsCalling: true,
             vision: true,
             multimodal: true,
-            maxContextTokens: 1000000,
-            maxOutputTokens: 8192,
+            maxContextTokens: 128000,
+            maxOutputTokens: 64000,
             streaming: true,
             provider: "Google",
-            category: "chat"
+            category: "powerful"
         },
         recommended: true,
-        status: "stable"
+        status: "preview",
+        isPremium: true
+    },
+    {
+        value: "gemini-3-flash-preview",
+        name: "Gemini 3 Flash (Preview)",
+        description: "Fast Gemini 3 with vision (128K context, 64K output) - PREMIUM (0.33x)",
+        capabilities: {
+            toolsCalling: true,
+            vision: true,
+            multimodal: true,
+            maxContextTokens: 128000,
+            maxOutputTokens: 64000,
+            streaming: true,
+            provider: "Google",
+            category: "lightweight"
+        },
+        recommended: true,
+        status: "preview",
+        isPremium: true
     }
 ];
 class GitHubCopilotModelsManager {
@@ -280,6 +450,12 @@ class GitHubCopilotModelsManager {
     static getStableModels() {
         return exports.GITHUB_COPILOT_MODELS.filter(model => model.status === "stable");
     }
+    static getFreeModels() {
+        return exports.GITHUB_COPILOT_MODELS.filter(model => !model.isPremium);
+    }
+    static getPremiumModels() {
+        return exports.GITHUB_COPILOT_MODELS.filter(model => model.isPremium);
+    }
     static getModelByValue(value) {
         return exports.GITHUB_COPILOT_MODELS.find(model => model.value === value);
     }
@@ -297,11 +473,13 @@ class GitHubCopilotModelsManager {
                 return this.getRecommendedModels();
             case "coding":
                 return exports.GITHUB_COPILOT_MODELS.filter(model => model.capabilities.category === "coding" ||
+                    model.capabilities.category === "powerful" ||
                     model.capabilities.toolsCalling);
             case "vision":
                 return this.getVisionCapableModels();
             case "reasoning":
-                return exports.GITHUB_COPILOT_MODELS.filter(model => model.capabilities.category === "reasoning");
+                return exports.GITHUB_COPILOT_MODELS.filter(model => model.capabilities.category === "reasoning" ||
+                    model.capabilities.category === "powerful");
             case "tools":
                 return this.getToolsCapableModels();
             default:
@@ -311,10 +489,13 @@ class GitHubCopilotModelsManager {
 }
 exports.GitHubCopilotModelsManager = GitHubCopilotModelsManager;
 exports.DEFAULT_MODELS = {
-    GENERAL: "gpt-4o-mini",
-    CODING: "o3-mini",
+    GENERAL: "gpt-4.1",
+    CODING: "gpt-5-codex",
     VISION: "gpt-4o",
-    REASONING: "claude-sonnet-4",
-    TOOLS: "gpt-5",
-    MULTIMODAL: "gemini-2.5-pro"
+    VISION_FALLBACK: "gpt-4.1",
+    REASONING: "o3-mini",
+    TOOLS: "gpt-4.1",
+    MULTIMODAL: "gemini-2.5-pro",
+    FREE: "gpt-4.1",
+    PREMIUM: "gpt-5.2"
 };

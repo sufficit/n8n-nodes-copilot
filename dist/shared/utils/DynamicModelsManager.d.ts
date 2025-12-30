@@ -32,6 +32,17 @@ export declare class DynamicModelsManager {
     }>;
     static clearCache(oauthToken: string): void;
     static clearAllCache(): void;
+    static getModelFromCache(oauthToken: string, modelId: string): CopilotModel | null;
+    static modelSupportsVision(oauthToken: string, modelId: string): boolean | null;
+    static modelSupportsTools(oauthToken: string, modelId: string): boolean | null;
+    static getModelCapabilities(oauthToken: string, modelId: string): {
+        vision: boolean;
+        tools: boolean;
+        streaming: boolean;
+        maxContextTokens: number;
+        maxOutputTokens: number;
+        isPremium: boolean;
+    } | null;
     static getCacheInfo(oauthToken: string): {
         cached: boolean;
         modelsCount: number;

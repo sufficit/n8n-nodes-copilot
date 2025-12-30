@@ -14,6 +14,7 @@ import { makeApiRequest, CopilotResponse } from '../GitHubCopilotChatAPI/utils';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
 import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
 
 export class GitHubCopilotOpenAI implements INodeType {
 	description: INodeTypeDescription = {
@@ -331,8 +332,21 @@ export class GitHubCopilotOpenAI implements INodeType {
 
 				// Handle vision fallback when model doesn't support vision
 				if (hasVisionContent) {
-					const modelInfo = GitHubCopilotModelsManager.getModelByValue(copilotModel);
-					const supportsVision = modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal || (modelInfo as any)?.capabilities?.supports?.vision;
+					// Get credentials for dynamic model lookup
+					const credentials = await this.getCredentials('githubCopilotApi');
+					const oauthToken = credentials.oauthToken as string;
+
+					// Check vision support: first try dynamic API cache, then static list
+					let supportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(oauthToken, copilotModel);
+					
+					if (supportsVision === null) {
+						// Fallback to static model list
+						const modelInfo = GitHubCopilotModelsManager.getModelByValue(copilotModel);
+						supportsVision = !!(modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal);
+						console.log(`👁️ Vision check for model ${copilotModel}: using static list, supportsVision=${supportsVision}`);
+					} else {
+						console.log(`👁️ Vision check for model ${copilotModel}: using API cache, supportsVision=${supportsVision}`);
+					}
 					
 					if (!supportsVision) {
 						const enableVisionFallback = advancedOptions.enableVisionFallback as boolean || false;
@@ -352,7 +366,7 @@ export class GitHubCopilotOpenAI implements INodeType {
 							
 							console.log(`👁️ Model ${copilotModel} does not support vision - using fallback model: ${fallbackModel}`);
 							copilotModel = fallbackModel;
-						} else if (modelInfo) {
+						} else {
 							throw new NodeOperationError(
 								this.getNode(),
 								`Model ${copilotModel} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`,

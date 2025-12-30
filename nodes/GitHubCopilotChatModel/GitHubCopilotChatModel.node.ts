@@ -12,6 +12,7 @@ import {
 	DEFAULT_MODELS,
 } from '../../shared/models/GitHubCopilotModels';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
 import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 import { CHAT_MODEL_PROPERTIES } from '../../shared/properties/ModelProperties';
 import {
@@ -90,11 +91,13 @@ interface IModelConfig {
 class GitHubCopilotChatOpenAI extends ChatOpenAI {
 	private context: ISupplyDataFunctions;
 	private options: IOptions;
+	private oauthToken: string;
 
 	constructor(context: ISupplyDataFunctions, options: IOptions, config: IModelConfig) {
 		super(config as unknown as ConstructorParameters<typeof ChatOpenAI>[0]);
 		this.context = context;
 		this.options = options;
+		this.oauthToken = config.configuration.apiKey;
 	}
 
 	/**
@@ -265,11 +268,17 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 		// If this request contains images and the selected model doesn't support vision,
 		// optionally switch to a configured vision-capable fallback model.
 		if (hasVisionContent) {
-			const baseModelInfo = GitHubCopilotModelsManager.getModelByValue(this.model);
-			// Check both formats: capabilities.vision (static list) and capabilities.supports.vision (API)
-			const baseSupportsVision = !!(baseModelInfo?.capabilities?.vision) || !!((baseModelInfo as any)?.capabilities?.supports?.vision);
+			// First, try to get vision support from dynamic API cache (most accurate)
+			let baseSupportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(this.oauthToken, this.model);
 			
-			console.log(`👁️ Vision check for model ${this.model}: supportsVision=${baseSupportsVision}, modelInfo=${baseModelInfo ? 'found' : 'not found'}`);
+			// Fallback to static model list if not found in API cache
+			if (baseSupportsVision === null) {
+				const baseModelInfo = GitHubCopilotModelsManager.getModelByValue(this.model);
+				baseSupportsVision = !!(baseModelInfo?.capabilities?.vision);
+				console.log(`👁️ Vision check for model ${this.model}: using static list, supportsVision=${baseSupportsVision}`);
+			} else {
+				console.log(`👁️ Vision check for model ${this.model}: using API cache, supportsVision=${baseSupportsVision}`);
+			}
 
 			if (!baseSupportsVision) {
 				if ((this.options as IOptions).enableVisionFallback) {

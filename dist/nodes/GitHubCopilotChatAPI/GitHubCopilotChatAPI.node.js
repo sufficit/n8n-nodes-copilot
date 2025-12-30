@@ -5,6 +5,7 @@ const utils_1 = require("./utils");
 const nodeProperties_1 = require("./nodeProperties");
 const mediaDetection_1 = require("./utils/mediaDetection");
 const GitHubCopilotModels_1 = require("../../shared/models/GitHubCopilotModels");
+const DynamicModelsManager_1 = require("../../shared/utils/DynamicModelsManager");
 const GitHubCopilotEndpoints_1 = require("../../shared/utils/GitHubCopilotEndpoints");
 const DynamicModelLoader_1 = require("../../shared/models/DynamicModelLoader");
 class GitHubCopilotChatAPI {
@@ -42,7 +43,7 @@ class GitHubCopilotChatAPI {
         };
     }
     async execute() {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f;
         const items = this.getInputData();
         const returnData = [];
         for (let i = 0; i < items.length; i++) {
@@ -78,8 +79,17 @@ class GitHubCopilotChatAPI {
                     const enableRetry = advancedOptions.enableRetry !== false;
                     const maxRetries = advancedOptions.maxRetries || 3;
                     const includeMedia = this.getNodeParameter('includeMedia', i, false);
-                    const modelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(model);
-                    const supportsVision = ((_a = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision) || ((_b = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _b === void 0 ? void 0 : _b.multimodal) || ((_d = (_c = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _c === void 0 ? void 0 : _c.supports) === null || _d === void 0 ? void 0 : _d.vision);
+                    const credentials = await this.getCredentials('githubCopilotApi');
+                    const oauthToken = credentials.oauthToken;
+                    let supportsVision = DynamicModelsManager_1.DynamicModelsManager.modelSupportsVision(oauthToken, model);
+                    if (supportsVision === null) {
+                        const modelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(model);
+                        supportsVision = !!(((_a = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision) || ((_b = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _b === void 0 ? void 0 : _b.multimodal));
+                        console.log(`👁️ Vision check for model ${model}: using static list, supportsVision=${supportsVision}`);
+                    }
+                    else {
+                        console.log(`👁️ Vision check for model ${model}: using API cache, supportsVision=${supportsVision}`);
+                    }
                     let effectiveModel = model;
                     if (includeMedia && !supportsVision) {
                         const enableVisionFallback = advancedOptions.enableVisionFallback || false;
@@ -94,11 +104,8 @@ class GitHubCopilotChatAPI {
                             effectiveModel = fallbackModel;
                             console.log(`👁️ Model ${model} does not support vision - using fallback model: ${effectiveModel}`);
                         }
-                        else if (modelInfo) {
-                            throw new Error(`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`);
-                        }
                         else {
-                            console.warn(`⚠️ Model ${model} not found in known models list. Vision capability unknown - proceeding anyway.`);
+                            throw new Error(`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`);
                         }
                     }
                     const messages = [];
@@ -171,7 +178,7 @@ class GitHubCopilotChatAPI {
                         catch (error) {
                             const isLastAttempt = attempt >= totalAttempts;
                             const errorObj = error;
-                            const is403Error = errorObj.status === 403 || ((_e = errorObj.message) === null || _e === void 0 ? void 0 : _e.includes('403'));
+                            const is403Error = errorObj.status === 403 || ((_c = errorObj.message) === null || _c === void 0 ? void 0 : _c.includes('403'));
                             if (is403Error && enableRetry && !isLastAttempt) {
                                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
                                 console.log(`GitHub Copilot API attempt ${attempt}/${totalAttempts} failed with 403, retrying in ${delay}ms...`);
@@ -187,13 +194,13 @@ class GitHubCopilotChatAPI {
                         throw new Error(`Failed to get response from GitHub Copilot API after ${totalAttempts} attempts (${retriesUsed} retries)`);
                     }
                     const result = {
-                        message: ((_g = (_f = response.choices[0]) === null || _f === void 0 ? void 0 : _f.message) === null || _g === void 0 ? void 0 : _g.content) || '',
+                        message: ((_e = (_d = response.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content) || '',
                         model: effectiveModel,
                         originalModel: effectiveModel !== model ? model : undefined,
                         usedVisionFallback: effectiveModel !== model,
                         operation,
                         usage: response.usage || null,
-                        finish_reason: ((_h = response.choices[0]) === null || _h === void 0 ? void 0 : _h.finish_reason) || 'unknown',
+                        finish_reason: ((_f = response.choices[0]) === null || _f === void 0 ? void 0 : _f.finish_reason) || 'unknown',
                         retries: retriesUsed,
                     };
                     returnData.push({

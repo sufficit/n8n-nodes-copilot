@@ -38,6 +38,7 @@ const openai_1 = require("@langchain/openai");
 const messages_1 = require("@langchain/core/messages");
 const GitHubCopilotModels_1 = require("../../shared/models/GitHubCopilotModels");
 const GitHubCopilotEndpoints_1 = require("../../shared/utils/GitHubCopilotEndpoints");
+const DynamicModelsManager_1 = require("../../shared/utils/DynamicModelsManager");
 const DynamicModelLoader_1 = require("../../shared/models/DynamicModelLoader");
 const ModelProperties_1 = require("../../shared/properties/ModelProperties");
 const ModelVersionRequirements_1 = require("../../shared/models/ModelVersionRequirements");
@@ -47,6 +48,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         super(config);
         this.context = context;
         this.options = options;
+        this.oauthToken = config.configuration.apiKey;
     }
     invocationParams(options) {
         const params = super.invocationParams(options);
@@ -54,7 +56,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         return params;
     }
     async _generate(messages, options) {
-        var _a, _b, _c, _d;
+        var _a, _b;
         if (!messages || messages.length === 0) {
             throw new Error('No messages provided for generation');
         }
@@ -173,9 +175,15 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             stream: this.options.enableStreaming || false,
         };
         if (hasVisionContent) {
-            const baseModelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(this.model);
-            const baseSupportsVision = !!((_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision) || !!((_c = (_b = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _b === void 0 ? void 0 : _b.supports) === null || _c === void 0 ? void 0 : _c.vision);
-            console.log(`👁️ Vision check for model ${this.model}: supportsVision=${baseSupportsVision}, modelInfo=${baseModelInfo ? 'found' : 'not found'}`);
+            let baseSupportsVision = DynamicModelsManager_1.DynamicModelsManager.modelSupportsVision(this.oauthToken, this.model);
+            if (baseSupportsVision === null) {
+                const baseModelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(this.model);
+                baseSupportsVision = !!((_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision);
+                console.log(`👁️ Vision check for model ${this.model}: using static list, supportsVision=${baseSupportsVision}`);
+            }
+            else {
+                console.log(`👁️ Vision check for model ${this.model}: using API cache, supportsVision=${baseSupportsVision}`);
+            }
             if (!baseSupportsVision) {
                 if (this.options.enableVisionFallback) {
                     const fallbackRaw = this.options.visionFallbackModel;
@@ -283,7 +291,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             const langchainMessage = new messages_1.AIMessage({
                 content: choice.message.content || '',
             });
-            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_d = choice.message.content) === null || _d === void 0 ? void 0 : _d.length) || 0}, finish_reason=${choice.finish_reason}`);
+            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_b = choice.message.content) === null || _b === void 0 ? void 0 : _b.length) || 0}, finish_reason=${choice.finish_reason}`);
             const generation = {
                 text: choice.message.content || '',
                 generationInfo: {

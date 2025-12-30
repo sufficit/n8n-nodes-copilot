@@ -12,6 +12,7 @@ import { ChatMessage, ChatMessageContent, makeApiRequest, CopilotResponse } from
 import { nodeProperties } from './nodeProperties';
 import { processMediaFile } from './utils/mediaDetection';
 import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
 import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 
@@ -102,9 +103,21 @@ export class GitHubCopilotChatAPI implements INodeType {
 
 					const includeMedia = this.getNodeParameter('includeMedia', i, false) as boolean;
 
-					// Get model capabilities from centralized manager (if available)
-					const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
-					const supportsVision = modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal || (modelInfo as any)?.capabilities?.supports?.vision;
+					// Get credentials for dynamic model lookup
+					const credentials = await this.getCredentials('githubCopilotApi');
+					const oauthToken = credentials.oauthToken as string;
+
+					// Check vision support: first try dynamic API cache, then static list
+					let supportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(oauthToken, model);
+					
+					if (supportsVision === null) {
+						// Fallback to static model list
+						const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
+						supportsVision = !!(modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal);
+						console.log(`👁️ Vision check for model ${model}: using static list, supportsVision=${supportsVision}`);
+					} else {
+						console.log(`👁️ Vision check for model ${model}: using API cache, supportsVision=${supportsVision}`);
+					}
 
 					// Track actual model to use (may change via fallback)
 					let effectiveModel = model;
@@ -124,13 +137,9 @@ export class GitHubCopilotChatAPI implements INodeType {
 							
 							effectiveModel = fallbackModel;
 							console.log(`👁️ Model ${model} does not support vision - using fallback model: ${effectiveModel}`);
-						} else if (modelInfo) {
+						} else {
 							throw new Error(
 								`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`,
-							);
-						} else {
-							console.warn(
-								`⚠️ Model ${model} not found in known models list. Vision capability unknown - proceeding anyway.`,
 							);
 						}
 					}
