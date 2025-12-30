@@ -291,12 +291,12 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 
 		const startTime = Date.now();
 
-		// Check if vision should be enabled (auto-detected OR manually enabled)
-		const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+		// Vision is auto-enabled when images are detected in messages
+		const shouldUseVision = hasVisionContent;
 
-		// Log vision request if detected or enabled
+		// Log vision request if detected
 		if (shouldUseVision) {
-			console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
+			console.log(`👁️ Sending vision request with Copilot-Vision-Request header (images detected)`);
 		}
 
 		try {
@@ -566,13 +566,6 @@ export class GitHubCopilotChatModel implements INodeType {
 						},
 					},
 					{
-						displayName: 'Enable Vision (Image Processing)',
-						name: 'enableVision',
-						type: 'boolean',
-						default: false,
-						description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.). Note: This is auto-enabled for models that support vision.',
-					},
-					{
 						displayName: 'Enable Vision Fallback',
 						name: 'enableVisionFallback',
 						type: 'boolean',
@@ -737,11 +730,7 @@ export class GitHubCopilotChatModel implements INodeType {
 					'OpenAI-Intent': 'conversation-panel',
 					'Copilot-Integration-Id': 'vscode-chat',
 					...additionalHeaders,
-					...(options.enableVision &&
-						safeModelInfo?.capabilities.vision && {
-							'Copilot-Vision-Request': 'true',
-							'Copilot-Media-Request': 'true',
-						}),
+					// Vision headers are added at request time when images are detected
 				},
 			},
 		};

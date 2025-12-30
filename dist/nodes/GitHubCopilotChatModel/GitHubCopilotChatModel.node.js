@@ -196,9 +196,9 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             console.log(`🔧 Request includes ${requestBody.tools.length} tools`);
         }
         const startTime = Date.now();
-        const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+        const shouldUseVision = hasVisionContent;
         if (shouldUseVision) {
-            console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
+            console.log(`👁️ Sending vision request with Copilot-Vision-Request header (images detected)`);
         }
         try {
             if (hasVisionContent) {
@@ -445,13 +445,6 @@ class GitHubCopilotChatModel {
                             },
                         },
                         {
-                            displayName: 'Enable Vision (Image Processing)',
-                            name: 'enableVision',
-                            type: 'boolean',
-                            default: false,
-                            description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.). Note: This is auto-enabled for models that support vision.',
-                        },
-                        {
                             displayName: 'Enable Vision Fallback',
                             name: 'enableVisionFallback',
                             type: 'boolean',
@@ -583,11 +576,6 @@ class GitHubCopilotChatModel {
                     'OpenAI-Intent': 'conversation-panel',
                     'Copilot-Integration-Id': 'vscode-chat',
                     ...additionalHeaders,
-                    ...(options.enableVision &&
-                        (safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities.vision) && {
-                        'Copilot-Vision-Request': 'true',
-                        'Copilot-Media-Request': 'true',
-                    }),
                 },
             },
         };
