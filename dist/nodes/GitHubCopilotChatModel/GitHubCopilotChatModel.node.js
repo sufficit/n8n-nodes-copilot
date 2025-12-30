@@ -382,7 +382,7 @@ class GitHubCopilotChatModel {
             !token.startsWith('github_pat_')) {
             console.warn(`⚠️ Unexpected token format: ${tokenPrefix}...${tokenSuffix}. Trying API call anyway.`);
         }
-        const safeModel = modelInfo ? model : GitHubCopilotModels_1.DEFAULT_MODELS.GENERAL;
+        const safeModel = model || GitHubCopilotModels_1.DEFAULT_MODELS.GENERAL;
         const safeModelInfo = modelInfo || GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(GitHubCopilotModels_1.DEFAULT_MODELS.GENERAL);
         const minVSCodeVersion = (0, ModelVersionRequirements_1.getMinVSCodeVersion)(safeModel);
         const additionalHeaders = (0, ModelVersionRequirements_1.getAdditionalHeaders)(safeModel);
@@ -417,11 +417,15 @@ class GitHubCopilotChatModel {
                 baseURL: GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.BASE_URL,
                 apiKey: token,
                 defaultHeaders: {
-                    'User-Agent': 'GitHubCopilotChat/1.0.0 n8n/3.10.1',
-                    Accept: 'application/json',
+                    'User-Agent': 'GitHubCopilotChat/0.35.0',
+                    'Accept': 'application/json',
                     'Editor-Version': `vscode/${minVSCodeVersion}`,
-                    'Editor-Plugin-Version': 'copilot-chat/0.12.0',
+                    'Editor-Plugin-Version': 'copilot-chat/0.35.0',
                     'X-Request-Id': `n8n-chatmodel-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                    'X-GitHub-Api-Version': '2025-05-01',
+                    'X-Interaction-Type': 'copilot-chat',
+                    'OpenAI-Intent': 'conversation-panel',
+                    'Copilot-Integration-Id': 'vscode-chat',
                     ...additionalHeaders,
                     ...(options.enableVision &&
                         (safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities.vision) && {

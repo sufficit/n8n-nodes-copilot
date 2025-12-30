@@ -544,7 +544,11 @@ export class GitHubCopilotChatModel implements INodeType {
 			);
 		}
 
-		const safeModel = modelInfo ? model : DEFAULT_MODELS.GENERAL;
+		// Trust the model ID if it's provided (either from list or manual)
+		// Fallback only if model is empty or undefined
+		const safeModel = model || DEFAULT_MODELS.GENERAL;
+
+		// Get model info for capabilities, fallback to general model info if not found in static list
 		const safeModelInfo =
 			modelInfo || GitHubCopilotModelsManager.getModelByValue(DEFAULT_MODELS.GENERAL);
 
@@ -587,11 +591,17 @@ export class GitHubCopilotChatModel implements INodeType {
 				baseURL: GITHUB_COPILOT_API.BASE_URL,
 				apiKey: token,
 				defaultHeaders: {
-					'User-Agent': 'GitHubCopilotChat/1.0.0 n8n/3.10.1',
-					Accept: 'application/json',
+					'User-Agent': 'GitHubCopilotChat/0.35.0',
+					'Accept': 'application/json',
 					'Editor-Version': `vscode/${minVSCodeVersion}`,
-					'Editor-Plugin-Version': 'copilot-chat/0.12.0',
+					'Editor-Plugin-Version': 'copilot-chat/0.35.0',
 					'X-Request-Id': `n8n-chatmodel-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+					// CRITICAL: These headers are REQUIRED for premium/new models (Raptor Mini, Gemini 3, etc.)
+					// Without these, you'll get 403 Forbidden errors
+					'X-GitHub-Api-Version': '2025-05-01',
+					'X-Interaction-Type': 'copilot-chat',
+					'OpenAI-Intent': 'conversation-panel',
+					'Copilot-Integration-Id': 'vscode-chat',
 					...additionalHeaders,
 					...(options.enableVision &&
 						safeModelInfo?.capabilities.vision && {

@@ -45,6 +45,11 @@ exports.MODEL_VERSION_REQUIREMENTS = {
         supportedEndpoints: ["/chat/completions", "/responses"],
         preview: true,
     },
+    "oswe-vscode-prime": {
+        minVSCodeVersion: "1.96.0",
+        supportedEndpoints: ["/chat/completions", "/responses"],
+        preview: true,
+    },
 };
 exports.DEFAULT_MODEL_REQUIREMENTS = {
     minVSCodeVersion: "1.95.0",
