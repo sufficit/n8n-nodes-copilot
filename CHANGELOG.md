@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.38.36] - 2025-12-30
+
+### Added
+- **GitHubCopilotChatAPI**: Vision Fallback feature
+  - **Enable Vision Fallback** in Advanced Options
+  - **Vision Fallback Model** dropdown (vision-capable models only)
+  - **Custom Vision Model** for manual model id entry
+  - Automatic model switching when primary model doesn't support vision
+- **GitHubCopilotOpenAI**: Vision Fallback feature
+  - Same options as ChatAPI for consistency
+  - Auto-detection of vision content in messages
+  - Proper Copilot-Vision-Request header when images detected
+
+### Fixed
+- **GitHubCopilotApiUtils**: Removed duplicated code causing TypeScript compilation errors
+- **Vision Fallback UI**: Options now properly appear in Advanced Options collection
+- **Response metadata**: Added `usedVisionFallback` and `originalModel` fields when fallback is used
+
 ## [3.38.35] - 2025-12-30
 
 ### Added

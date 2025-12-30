@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GitHubCopilotChatModel = void 0;
 const openai_1 = require("@langchain/openai");
@@ -168,6 +201,66 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
         }
         try {
+            if (hasVisionContent) {
+                console.log('👁️ Preparing image uploads for vision content...');
+                for (const msg of requestBody.messages) {
+                    if (!(msg === null || msg === void 0 ? void 0 : msg.content) || !Array.isArray(msg.content))
+                        continue;
+                    for (const part of msg.content) {
+                        if ((part === null || part === void 0 ? void 0 : part.type) === 'image_url' && part.image_url && part.image_url.url) {
+                            const url = String(part.image_url.url || '');
+                            try {
+                                let buffer = null;
+                                let mime = 'application/octet-stream';
+                                let filename = `upload-${Date.now()}.bin`;
+                                if (url.startsWith('data:image/')) {
+                                    const match = url.match(/^data:(image\/[^;]+);base64,(.*)$/);
+                                    if (match) {
+                                        mime = match[1];
+                                        const base64 = match[2];
+                                        buffer = Buffer.from(base64, 'base64');
+                                        filename = `image-${Date.now()}.${mime.split('/').pop()}`;
+                                    }
+                                }
+                                else if (url.startsWith('http://') || url.startsWith('https://')) {
+                                    const res = await fetch(url);
+                                    if (!res.ok)
+                                        throw new Error(`Failed to download image: ${res.status}`);
+                                    mime = res.headers.get('content-type') || mime;
+                                    const arrayBuffer = await res.arrayBuffer();
+                                    buffer = Buffer.from(arrayBuffer);
+                                    const ext = (mime.split('/')[1] || 'png').split('+')[0];
+                                    filename = `image-${Date.now()}.${ext}`;
+                                }
+                                else {
+                                    continue;
+                                }
+                                if (buffer) {
+                                    try {
+                                        const uploadResult = await Promise.resolve().then(() => __importStar(require('../../shared/utils/GitHubCopilotApiUtils'))).then(m => m.uploadFileToCopilot(this.context, buffer, filename, mime));
+                                        const newUrl = (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.url) || (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.file_url) || (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.id) ? (uploadResult.url || `copilot-file://${uploadResult.id}`) : null;
+                                        if (newUrl) {
+                                            part.image_url.url = newUrl;
+                                            console.log(`👁️ Uploaded image and replaced URL with ${newUrl}`);
+                                        }
+                                        else {
+                                            console.warn('⚠️ File upload succeeded but no URL/id returned by API', uploadResult);
+                                        }
+                                    }
+                                    catch (err) {
+                                        console.error('❌ Image upload failed:', err instanceof Error ? err.message : String(err));
+                                        throw err;
+                                    }
+                                }
+                            }
+                            catch (err) {
+                                console.error('❌ Preparing/uploading image failed:', err instanceof Error ? err.message : String(err));
+                                throw err;
+                            }
+                        }
+                    }
+                }
+            }
             const response = await (0, GitHubCopilotApiUtils_1.makeGitHubCopilotRequest)(this.context, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, shouldUseVision);
             const endTime = Date.now();
             const latency = endTime - startTime;
@@ -356,7 +449,44 @@ class GitHubCopilotChatModel {
                             name: 'enableVision',
                             type: 'boolean',
                             default: false,
-                            description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
+                            description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.). Note: This is auto-enabled for models that support vision.',
+                        },
+                        {
+                            displayName: 'Enable Vision Fallback',
+                            name: 'enableVisionFallback',
+                            type: 'boolean',
+                            default: false,
+                            description: 'When the primary model does not support vision, automatically use a vision-capable fallback model to process images. Enable this if you want to send images but your primary model does not support vision.',
+                        },
+                        {
+                            displayName: 'Vision Fallback Model',
+                            name: 'visionFallbackModel',
+                            type: 'options',
+                            typeOptions: {
+                                loadOptionsMethod: 'getVisionFallbackModels',
+                            },
+                            default: '',
+                            description: 'Select a vision-capable model to use when processing images with a non-vision primary model',
+                            displayOptions: {
+                                show: {
+                                    enableVisionFallback: [true],
+                                },
+                            },
+                        },
+                        {
+                            displayName: 'Custom Vision Model',
+                            name: 'visionFallbackCustomModel',
+                            type: 'string',
+                            default: '',
+                            placeholder: 'gpt-4o, claude-sonnet-4, gemini-2.0-flash, etc.',
+                            description: 'Enter the model name manually for vision fallback',
+                            hint: 'Enter the exact model ID for vision processing (e.g., gpt-4o, claude-sonnet-4)',
+                            displayOptions: {
+                                show: {
+                                    enableVisionFallback: [true],
+                                    visionFallbackModel: ['__manual__'],
+                                },
+                            },
                         },
                     ],
                 },

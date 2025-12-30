@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeGitHubCopilotRequest = makeGitHubCopilotRequest;
+exports.uploadFileToCopilot = uploadFileToCopilot;
 exports.downloadFileFromUrl = downloadFileFromUrl;
 exports.getFileFromBinary = getFileFromBinary;
 exports.getImageMimeType = getImageMimeType;
@@ -87,6 +88,41 @@ async function makeGitHubCopilotRequest(context, endpoint, body, hasMedia = fals
         headers,
         body: JSON.stringify(body),
     };
+    async function uploadFile(buffer, filename, mimeType = 'application/octet-stream') {
+        const url = `${GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+        let form;
+        try {
+            form = new FormData();
+            const blob = new Blob([buffer], { type: mimeType });
+            form.append('file', blob, filename);
+        }
+        catch (err) {
+            const FormData = require('form-data');
+            form = new FormData();
+            form.append('file', buffer, { filename, contentType: mimeType });
+        }
+        const uploadHeaders = {
+            ...GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+            'X-GitHub-Api-Version': '2025-05-01',
+            'X-Interaction-Type': 'copilot-chat',
+            'OpenAI-Intent': 'conversation-panel',
+            'Copilot-Integration-Id': 'vscode-chat',
+        };
+        if (typeof form.getHeaders === 'function') {
+            Object.assign(uploadHeaders, form.getHeaders());
+        }
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: uploadHeaders,
+            body: form,
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+        }
+        const json = await res.json();
+        return json;
+    }
     const fullUrl = `${GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.BASE_URL}${endpoint}`;
     let lastError = null;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -104,19 +140,15 @@ async function makeGitHubCopilotRequest(context, endpoint, body, hasMedia = fals
                 const errorText = await response.text();
                 if (response.status === 400) {
                     console.log(`🚫 400 Bad Request detected - not retrying`);
-                    const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText}`;
-                    throw new Error(enhancedError);
+                    throw new Error(`GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText}`);
                 }
                 const tokenPrefix = token.substring(0, 4);
                 const tokenSuffix = token.substring(token.length - 5);
                 const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
                 console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
                 console.error(`❌ Error details: ${errorText}`);
-                console.error(`❌ Used credential type: ${credentialType}`);
-                console.error(`❌ Token format used: ${tokenInfo}`);
                 console.error(`❌ Attempt: ${attempt}/${MAX_RETRIES}`);
-                const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`;
-                throw new Error(enhancedError);
+                throw new Error(`GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`);
             }
             if (attempt > 1) {
                 console.log(`✅ GitHub Copilot API succeeded on attempt ${attempt}/${MAX_RETRIES}`);
@@ -143,6 +175,53 @@ async function makeGitHubCopilotRequest(context, endpoint, body, hasMedia = fals
         }
     }
     throw lastError || new Error("GitHub Copilot API request failed after all retries");
+}
+async function uploadFileToCopilot(context, buffer, filename, mimeType = 'application/octet-stream') {
+    let credentialType = 'githubCopilotApi';
+    try {
+        credentialType = context.getNodeParameter('credentialType', 0, 'githubCopilotApi');
+    }
+    catch { }
+    const credentials = await context.getCredentials(credentialType);
+    if (!credentials || !credentials.token) {
+        throw new Error('GitHub Copilot: No token found in credentials for file upload');
+    }
+    const githubToken = credentials.token;
+    const token = await OAuthTokenManager_1.OAuthTokenManager.getValidOAuthToken(githubToken);
+    const url = `${GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+    let form;
+    try {
+        form = new FormData();
+        const blob = new Blob([buffer], { type: mimeType });
+        form.append('file', blob, filename);
+    }
+    catch (err) {
+        const FormData = require('form-data');
+        form = new FormData();
+        form.append('file', buffer, { filename, contentType: mimeType });
+    }
+    const headers = {
+        ...GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+        'X-GitHub-Api-Version': '2025-05-01',
+        'X-Interaction-Type': 'copilot-chat',
+        'OpenAI-Intent': 'conversation-panel',
+        'Copilot-Integration-Id': 'vscode-chat',
+        'Copilot-Vision-Request': 'true',
+        'Copilot-Media-Request': 'true',
+    };
+    if (typeof form.getHeaders === 'function') {
+        Object.assign(headers, form.getHeaders());
+    }
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: form,
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+    }
+    return await res.json();
 }
 async function downloadFileFromUrl(url) {
     const response = await fetch(url);

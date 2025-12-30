@@ -4,6 +4,7 @@ export declare class GitHubCopilotOpenAI implements INodeType {
     methods: {
         loadOptions: {
             getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]>;
+            getVisionFallbackModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]>;
         };
     };
     execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]>;

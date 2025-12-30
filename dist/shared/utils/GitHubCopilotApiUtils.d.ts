@@ -38,6 +38,7 @@ export interface RetryConfig {
     retryOn403?: boolean;
 }
 export declare function makeGitHubCopilotRequest(context: IExecuteFunctions, endpoint: string, body: Record<string, unknown>, hasMedia?: boolean, retryConfig?: RetryConfig): Promise<CopilotResponse>;
+export declare function uploadFileToCopilot(context: IExecuteFunctions, buffer: Buffer, filename: string, mimeType?: string): Promise<any>;
 export declare function downloadFileFromUrl(url: string): Promise<Buffer>;
 export declare function getFileFromBinary(context: IExecuteFunctions, itemIndex: number, propertyName: string): Promise<Buffer>;
 export declare function getImageMimeType(filename: string): string;

@@ -570,7 +570,44 @@ export class GitHubCopilotChatModel implements INodeType {
 						name: 'enableVision',
 						type: 'boolean',
 						default: false,
-						description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
+						description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.). Note: This is auto-enabled for models that support vision.',
+					},
+					{
+						displayName: 'Enable Vision Fallback',
+						name: 'enableVisionFallback',
+						type: 'boolean',
+						default: false,
+						description: 'When the primary model does not support vision, automatically use a vision-capable fallback model to process images. Enable this if you want to send images but your primary model does not support vision.',
+					},
+					{
+						displayName: 'Vision Fallback Model',
+						name: 'visionFallbackModel',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getVisionFallbackModels',
+						},
+						default: '',
+						description: 'Select a vision-capable model to use when processing images with a non-vision primary model',
+						displayOptions: {
+							show: {
+								enableVisionFallback: [true],
+							},
+						},
+					},
+					{
+						displayName: 'Custom Vision Model',
+						name: 'visionFallbackCustomModel',
+						type: 'string',
+						default: '',
+						placeholder: 'gpt-4o, claude-sonnet-4, gemini-2.0-flash, etc.',
+						description: 'Enter the model name manually for vision fallback',
+						hint: 'Enter the exact model ID for vision processing (e.g., gpt-4o, claude-sonnet-4)',
+						displayOptions: {
+							show: {
+								enableVisionFallback: [true],
+								visionFallbackModel: ['__manual__'],
+							},
+						},
 					},
 				],
 			},

@@ -13,7 +13,7 @@ import { nodeProperties } from './nodeProperties';
 import { processMediaFile } from './utils/mediaDetection';
 import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
-import { loadAvailableModels } from '../../shared/models/DynamicModelLoader';
+import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 
 export class GitHubCopilotChatAPI implements INodeType {
 	description: INodeTypeDescription = {
@@ -43,6 +43,9 @@ export class GitHubCopilotChatAPI implements INodeType {
 		loadOptions: {
 			async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				return await loadAvailableModels.call(this);
+			},
+			async getVisionFallbackModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return await loadAvailableVisionModels.call(this);
 			},
 		},
 	};
@@ -101,18 +104,31 @@ export class GitHubCopilotChatAPI implements INodeType {
 
 					// Get model capabilities from centralized manager (if available)
 					const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
+					const supportsVision = modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal || (modelInfo as any)?.capabilities?.supports?.vision;
 
-					// Validate model capabilities before processing (only if media is included)
-					if (includeMedia) {
-						if (
-							modelInfo &&
-							!modelInfo?.capabilities.vision &&
-							!modelInfo?.capabilities.multimodal
-						) {
+					// Track actual model to use (may change via fallback)
+					let effectiveModel = model;
+
+					// Handle vision fallback when model doesn't support vision but media is included
+					if (includeMedia && !supportsVision) {
+						const enableVisionFallback = advancedOptions.enableVisionFallback as boolean || false;
+						if (enableVisionFallback) {
+							const fallbackModelRaw = advancedOptions.visionFallbackModel as string;
+							const fallbackModel = fallbackModelRaw === '__manual__' 
+								? (advancedOptions.visionFallbackCustomModel as string)
+								: fallbackModelRaw;
+							
+							if (!fallbackModel || fallbackModel.trim() === '') {
+								throw new Error('Vision fallback enabled but no fallback model was selected or provided. Please select a vision-capable model in Advanced Options.');
+							}
+							
+							effectiveModel = fallbackModel;
+							console.log(`👁️ Model ${model} does not support vision - using fallback model: ${effectiveModel}`);
+						} else if (modelInfo) {
 							throw new Error(
-								`Model ${model} does not support vision/image processing. Please select a model with vision capabilities.`,
+								`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`,
 							);
-						} else if (!modelInfo) {
+						} else {
 							console.warn(
 								`⚠️ Model ${model} not found in known models list. Vision capability unknown - proceeding anyway.`,
 							);
@@ -192,13 +208,17 @@ export class GitHubCopilotChatAPI implements INodeType {
 						});
 					}
 
-					// Prepare request body
+					// Prepare request body - use effectiveModel (may be fallback model for vision)
 					const requestBody: Record<string, unknown> = {
-						model,
+						model: effectiveModel,
 						messages,
 						stream: false,
 						...advancedOptions,
 					};
+					// Remove vision fallback options from request body (they're node-only options)
+					delete requestBody.enableVisionFallback;
+					delete requestBody.visionFallbackModel;
+					delete requestBody.visionFallbackCustomModel;
 
 					// Make API request with retry logic
 					const hasMedia = includeMedia;
@@ -248,7 +268,9 @@ export class GitHubCopilotChatAPI implements INodeType {
 					// Extract result with retry information
 					const result: IDataObject = {
 						message: response.choices[0]?.message?.content || '',
-						model,
+						model: effectiveModel,
+						originalModel: effectiveModel !== model ? model : undefined,
+						usedVisionFallback: effectiveModel !== model,
 						operation,
 						usage: response.usage || null,
 						finish_reason: response.choices[0]?.finish_reason || 'unknown',
