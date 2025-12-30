@@ -162,13 +162,20 @@ export async function makeGitHubCopilotRequest(
   }
     
   // Prepare headers using centralized configuration
+  // CRITICAL: X-GitHub-Api-Version: 2025-05-01 and Copilot-Integration-Id are REQUIRED
+  // for newer models like Raptor Mini (oswe-vscode-prime), Gemini 3, etc.
+  // Source: microsoft/vscode-copilot-chat networking.ts
   const headers: Record<string, string> = {
     ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
-    // Add VS Code client headers for better compatibility and reduced 403 errors
-    "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
-    // Note: X-GitHub-Api-Version removed - causes "invalid apiVersion" errors
+    // VS Code client headers for compatibility
+    "User-Agent": "GitHubCopilotChat/0.35.0",
     "Editor-Version": `vscode/${minVSCodeVersion}`,
-    "Editor-Plugin-Version": "copilot/1.0.0",
+    "Editor-Plugin-Version": "copilot-chat/0.35.0",
+    // CRITICAL: These headers are required for newer models (Raptor Mini, Gemini 3, etc.)
+    "X-GitHub-Api-Version": "2025-05-01",
+    "X-Interaction-Type": "copilot-chat",
+    "OpenAI-Intent": "conversation-panel",
+    "Copilot-Integration-Id": "vscode-chat",
     ...additionalHeaders,
   };
 

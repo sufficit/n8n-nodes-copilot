@@ -1,0 +1,10 @@
+import { IExecuteFunctions } from 'n8n-workflow';
+import { CopilotResponse, RetryConfig, downloadFileFromUrl as sharedDownloadFileFromUrl, getFileFromBinary as sharedGetFileFromBinary, estimateTokens as sharedEstimateTokens } from '../../../shared/utils/GitHubCopilotApiUtils';
+export declare function makeApiRequest(context: IExecuteFunctions, endpoint: string, body: Record<string, unknown>, hasMedia?: boolean, retryConfig?: RetryConfig): Promise<CopilotResponse>;
+export declare const downloadFileFromUrl: typeof sharedDownloadFileFromUrl;
+export declare const getFileFromBinary: typeof sharedGetFileFromBinary;
+export declare const estimateTokens: typeof sharedEstimateTokens;
+export declare function getImageMimeType(buffer: Buffer): string;
+export declare function getImageMimeTypeFromFilename(filename: string): string;
+export declare function validateFileSize(buffer: Buffer, maxSize?: number): boolean;
+export type { CopilotResponse };

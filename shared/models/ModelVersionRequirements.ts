@@ -81,6 +81,13 @@ export const MODEL_VERSION_REQUIREMENTS: Record<string, ModelRequirements> = {
     supportedEndpoints: ["/chat/completions", "/responses"],
     preview: true,
   },
+
+  // Raptor Mini (oswe-vscode-prime)
+  "oswe-vscode-prime": {
+    minVSCodeVersion: "1.96.0",
+    supportedEndpoints: ["/chat/completions", "/responses"],
+    preview: true,
+  },
   
   // Add more models with special requirements here as needed
 };

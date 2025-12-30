@@ -4,6 +4,8 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	IDataObject,
+	ILoadOptionsFunctions,
+	INodePropertyOptions,
 } from 'n8n-workflow';
 
 import {
@@ -477,6 +479,77 @@ async function consolidatedModelTest(
 	}
 }
 
+// Test a single chat model
+async function testSingleModel(
+	token: string,
+	modelId: string,
+	testMessage: string,
+	enableRetry = true,
+	maxRetries = 3,
+): Promise<IDataObject> {
+	const testStart = Date.now();
+
+	try {
+		console.log(`🧪 Testing single model: ${modelId}`);
+
+		const response = await fetch(GitHubCopilotEndpoints.getChatCompletionsUrl(), {
+			method: 'POST',
+			headers: GitHubCopilotEndpoints.getAuthHeaders(token),
+			body: JSON.stringify({
+				model: modelId,
+				messages: [
+					{
+						role: 'user',
+						content: testMessage,
+					},
+				],
+				max_tokens: 100,
+				temperature: 0.1,
+			}),
+		});
+
+		const testEnd = Date.now();
+		const responseTime = testEnd - testStart;
+
+		if (response.ok) {
+			const data = (await response.json()) as Record<string, unknown>;
+			const choices = (data.choices as unknown[]) || [];
+			const firstChoice = (choices[0] as Record<string, unknown>) || {};
+			const message = (firstChoice.message as Record<string, unknown>) || {};
+			const usage = (data.usage as Record<string, unknown>) || {};
+
+			return {
+				success: true,
+				modelId: modelId,
+				responseTime: `${responseTime}ms`,
+				response: (message.content as string) || 'No content',
+				usage: usage,
+				finishReason: (firstChoice.finish_reason as string) || 'unknown',
+				timestamp: new Date().toISOString(),
+				rawResponse: data,
+			};
+		} else {
+			const errorText = await response.text();
+			return {
+				success: false,
+				modelId: modelId,
+				responseTime: `${responseTime}ms`,
+				error: `HTTP ${response.status}: ${errorText}`,
+				timestamp: new Date().toISOString(),
+			};
+		}
+	} catch (error) {
+		const testEnd = Date.now();
+		return {
+			success: false,
+			modelId: modelId,
+			responseTime: `${testEnd - testStart}ms`,
+			error: error instanceof Error ? error.message : 'Unknown error',
+			timestamp: new Date().toISOString(),
+		};
+	}
+}
+
 // Generate recommendations based on test results
 function generateTestRecommendations(testResults: Record<string, unknown>): unknown[] {
 	const recommendations = [];
@@ -765,9 +838,41 @@ export class GitHubCopilotTest implements INodeType {
 						description:
 							'Test all available chat models 5 times each and generate comprehensive report ⚠️ This test may take up to 2 minutes to complete',
 					},
+					{
+						name: 'Test Single Chat Model',
+						value: 'testSingleModel',
+						description: 'Test a specific chat model with a custom message',
+					},
 				],
 				default: 'listModels',
 				description: 'Select the test function to execute',
+			},
+			{
+				displayName: 'Model Name or ID',
+				name: 'modelId',
+				type: 'options',
+				description:
+					'Select the model to test. Choose from the list, or specify an ID using an expression.',
+				typeOptions: {
+					loadOptionsMethod: 'getModels',
+				},
+				displayOptions: {
+					show: {
+						testFunction: ['testSingleModel'],
+					},
+				},
+				default: '',
+			},
+			{
+				displayName: 'Test Message',
+				name: 'testMessage',
+				type: 'string',
+				default: "Hello! Please respond with just 'OK' to confirm you're working.",
+				displayOptions: {
+					show: {
+						testFunction: ['testSingleModel'],
+					},
+				},
 			},
 			{
 				displayName: 'Tests Per Model',
@@ -816,6 +921,47 @@ export class GitHubCopilotTest implements INodeType {
 				],
 			},
 		],
+	};
+
+	methods = {
+		loadOptions: {
+			// Get available models for the dropdown
+			async getModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const credentials = await this.getCredentials('githubCopilotApi');
+				const token = credentials.token as string;
+
+				if (!token) {
+					throw new Error('Credentials are required to load models');
+				}
+
+				try {
+					// Use DynamicModelsManager to get models (handles caching)
+					// We need an OAuth token for this
+					const oauthToken = await OAuthTokenManager.getValidOAuthToken(token);
+					const models = await DynamicModelsManager.getAvailableModels(oauthToken);
+
+					return models
+						.filter((model: any) => {
+							const type = model.capabilities?.type;
+							return type !== 'embeddings'; // Only chat models
+						})
+						.map((model: any) => {
+							const multiplier = model.billing?.multiplier
+								? ` (${model.billing.multiplier}x)`
+								: '';
+							return {
+								name: `${model.name || model.id}${multiplier}`,
+								value: model.id,
+								description: `${model.vendor || 'GitHub'} - ${model.id}`,
+							};
+						})
+						.sort((a, b) => a.name.localeCompare(b.name));
+				} catch (error) {
+					const errorMessage = error instanceof Error ? error.message : String(error);
+					throw new Error(`Failed to load models: ${errorMessage}`);
+				}
+			},
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -867,6 +1013,17 @@ export class GitHubCopilotTest implements INodeType {
 						break;
 					case 'consolidatedTest':
 						result = await consolidatedModelTest(token, enableRetry, maxRetries, testsPerModel);
+						break;
+					case 'testSingleModel':
+						const modelId = this.getNodeParameter('modelId', i) as string;
+						const testMessage = this.getNodeParameter('testMessage', i) as string;
+						result = await testSingleModel(
+							token,
+							modelId,
+							testMessage,
+							enableRetry,
+							maxRetries,
+						);
 						break;
 					default:
 						throw new Error(`Unknown test function: ${testFunction}`);

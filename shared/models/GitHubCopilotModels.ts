@@ -137,8 +137,8 @@ export const GITHUB_COPILOT_MODELS: GitHubCopilotModel[] = [
     description: "Faster and more cost-effective GPT-4o - VERIFIED WORKING",
     capabilities: {
       toolsCalling: true,
-      vision: false, // Based on API response
-      multimodal: false,
+      vision: true,
+      multimodal: true,
       maxContextTokens: 128000,
       maxOutputTokens: 4096,
       streaming: true,
@@ -164,6 +164,25 @@ export const GITHUB_COPILOT_MODELS: GitHubCopilotModel[] = [
     },
     recommended: true,
     status: "stable"
+  },
+
+  // Microsoft Models
+  {
+    value: "oswe-vscode-prime",
+    name: "Raptor mini (Preview)",
+    description: "Fast and versatile model optimized for VS Code by Microsoft (Azure OpenAI)",
+    capabilities: {
+      toolsCalling: true,
+      vision: true,
+      multimodal: true,
+      maxContextTokens: 264000,
+      maxOutputTokens: 64000,
+      streaming: true,
+      provider: "Microsoft",
+      category: "chat"
+    },
+    recommended: true,
+    status: "preview"
   },
 
   // Anthropic Claude Models - VERIFIED via API

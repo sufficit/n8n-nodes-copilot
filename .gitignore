@@ -1,5 +1,4 @@
 node_modules/
-dist/
 temp/
 results/
 *.log
@@ -21,3 +20,7 @@ yarn-error.log*
 models.json
 package-lock.json
 *-lock.json
+.token
+.token.oauth
+.token.oauth.generated.json.token.oauth.info.json
+.machine-id

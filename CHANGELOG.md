@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.38.34] - 2025-12-30
+
+### Fixed
+- **GitHubCopilotChatModel**: Added critical headers to `defaultHeaders` for premium model access
+  - `X-GitHub-Api-Version: 2025-05-01`
+  - `X-Interaction-Type: copilot-chat`
+  - `OpenAI-Intent: conversation-panel`
+  - `Copilot-Integration-Id: vscode-chat`
+- **AI Agent 403 Fix**: Models like Raptor Mini (oswe-vscode-prime) now work correctly in AI Agent node
+- Updated User-Agent and Editor-Plugin-Version to match VS Code Copilot Chat
+
+### Updated
+- **Raptor Mini model**: Updated capabilities to match API (264K context, 64K output)
+- **temp_models.json**: Refreshed with complete model list (39 models)
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

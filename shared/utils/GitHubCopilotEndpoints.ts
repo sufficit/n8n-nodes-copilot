@@ -130,9 +130,21 @@ export class GitHubCopilotEndpoints {
     
   /**
      * Get headers with authentication
+     * CRITICAL: Includes required headers for premium models (Claude, Gemini, GPT-5, etc.)
+     * Source: microsoft/vscode-copilot-chat networking.ts
      */
   static getAuthHeaders(token: string, includeVSCodeHeaders = false): Record<string, string> {
-    const headers = GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token);
+    const headers: Record<string, string> = {
+      ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+      // CRITICAL: These headers are required for premium models
+      "User-Agent": "GitHubCopilotChat/0.35.0",
+      "Editor-Version": "vscode/1.96.0",
+      "Editor-Plugin-Version": "copilot-chat/0.35.0",
+      "X-GitHub-Api-Version": "2025-05-01",
+      "X-Interaction-Type": "copilot-chat",
+      "OpenAI-Intent": "conversation-panel",
+      "Copilot-Integration-Id": "vscode-chat",
+    };
         
     if (includeVSCodeHeaders) {
       return {

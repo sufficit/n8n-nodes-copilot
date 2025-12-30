@@ -15,10 +15,19 @@ interface CopilotModel {
   name: string;
   display_name?: string;
   model_picker_enabled?: boolean;
+  model_picker_category?: "lightweight" | "versatile" | "powerful" | string;
   capabilities?: any;
   vendor?: string;
   version?: string;
   preview?: boolean;
+  /** Billing information - only available with X-GitHub-Api-Version: 2025-05-01 header */
+  billing?: {
+    is_premium: boolean;
+    multiplier: number;
+    restricted_to?: string[];
+  };
+  is_chat_default?: boolean;
+  is_chat_fallback?: boolean;
 }
 
 /**
@@ -75,9 +84,15 @@ export class DynamicModelsManager {
         Authorization: `Bearer ${oauthToken}`,
         Accept: "application/json",
         "Content-Type": "application/json",
-        "User-Agent": "GitHub-Copilot/1.0 (n8n-node)",
-        "Editor-Version": "vscode/1.95.0",
-        "Editor-Plugin-Version": "copilot/1.0.0",
+        "User-Agent": "GitHubCopilotChat/0.35.0",
+        "Editor-Version": "vscode/1.96.0",
+        "Editor-Plugin-Version": "copilot-chat/0.35.0",
+        // CRITICAL: This API version returns billing.multiplier field
+        // Source: microsoft/vscode-copilot-chat networking.ts
+        "X-GitHub-Api-Version": "2025-05-01",
+        "X-Interaction-Type": "model-access",
+        "OpenAI-Intent": "model-access",
+        "Copilot-Integration-Id": "vscode-chat",
       },
     });
 
@@ -156,6 +171,62 @@ export class DynamicModelsManager {
   }
 
   /**
+   * Get cost multiplier from API billing data or fallback to estimation
+   * 
+   * With X-GitHub-Api-Version: 2025-05-01, the API returns:
+   * - billing.multiplier: 0, 0.33, 1, 3, or 10
+   * - billing.is_premium: boolean
+   * 
+   * Display format: "0x", "0.33x", "1x", "3x", "10x"
+   */
+  private static getCostMultiplier(model: CopilotModel): string {
+    // BEST: Use API billing data if available (requires 2025-05-01 header)
+    if (model.billing?.multiplier !== undefined) {
+      return `${model.billing.multiplier}x`;
+    }
+    
+    // FALLBACK: Estimate based on model ID patterns
+    // This is used when API doesn't return billing data
+    const id = model.id.toLowerCase();
+    
+    // === 0x FREE TIER ===
+    // GPT-4 series (legacy, included in subscription)
+    if (id === 'gpt-4.1' || id.startsWith('gpt-4.1-')) return '0x';
+    if (id === 'gpt-4o' || id.startsWith('gpt-4o-')) return '0x';
+    if (id === 'gpt-4' || id === 'gpt-4-0613') return '0x';
+    // Mini models
+    if (id === 'gpt-5-mini') return '0x';
+    if (id === 'gpt-4o-mini' || id.startsWith('gpt-4o-mini-')) return '0x';
+    // Grok fast models
+    if (id.includes('grok') && id.includes('fast')) return '0x';
+    // Raptor mini (ID: oswe-vscode-prime)
+    if (id === 'oswe-vscode-prime' || id.includes('oswe-vscode')) return '0x';
+    
+    // === 0.33x ECONOMY TIER ===
+    // Claude Haiku (economy)
+    if (id.includes('haiku')) return '0.33x';
+    // Gemini Flash models
+    if (id.includes('flash')) return '0.33x';
+    // Codex-Mini models
+    if (id.includes('codex-mini')) return '0.33x';
+    
+    // === 10x ULTRA PREMIUM ===
+    // Claude Opus 4.1 specifically
+    if (id === 'claude-opus-41' || id === 'claude-opus-4.1') return '10x';
+    
+    // === 3x PREMIUM TIER ===
+    // Claude Opus 4.5
+    if (id.includes('opus')) return '3x';
+    
+    // === 1x STANDARD TIER (default for most models) ===
+    // GPT-5 series (including Codex variants - they are 1x, not 3x!)
+    // Claude Sonnet
+    // Gemini Pro
+    // Everything else
+    return '1x';
+  }
+
+  /**
    * Convert models to n8n options format with capability badges
    */
   public static modelsToN8nOptions(models: CopilotModel[]): Array<{
@@ -188,12 +259,20 @@ export class DynamicModelsManager {
         if (supports.max_thinking_budget) badges.push("🧠 Reasoning");
       }
       
-      // Build display name with badges
+      // Build display name with badges and cost multiplier (VS Code style: "Model Name • 1x")
       const displayName = model.display_name || model.name || model.id;
+      const costMultiplier = this.getCostMultiplier(model);
       const badgesText = badges.length > 0 ? ` [${badges.join(" • ")}]` : "";
       
       // Check if this display name has duplicates
       const hasDuplicates = (nameCount.get(displayName) || 0) > 1;
+      
+      // Get category label (capitalize first letter)
+      const category = model.model_picker_category || "";
+      const categoryLabel = category ? ` - ${category.charAt(0).toUpperCase() + category.slice(1)}` : "";
+      
+      // Format: "Model Name • 0x - Lightweight [badges]"
+      const multiplierDisplay = ` • ${costMultiplier}${categoryLabel}`;
       
       // Build description with more details
       let description = "";
@@ -201,7 +280,7 @@ export class DynamicModelsManager {
         const limits = (model.capabilities as any).limits || {};
         const parts: string[] = [];
         
-        // If duplicates exist, add model ID at the start of description
+        // If duplicates exist, add model ID
         if (hasDuplicates) {
           parts.push(`ID: ${model.id}`);
         }
@@ -217,13 +296,15 @@ export class DynamicModelsManager {
         }
         
         description = parts.join(" • ");
-      } else if (hasDuplicates) {
-        // If no capabilities but has duplicates, still show ID
-        description = `ID: ${model.id}`;
+      } else {
+        // No capabilities, just show ID if duplicates
+        if (hasDuplicates) {
+          description = `ID: ${model.id}`;
+        }
       }
 
       return {
-        name: `${displayName}${badgesText}`,
+        name: `${displayName}${multiplierDisplay}${badgesText}`,
         value: model.id,
         description: description || undefined,
       };
