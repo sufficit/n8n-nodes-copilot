@@ -54,7 +54,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         return params;
     }
     async _generate(messages, options) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         if (!messages || messages.length === 0) {
             throw new Error('No messages provided for generation');
         }
@@ -174,7 +174,8 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         };
         if (hasVisionContent) {
             const baseModelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(this.model);
-            const baseSupportsVision = !!((_b = (_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.supports) === null || _b === void 0 ? void 0 : _b.vision);
+            const baseSupportsVision = !!((_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision) || !!((_c = (_b = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _b === void 0 ? void 0 : _b.supports) === null || _c === void 0 ? void 0 : _c.vision);
+            console.log(`👁️ Vision check for model ${this.model}: supportsVision=${baseSupportsVision}, modelInfo=${baseModelInfo ? 'found' : 'not found'}`);
             if (!baseSupportsVision) {
                 if (this.options.enableVisionFallback) {
                     const fallbackRaw = this.options.visionFallbackModel;
@@ -203,6 +204,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         try {
             if (hasVisionContent) {
                 console.log('👁️ Preparing image uploads for vision content...');
+                const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
                 for (const msg of requestBody.messages) {
                     if (!(msg === null || msg === void 0 ? void 0 : msg.content) || !Array.isArray(msg.content))
                         continue;
@@ -211,30 +213,36 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
                             const url = String(part.image_url.url || '');
                             try {
                                 let buffer = null;
-                                let mime = 'application/octet-stream';
-                                let filename = `upload-${Date.now()}.bin`;
+                                let mime = 'image/png';
+                                let filename = `upload-${Date.now()}.png`;
                                 if (url.startsWith('data:image/')) {
                                     const match = url.match(/^data:(image\/[^;]+);base64,(.*)$/);
                                     if (match) {
-                                        mime = match[1];
+                                        mime = match[1].toLowerCase();
                                         const base64 = match[2];
                                         buffer = Buffer.from(base64, 'base64');
-                                        filename = `image-${Date.now()}.${mime.split('/').pop()}`;
+                                        const ext = mime.split('/').pop() || 'png';
+                                        filename = `image-${Date.now()}.${ext}`;
                                     }
                                 }
                                 else if (url.startsWith('http://') || url.startsWith('https://')) {
                                     const res = await fetch(url);
                                     if (!res.ok)
                                         throw new Error(`Failed to download image: ${res.status}`);
-                                    mime = res.headers.get('content-type') || mime;
+                                    mime = (res.headers.get('content-type') || 'image/png').toLowerCase();
                                     const arrayBuffer = await res.arrayBuffer();
                                     buffer = Buffer.from(arrayBuffer);
-                                    const ext = (mime.split('/')[1] || 'png').split('+')[0];
+                                    const ext = (mime.split('/')[1] || 'png').split('+')[0].split(';')[0];
                                     filename = `image-${Date.now()}.${ext}`;
                                 }
                                 else {
+                                    console.log(`⚠️ Skipping unsupported URL format: ${url.substring(0, 50)}...`);
                                     continue;
                                 }
+                                if (!SUPPORTED_IMAGE_TYPES.includes(mime)) {
+                                    console.warn(`⚠️ Image type ${mime} may not be supported. Supported: ${SUPPORTED_IMAGE_TYPES.join(', ')}`);
+                                }
+                                console.log(`👁️ Processing image: ${filename}, type: ${mime}, size: ${(buffer === null || buffer === void 0 ? void 0 : buffer.length) || 0} bytes`);
                                 if (buffer) {
                                     try {
                                         const uploadResult = await Promise.resolve().then(() => __importStar(require('../../shared/utils/GitHubCopilotApiUtils'))).then(m => m.uploadFileToCopilot(this.context, buffer, filename, mime));
@@ -275,7 +283,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             const langchainMessage = new messages_1.AIMessage({
                 content: choice.message.content || '',
             });
-            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_c = choice.message.content) === null || _c === void 0 ? void 0 : _c.length) || 0}, finish_reason=${choice.finish_reason}`);
+            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_d = choice.message.content) === null || _d === void 0 ? void 0 : _d.length) || 0}, finish_reason=${choice.finish_reason}`);
             const generation = {
                 text: choice.message.content || '',
                 generationInfo: {

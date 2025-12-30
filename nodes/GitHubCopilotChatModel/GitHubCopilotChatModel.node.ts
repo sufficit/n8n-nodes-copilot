@@ -266,7 +266,10 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 		// optionally switch to a configured vision-capable fallback model.
 		if (hasVisionContent) {
 			const baseModelInfo = GitHubCopilotModelsManager.getModelByValue(this.model);
-			const baseSupportsVision = !!(baseModelInfo as any)?.capabilities?.supports?.vision;
+			// Check both formats: capabilities.vision (static list) and capabilities.supports.vision (API)
+			const baseSupportsVision = !!(baseModelInfo?.capabilities?.vision) || !!((baseModelInfo as any)?.capabilities?.supports?.vision);
+			
+			console.log(`👁️ Vision check for model ${this.model}: supportsVision=${baseSupportsVision}, modelInfo=${baseModelInfo ? 'found' : 'not found'}`);
 
 			if (!baseSupportsVision) {
 				if ((this.options as IOptions).enableVisionFallback) {
@@ -303,6 +306,10 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			// If there is vision content, upload external image URLs or data URLs to the Files endpoint
 			if (hasVisionContent) {
 				console.log('👁️ Preparing image uploads for vision content...');
+				
+				// Supported image types by GitHub Copilot
+				const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+				
 				for (const msg of requestBody.messages as any[]) {
 					if (!msg?.content || !Array.isArray(msg.content)) continue;
 					for (const part of msg.content) {
@@ -310,31 +317,42 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 							const url = String(part.image_url.url || '');
 							try {
 								let buffer: Buffer | null = null;
-								let mime = 'application/octet-stream';
-								let filename = `upload-${Date.now()}.bin`;
+								let mime = 'image/png'; // Default to PNG
+								let filename = `upload-${Date.now()}.png`;
+								
 								if (url.startsWith('data:image/')) {
 									// data URL
 									const match = url.match(/^data:(image\/[^;]+);base64,(.*)$/);
 									if (match) {
-										mime = match[1];
+										mime = match[1].toLowerCase();
 										const base64 = match[2];
 										buffer = Buffer.from(base64, 'base64');
-										filename = `image-${Date.now()}.${mime.split('/').pop()}`;
+										const ext = mime.split('/').pop() || 'png';
+										filename = `image-${Date.now()}.${ext}`;
 									}
 								} else if (url.startsWith('http://') || url.startsWith('https://')) {
 									// Download external image
 									const res = await fetch(url);
 									if (!res.ok) throw new Error(`Failed to download image: ${res.status}`);
-									mime = res.headers.get('content-type') || mime;
+									mime = (res.headers.get('content-type') || 'image/png').toLowerCase();
 									const arrayBuffer = await res.arrayBuffer();
 									buffer = Buffer.from(arrayBuffer);
-									// try to derive extension
-									const ext = (mime.split('/')[1] || 'png').split('+')[0];
+									const ext = (mime.split('/')[1] || 'png').split('+')[0].split(';')[0];
 									filename = `image-${Date.now()}.${ext}`;
 								} else {
 									// Unhandled URL format, skip
+									console.log(`⚠️ Skipping unsupported URL format: ${url.substring(0, 50)}...`);
 									continue;
 								}
+								
+								// Validate mime type
+								if (!SUPPORTED_IMAGE_TYPES.includes(mime)) {
+									console.warn(`⚠️ Image type ${mime} may not be supported. Supported: ${SUPPORTED_IMAGE_TYPES.join(', ')}`);
+									// Try to continue anyway, let API reject if needed
+								}
+								
+								console.log(`👁️ Processing image: ${filename}, type: ${mime}, size: ${buffer?.length || 0} bytes`);
+								
 								if (buffer) {
 									try {
 										const uploadResult = await import('../../shared/utils/GitHubCopilotApiUtils').then(m => m.uploadFileToCopilot(this.context as unknown as import('n8n-workflow').IExecuteFunctions, buffer as Buffer, filename, mime));

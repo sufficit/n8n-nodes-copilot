@@ -93,8 +93,8 @@ exports.GITHUB_COPILOT_MODELS = [
         description: "Faster and more cost-effective GPT-4o - VERIFIED WORKING",
         capabilities: {
             toolsCalling: true,
-            vision: true,
-            multimodal: true,
+            vision: false,
+            multimodal: false,
             maxContextTokens: 128000,
             maxOutputTokens: 4096,
             streaming: true,
