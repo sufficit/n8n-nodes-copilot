@@ -576,6 +576,10 @@ class GitHubCopilotChatModel {
                     'OpenAI-Intent': 'conversation-panel',
                     'Copilot-Integration-Id': 'vscode-chat',
                     ...additionalHeaders,
+                    ...((safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities.vision) && {
+                        'Copilot-Vision-Request': 'true',
+                        'Copilot-Media-Request': 'true',
+                    }),
                 },
             },
         };

@@ -730,7 +730,12 @@ export class GitHubCopilotChatModel implements INodeType {
 					'OpenAI-Intent': 'conversation-panel',
 					'Copilot-Integration-Id': 'vscode-chat',
 					...additionalHeaders,
-					// Vision headers are added at request time when images are detected
+					// Pre-add vision headers for vision-capable models (they're needed when images are sent)
+					// The actual vision detection happens in _generate() which passes shouldUseVision to makeGitHubCopilotRequest
+					...(safeModelInfo?.capabilities.vision && {
+						'Copilot-Vision-Request': 'true',
+						'Copilot-Media-Request': 'true',
+					}),
 				},
 			},
 		};
