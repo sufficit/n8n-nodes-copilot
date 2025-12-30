@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "3.38.39",
+  "version": "3.38.40",
   "description": "n8n community node for GitHub Copilot with CLI integration, Chat API access, and AI Chat Model for workflows with full tools and function calling support - access GPT-5, Claude, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
