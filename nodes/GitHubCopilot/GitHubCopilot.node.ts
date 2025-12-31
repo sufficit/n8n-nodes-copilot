@@ -113,17 +113,17 @@ export class GitHubCopilot implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		// Get Copilot CLI version once (outside loop for efficiency)
-		let copilotVersionInfo: { version: string; commit: string } = { version: 'unknown', commit: 'unknown' };
+		let copilotVersionInfo: { build: string; commit: string } = { build: 'unknown', commit: 'unknown' };
 		try {
 			const versionResult = await execAsync('copilot --version', { timeout: 5000 });
 			const versionOutput = versionResult.stdout.trim();
 			// Parse version output: "0.0.373\nCommit: 1f9ed04"
 			const lines = versionOutput.split('\n');
-			copilotVersionInfo.version = lines[0] || 'unknown';
+			copilotVersionInfo.build = lines[0] || 'unknown';
 			const commitLine = lines.find(l => l.startsWith('Commit:'));
 			copilotVersionInfo.commit = commitLine ? commitLine.replace('Commit:', '').trim() : 'unknown';
 		} catch (error) {
-			copilotVersionInfo = { version: 'not installed', commit: 'unknown' };
+			copilotVersionInfo = { build: 'not installed', commit: 'unknown' };
 		}
 
 		for (let i = 0; i < items.length; i++) {

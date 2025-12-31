@@ -106,17 +106,17 @@ class GitHubCopilot {
     async execute() {
         const items = this.getInputData();
         const returnData = [];
-        let copilotVersionInfo = { version: 'unknown', commit: 'unknown' };
+        let copilotVersionInfo = { build: 'unknown', commit: 'unknown' };
         try {
             const versionResult = await execAsync('copilot --version', { timeout: 5000 });
             const versionOutput = versionResult.stdout.trim();
             const lines = versionOutput.split('\n');
-            copilotVersionInfo.version = lines[0] || 'unknown';
+            copilotVersionInfo.build = lines[0] || 'unknown';
             const commitLine = lines.find(l => l.startsWith('Commit:'));
             copilotVersionInfo.commit = commitLine ? commitLine.replace('Commit:', '').trim() : 'unknown';
         }
         catch (error) {
-            copilotVersionInfo = { version: 'not installed', commit: 'unknown' };
+            copilotVersionInfo = { build: 'not installed', commit: 'unknown' };
         }
         for (let i = 0; i < items.length; i++) {
             try {
