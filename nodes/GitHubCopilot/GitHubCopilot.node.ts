@@ -113,12 +113,17 @@ export class GitHubCopilot implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		// Get Copilot CLI version once (outside loop for efficiency)
-		let copilotVersion = 'unknown';
+		let copilotVersionInfo: { version: string; commit: string } = { version: 'unknown', commit: 'unknown' };
 		try {
 			const versionResult = await execAsync('copilot --version', { timeout: 5000 });
-			copilotVersion = versionResult.stdout.trim();
+			const versionOutput = versionResult.stdout.trim();
+			// Parse version output: "0.0.373\nCommit: 1f9ed04"
+			const lines = versionOutput.split('\n');
+			copilotVersionInfo.version = lines[0] || 'unknown';
+			const commitLine = lines.find(l => l.startsWith('Commit:'));
+			copilotVersionInfo.commit = commitLine ? commitLine.replace('Commit:', '').trim() : 'unknown';
 		} catch (error) {
-			copilotVersion = 'not installed';
+			copilotVersionInfo = { version: 'not installed', commit: 'unknown' };
 		}
 
 		for (let i = 0; i < items.length; i++) {
@@ -246,7 +251,7 @@ export class GitHubCopilot implements INodeType {
 						prompt,
 						toolApproval,
 						authMethod,
-						copilotVersion,
+						copilotVersion: copilotVersionInfo,
 						output: stdout,
 						stderr: stderr || undefined,
 						timestamp: new Date().toISOString(),
@@ -259,7 +264,7 @@ export class GitHubCopilot implements INodeType {
 						json: {
 							error: error instanceof Error ? error.message : String(error),
 							operation: 'query',
-							copilotVersion,
+							copilotVersion: copilotVersionInfo,
 							prompt: this.getNodeParameter('prompt', i, ''),
 							timestamp: new Date().toISOString(),
 						},

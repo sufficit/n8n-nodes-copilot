@@ -106,13 +106,17 @@ class GitHubCopilot {
     async execute() {
         const items = this.getInputData();
         const returnData = [];
-        let copilotVersion = 'unknown';
+        let copilotVersionInfo = { version: 'unknown', commit: 'unknown' };
         try {
             const versionResult = await execAsync('copilot --version', { timeout: 5000 });
-            copilotVersion = versionResult.stdout.trim();
+            const versionOutput = versionResult.stdout.trim();
+            const lines = versionOutput.split('\n');
+            copilotVersionInfo.version = lines[0] || 'unknown';
+            const commitLine = lines.find(l => l.startsWith('Commit:'));
+            copilotVersionInfo.commit = commitLine ? commitLine.replace('Commit:', '').trim() : 'unknown';
         }
         catch (error) {
-            copilotVersion = 'not installed';
+            copilotVersionInfo = { version: 'not installed', commit: 'unknown' };
         }
         for (let i = 0; i < items.length; i++) {
             try {
@@ -206,7 +210,7 @@ class GitHubCopilot {
                         prompt,
                         toolApproval,
                         authMethod,
-                        copilotVersion,
+                        copilotVersion: copilotVersionInfo,
                         output: stdout,
                         stderr: stderr || undefined,
                         timestamp: new Date().toISOString(),
@@ -220,7 +224,7 @@ class GitHubCopilot {
                         json: {
                             error: error instanceof Error ? error.message : String(error),
                             operation: 'query',
-                            copilotVersion,
+                            copilotVersion: copilotVersionInfo,
                             prompt: this.getNodeParameter('prompt', i, ''),
                             timestamp: new Date().toISOString(),
                         },
