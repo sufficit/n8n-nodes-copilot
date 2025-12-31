@@ -27,3 +27,4 @@ package-lock.json
 .token.oauth
 .token.oauth.generated.json.token.oauth.info.json
 .machine-id
+*.tgz
