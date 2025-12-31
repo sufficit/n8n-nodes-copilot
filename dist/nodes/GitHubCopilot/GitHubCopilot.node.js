@@ -5,57 +5,18 @@ const n8n_workflow_1 = require("n8n-workflow");
 const child_process_1 = require("child_process");
 const util_1 = require("util");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
-function filterCopilotOutput(rawOutput) {
-    const lines = rawOutput.split('\n');
-    let startIndex = -1;
-    const endIndex = lines.length;
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.includes('# Explanation:') ||
-            line.includes('# Suggestion:') ||
-            line.includes('# Command:') ||
-            line.includes('# Code:') ||
-            (line.startsWith('•') && i > 5)) {
-            startIndex = i;
-            break;
-        }
-    }
-    if (startIndex === -1) {
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line.includes('version ') && line.includes('(') && line.includes(')')) {
-                startIndex = i + 3;
-                break;
-            }
-        }
-    }
-    if (startIndex === -1) {
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line.length > 10 && !line.includes('Welcome to') && !line.includes('powered by AI')) {
-                startIndex = i;
-                break;
-            }
-        }
-    }
-    if (startIndex >= 0) {
-        const filteredLines = lines.slice(startIndex, endIndex);
-        return filteredLines.join('\n').trim();
-    }
-    return rawOutput.trim();
-}
 class GitHubCopilot {
     constructor() {
         this.description = {
-            displayName: 'GitHub Copilot',
+            displayName: 'GitHub Copilot CLI',
             name: 'gitHubCopilot',
             icon: 'file:../../shared/icons/copilot.svg',
             group: ['transform'],
-            version: 1,
-            subtitle: '',
-            description: 'Interact with GitHub Copilot API for code completions',
+            version: 2,
+            subtitle: '={{$parameter["operation"]}}',
+            description: 'Interact with GitHub Copilot CLI in programmatic mode',
             defaults: {
-                name: 'GitHub Copilot',
+                name: 'GitHub Copilot CLI',
             },
             inputs: ['main'],
             outputs: ['main'],
@@ -76,7 +37,7 @@ class GitHubCopilot {
                     name: 'useCredential',
                     type: 'boolean',
                     default: false,
-                    description: 'Use GitHub Copilot API credential instead of local GitHub CLI authentication',
+                    description: 'Use GitHub token (GH_TOKEN/GITHUB_TOKEN) instead of local copilot CLI authentication',
                 },
                 {
                     displayName: 'Operation',
@@ -85,166 +46,59 @@ class GitHubCopilot {
                     noDataExpression: true,
                     options: [
                         {
-                            name: 'Suggest',
-                            value: 'suggest',
-                            description: 'Get code suggestions from GitHub Copilot',
-                            action: 'Get code suggestions',
-                        },
-                        {
-                            name: 'Explain',
-                            value: 'explain',
-                            description: 'Explain code or commands using GitHub Copilot',
-                            action: 'Explain code or commands',
-                        },
-                        {
-                            name: 'Shell',
-                            value: 'shell',
-                            description: 'Get shell command suggestions from GitHub Copilot',
-                            action: 'Get shell command suggestions',
-                        },
-                        {
-                            name: 'Revise',
-                            value: 'revise',
-                            description: 'Revise and improve existing code or commands',
-                            action: 'Revise code or commands',
-                        },
-                        {
-                            name: 'Rate Response',
-                            value: 'rating',
-                            description: 'Rate a previous GitHub Copilot response',
-                            action: 'Rate response',
+                            name: 'Query',
+                            value: 'query',
+                            description: 'Ask GitHub Copilot any question or task in programmatic mode',
+                            action: 'Query Copilot in programmatic mode',
                         },
                     ],
-                    default: 'suggest',
+                    default: 'query',
                 },
                 {
                     displayName: 'Prompt',
                     name: 'prompt',
                     type: 'string',
                     typeOptions: {
-                        rows: 3,
+                        rows: 5,
                     },
                     required: true,
                     default: '',
-                    placeholder: 'Enter your request...',
-                    description: 'What you want GitHub Copilot to help with',
+                    placeholder: 'Example: Show me this week\'s commits and summarize them',
+                    description: 'Your query or task for GitHub Copilot CLI. Will be executed with: copilot -p "your prompt"',
                 },
                 {
-                    displayName: 'Filter Output',
-                    name: 'filterOutput',
-                    type: 'boolean',
-                    default: true,
-                    description: 'Remove GitHub Copilot CLI header and footer, keeping only the useful response',
-                },
-                {
-                    displayName: 'Language',
-                    name: 'language',
-                    type: 'options',
-                    displayOptions: {
-                        show: {
-                            operation: ['suggest'],
-                        },
-                    },
-                    options: [
-                        { name: 'JavaScript', value: 'javascript' },
-                        { name: 'TypeScript', value: 'typescript' },
-                        { name: 'Python', value: 'python' },
-                        { name: 'Java', value: 'java' },
-                        { name: 'C#', value: 'csharp' },
-                        { name: 'C++', value: 'cpp' },
-                        { name: 'Go', value: 'go' },
-                        { name: 'Rust', value: 'rust' },
-                        { name: 'PHP', value: 'php' },
-                        { name: 'Ruby', value: 'ruby' },
-                        { name: 'Shell', value: 'shell' },
-                        { name: 'SQL', value: 'sql' },
-                        { name: 'Other', value: 'other' },
-                    ],
-                    default: 'javascript',
-                    description: 'Programming language for code suggestions',
-                },
-                {
-                    displayName: 'Command Type',
-                    name: 'commandType',
-                    type: 'options',
-                    displayOptions: {
-                        show: {
-                            operation: ['shell'],
-                        },
-                    },
-                    options: [
-                        { name: 'General', value: 'general' },
-                        { name: 'Git', value: 'git' },
-                        { name: 'Docker', value: 'docker' },
-                        { name: 'npm/yarn', value: 'npm' },
-                        { name: 'File Operations', value: 'file' },
-                    ],
-                    default: 'general',
-                    description: 'Type of shell commands to suggest',
-                },
-                {
-                    displayName: 'Additional Context',
-                    name: 'context',
-                    type: 'string',
-                    typeOptions: {
-                        rows: 2,
-                    },
-                    default: '',
-                    placeholder: 'Any additional context or constraints...',
-                    description: 'Optional additional context to provide better suggestions',
-                },
-                {
-                    displayName: 'Original Code/Command',
-                    name: 'originalCode',
-                    type: 'string',
-                    typeOptions: {
-                        rows: 4,
-                    },
-                    required: true,
-                    default: '',
-                    placeholder: 'Enter the original code or command to revise...',
-                    description: 'The original code or command that you want to improve',
-                    displayOptions: {
-                        show: {
-                            operation: ['revise'],
-                        },
-                    },
-                },
-                {
-                    displayName: 'Rating',
-                    name: 'rating',
+                    displayName: 'Tool Approval',
+                    name: 'toolApproval',
                     type: 'options',
                     options: [
-                        { name: 'Very Good', value: 'very-good' },
-                        { name: 'Good', value: 'good' },
-                        { name: 'Fair', value: 'fair' },
-                        { name: 'Poor', value: 'poor' },
+                        { name: 'Allow All Tools (Unsafe)', value: 'allow-all' },
+                        { name: 'Allow Shell Commands Only', value: 'shell-only' },
+                        { name: 'Allow Write Operations Only', value: 'write-only' },
+                        { name: 'Manual Approval Required', value: 'manual' },
+                        { name: 'Custom (Advanced)', value: 'custom' },
                     ],
-                    required: true,
-                    default: 'good',
-                    description: 'Rate the GitHub Copilot response',
-                    displayOptions: {
-                        show: {
-                            operation: ['rating'],
-                        },
-                    },
+                    default: 'manual',
+                    description: 'Which tools Copilot can use without asking. WARNING: "Allow All" is dangerous - Copilot can execute ANY command!',
                 },
                 {
-                    displayName: 'Response to Rate',
-                    name: 'responseToRate',
+                    displayName: 'Allowed Tools',
+                    name: 'allowedTools',
                     type: 'string',
-                    typeOptions: {
-                        rows: 3,
-                    },
-                    required: true,
-                    default: '',
-                    placeholder: 'Enter the GitHub Copilot response you want to rate...',
-                    description: 'The GitHub Copilot response that you want to rate',
                     displayOptions: {
                         show: {
-                            operation: ['rating'],
+                            toolApproval: ['custom'],
                         },
                     },
+                    default: '',
+                    placeholder: '--allow-tool \'shell(git)\' --allow-tool \'write\'',
+                    description: 'Custom tool approval flags (space-separated). Example: --allow-tool \'shell(git)\' --deny-tool \'shell(rm)\'',
+                },
+                {
+                    displayName: 'Timeout (seconds)',
+                    name: 'timeout',
+                    type: 'number',
+                    default: 60,
+                    description: 'Maximum execution time in seconds',
                 },
             ],
         };
@@ -256,101 +110,61 @@ class GitHubCopilot {
             try {
                 const operation = this.getNodeParameter('operation', i);
                 const prompt = this.getNodeParameter('prompt', i);
-                const context = this.getNodeParameter('context', i, '');
+                const toolApproval = this.getNodeParameter('toolApproval', i);
+                const timeout = this.getNodeParameter('timeout', i, 60);
                 const useCredential = this.getNodeParameter('useCredential', i, false);
                 let githubToken = '';
-                let authMethod = 'Local CLI';
+                let authMethod = 'Local Copilot CLI';
                 if (useCredential) {
                     try {
                         const credentials = await this.getCredentials('githubCopilotApi');
                         const token = credentials.token;
                         if (token) {
                             githubToken = token;
-                            authMethod = 'GitHub Copilot API Credential';
+                            authMethod = 'GitHub Token (GH_TOKEN)';
                         }
                     }
                     catch {
                         throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'GitHub Copilot credential is not configured. Please configure it or use Local CLI authentication.');
                     }
                 }
-                const useToken = githubToken && githubToken.trim() !== '';
-                let command;
-                let fullPrompt = prompt;
-                if (context) {
-                    fullPrompt = `${prompt}\n\nAdditional context: ${context}`;
-                }
-                switch (operation) {
-                    case 'suggest': {
-                        const language = this.getNodeParameter('language', i);
-                        if (language !== 'other') {
-                            fullPrompt = `[${language}] ${fullPrompt}`;
-                        }
-                        const escapedSuggestPrompt = fullPrompt.replace(/'/g, "'\"'\"'");
-                        command = `gh copilot suggest '${escapedSuggestPrompt}'`;
+                let toolFlags = '';
+                switch (toolApproval) {
+                    case 'allow-all':
+                        toolFlags = '--allow-all-tools';
                         break;
-                    }
-                    case 'explain': {
-                        const escapedExplainPrompt = fullPrompt.replace(/'/g, "'\"'\"'");
-                        command = `gh copilot explain '${escapedExplainPrompt}'`;
+                    case 'shell-only':
+                        toolFlags = '--allow-tool \'shell\'';
                         break;
-                    }
-                    case 'shell': {
-                        const commandType = this.getNodeParameter('commandType', i);
-                        let shellPrompt = fullPrompt;
-                        switch (commandType) {
-                            case 'git':
-                                shellPrompt = `git: ${fullPrompt}`;
-                                break;
-                            case 'docker':
-                                shellPrompt = `docker: ${fullPrompt}`;
-                                break;
-                            case 'npm':
-                                shellPrompt = `npm/yarn: ${fullPrompt}`;
-                                break;
-                            case 'file':
-                                shellPrompt = `file operations: ${fullPrompt}`;
-                                break;
-                            default:
-                                shellPrompt = fullPrompt;
-                        }
-                        const escapedShellPrompt = shellPrompt.replace(/'/g, "'\"'\"'");
-                        command = `gh copilot suggest '${escapedShellPrompt}' --type shell`;
+                    case 'write-only':
+                        toolFlags = '--allow-tool \'write\'';
                         break;
-                    }
-                    case 'revise': {
-                        const originalCode = this.getNodeParameter('originalCode', i);
-                        const revisePrompt = `${fullPrompt}\n\nOriginal code/command:\n${originalCode}`;
-                        const escapedRevisePrompt = revisePrompt.replace(/'/g, "'\"'\"'");
-                        command = `gh copilot revise '${escapedRevisePrompt}'`;
+                    case 'custom':
+                        toolFlags = this.getNodeParameter('allowedTools', i, '');
                         break;
-                    }
-                    case 'rating': {
-                        const rating = this.getNodeParameter('rating', i);
-                        const responseToRate = this.getNodeParameter('responseToRate', i);
-                        const escapedResponseToRate = responseToRate.replace(/'/g, "'\"'\"'");
-                        command = `gh copilot rate '${escapedResponseToRate}' --rating ${rating}`;
-                        break;
-                    }
+                    case 'manual':
                     default:
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
+                        toolFlags = '';
+                        break;
                 }
+                const escapedPrompt = prompt.replace(/'/g, "'\"'\"'");
+                const command = `copilot -p '${escapedPrompt}' ${toolFlags}`.trim();
                 console.log('Executing command:', command);
                 console.log('Auth method:', authMethod);
-                console.log('Using token:', useToken ? 'Yes (Manual)' : 'No (Local CLI)');
                 let stdout = '';
                 let stderr = '';
                 try {
                     const envVars = {
                         ...process.env,
                     };
-                    if (useToken) {
+                    if (githubToken) {
                         envVars.GH_TOKEN = githubToken;
                         envVars.GITHUB_TOKEN = githubToken;
                     }
                     const result = await execAsync(command, {
                         env: envVars,
-                        timeout: 30000,
-                        maxBuffer: 1024 * 1024,
+                        timeout: timeout * 1000,
+                        maxBuffer: 10 * 1024 * 1024,
                     });
                     stdout = result.stdout;
                     stderr = result.stderr;
@@ -359,53 +173,33 @@ class GitHubCopilot {
                     const err = execError;
                     stderr = err.stderr || err.message || String(execError);
                     stdout = err.stdout || '';
-                }
-                if (stderr) {
-                    const debugInfo = useToken
-                        ? ` [Using manual token: ${githubToken.substring(0, 4)}...]`
-                        : ' [Using local CLI authentication]';
-                    if (stderr.includes('internal server error') || stderr.includes('code: 500')) {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `GitHub Copilot service is temporarily unavailable (HTTP 500). This is a GitHub server issue. Please try again in a few moments.${debugInfo} Error: ${stderr}`);
-                    }
-                    else if (stderr.includes('code: 400') || stderr.includes('Bad Request')) {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `GitHub Copilot request failed (HTTP 400). The request is malformed or invalid.${debugInfo} Full error response: ${stderr}`);
-                    }
-                    else if (stderr.includes('401') ||
-                        stderr.includes('Unauthorized') ||
-                        stderr.includes('Bad credentials')) {
-                        const tokenHelp = useToken
-                            ? ' IMPORTANT: Only tokens generated by "gh auth token" command work with Copilot. Personal Access Tokens from GitHub website DO NOT work. Try: run "gh auth login" first, then use "gh auth token" to get a working token.'
-                            : ' Please run "gh auth login" on the server first, or provide a token generated by "gh auth token" command.';
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `GitHub authentication failed (HTTP 401).${tokenHelp}${debugInfo} Full error response: ${stderr}`);
-                    }
-                    else if (stderr.includes('403') || stderr.includes('Forbidden')) {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `GitHub Copilot access denied (HTTP 403). Please ensure your account has Copilot subscription.${debugInfo} Full error response: ${stderr}`);
-                    }
-                    else if (!stdout) {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `GitHub Copilot CLI error:${debugInfo} Full error response: ${stderr}`);
+                    if (err.code === 'ETIMEDOUT') {
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Command timed out after ${timeout} seconds. Try increasing the timeout or simplifying the task.`);
                     }
                 }
-                const filterOutput = this.getNodeParameter('filterOutput', i, true);
-                let processedOutput = stdout;
-                if (filterOutput) {
-                    processedOutput = filterCopilotOutput(stdout);
+                if (stderr && !stdout) {
+                    if (stderr.includes('command not found: copilot') || stderr.includes('\'copilot\' is not recognized')) {
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'GitHub Copilot CLI not found. Please install it:\n' +
+                            '- npm: npm install -g @github/copilot\n' +
+                            '- brew: brew install copilot-cli\n' +
+                            '- See: https://github.com/github/copilot-cli');
+                    }
+                    else if (stderr.includes('not logged in') || stderr.includes('authentication required')) {
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Not authenticated with GitHub Copilot CLI. Please run: copilot (and use /login command)\n' +
+                            'Or provide a GitHub token via credential.');
+                    }
+                    else {
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Copilot CLI error: ${stderr}`);
+                    }
                 }
                 returnData.push({
                     json: {
                         operation,
-                        prompt: prompt,
-                        context: context || undefined,
-                        authMethod: authMethod,
-                        tokenUsed: useToken,
-                        tokenPrefix: useToken ? githubToken.substring(0, 4) + '...' : 'none',
-                        language: operation === 'suggest' ? this.getNodeParameter('language', i) : undefined,
-                        commandType: operation === 'shell' ? this.getNodeParameter('commandType', i) : undefined,
-                        originalCode: operation === 'revise' ? this.getNodeParameter('originalCode', i) : undefined,
-                        rating: operation === 'rating' ? this.getNodeParameter('rating', i) : undefined,
-                        responseToRate: operation === 'rating' ? this.getNodeParameter('responseToRate', i) : undefined,
-                        output: processedOutput,
-                        cliRawOutput: stdout,
-                        cliStderr: stderr || undefined,
+                        prompt,
+                        toolApproval,
+                        authMethod,
+                        output: stdout,
+                        stderr: stderr || undefined,
                         timestamp: new Date().toISOString(),
                     },
                     pairedItem: { item: i },
@@ -416,7 +210,7 @@ class GitHubCopilot {
                     returnData.push({
                         json: {
                             error: error instanceof Error ? error.message : String(error),
-                            operation: this.getNodeParameter('operation', i, 'unknown'),
+                            operation: 'query',
                             prompt: this.getNodeParameter('prompt', i, ''),
                             timestamp: new Date().toISOString(),
                         },

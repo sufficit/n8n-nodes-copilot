@@ -4,17 +4,19 @@
 ![n8n](https://img.shields.io/badge/n8n-Community%20Node-red?logo=n8n)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Este é um **community node** para [n8n](https://n8n.io/) que integra o **GitHub Copilot** de duas formas: através do CLI tradicional e da nova **API oficial do GitHub Copilot**, permitindo acesso direto aos modelos avançados de IA como GPT-5, Claude Opus 4.1, Gemini 2.5 Pro e muito mais usando seus créditos existentes do Copilot.
+Este é um **community node** para [n8n](https://n8n.io/) que integra o **GitHub Copilot** através do novo **GitHub Copilot CLI** em modo programático e da **API oficial do GitHub Copilot**, permitindo acesso direto aos modelos avançados de IA como GPT-5, Claude Sonnet 4.5, Gemini 2.5 Pro e muito mais usando seus créditos existentes do Copilot.
 
 ## 🚀 Nodes Disponíveis
 
-### 1. GitHub Copilot (CLI)
-- **Sugestões de Código**: Gere código em múltiplas linguagens de programação
-- **Explicação de Código**: Obtenha explicações detalhadas sobre funcionalidades de código
-- **Comandos Shell**: Receba sugestões de comandos para Git, Docker, NPM e muito mais
-- **Múltiplas Linguagens**: Suporte para JavaScript, TypeScript, Python, Ruby, Java, C#, Go, PHP, C++, Rust, SQL, HTML, CSS
+### 1. GitHub Copilot CLI (Novo! ⭐ Modo Programático)
+- **Modo Programático**: Execute qualquer tarefa ou consulta do Copilot diretamente via `copilot -p "prompt"`
+- **Agentic Capabilities**: Copilot pode planejar e executar tarefas complexas automaticamente
+- **Tool Approval**: Controle fino sobre quais ferramentas o Copilot pode usar (shell, write, MCP servers)
+- **Múltiplos Modelos**: Claude Sonnet 4.5 (padrão), Claude Sonnet 4, GPT-5
+- **Integração GitHub**: Trabalhe com repositórios, issues, PRs diretamente da CLI
+- **MCP Support**: Suporte nativo para Model Context Protocol servers
 
-### 2. GitHub Copilot Chat API (Novo! ⭐)
+### 2. GitHub Copilot Chat API
 - **Chat Completion**: Conversas diretas com modelos avançados de IA
 - **Análise de Imagens**: Processamento de imagens com modelos de visão
 - **Modelos Disponíveis**: GPT-5, GPT-5 Mini, Claude Opus 4.1, Gemini 2.5 Pro, Grok Code Fast 1, GPT-4.1 Copilot
@@ -22,8 +24,9 @@ Este é um **community node** para [n8n](https://n8n.io/) que integra o **GitHub
 
 ## 🎯 Funcionalidades
 
-- **Integração Dual**: CLI tradicional + API oficial do GitHub Copilot
-- **Modelos Premium**: Acesso a GPT-5, Claude, Gemini através de sua assinatura Copilot
+- **Novo Copilot CLI**: Agente conversacional com modo programático
+- **API oficial**: Acesso direto aos modelos via API
+- **Modelos Premium**: GPT-5, Claude Sonnet 4.5, Gemini através de sua assinatura
 
 ## 📋 Pré-requisitos
 
@@ -33,71 +36,47 @@ Você precisa ter uma assinatura ativa do GitHub Copilot:
 - **GitHub Copilot Business**: $19/usuário/mês
 - **GitHub Copilot Enterprise**: $39/usuário/mês
 
-### 2. GitHub CLI Instalado
-O node usa o GitHub CLI (`gh`) e a extensão Copilot:
+### 2. Novo GitHub Copilot CLI
+O node agora usa o **novo GitHub Copilot CLI standalone** (não mais a extensão `gh copilot` que foi depreciada):
 
 #### Linux/Ubuntu:
 ```bash
-# Instalar GitHub CLI
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-sudo apt update
-sudo apt install gh
+# Via install script
+curl -fsSL https://gh.io/copilot-install | bash
 
-# Instalar extensão Copilot
-gh extension install github/gh-copilot
+# Ou via npm
+npm install -g @github/copilot
 
-# Autenticar
-gh auth login
+# Autenticar (primeira vez)
+copilot
+# Use o comando /login quando solicitado
 ```
 
 #### macOS:
 ```bash
 # Usando Homebrew
-brew install gh
+brew install copilot-cli
 
-# Instalar extensão Copilot
-gh extension install github/gh-copilot
+# Ou via npm
+npm install -g @github/copilot
 
 # Autenticar
-gh auth login
+copilot
 ```
 
 #### Windows:
 ```powershell
-# Usando Chocolatey
-choco install gh
+# Usando npm
+npm install -g @github/copilot
 
-# Ou usando Scoop
-scoop install gh
-
-# Instalar extensão Copilot
-gh extension install github/gh-copilot
+# Ou via WinGet
+winget install GitHub.Copilot
 
 # Autenticar
-gh auth login
+copilot
 ```
 
-### 3. Token de Acesso GitHub
-Crie um Personal Access Token no GitHub com as seguintes permissões:
-- `read:user`
-- `user:email`
-- Acesso ao GitHub Copilot (incluído automaticamente se você tem assinatura)
-
-## 🚀 Instalação
-
-### Opção 1: Via npm (Recomendado)
-```bash
-npm install n8n-nodes-github-copilot
-```
-
-### Opção 2: Via Interface do n8n
-1. Vá para **Settings > Community Nodes**
-2. Clique em **Install a community node**
-3. Digite: `n8n-nodes-github-copilot`
-4. Clique em **Install**
-
-### Opção 3: Instalação Manual
+**⚠️ IMPORTANTE**: O antigo `gh copilot` (extensão do GitHub CLI) foi depreciado. Este node agora usa o novo `copilot` CLI standalone.
 1. Clone este repositório
 2. Execute `npm run build`
 3. Copie a pasta `dist` para o diretório de nodes do n8n

@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0] - 2025-12-31 🚀 BREAKING CHANGE
+
+### 🎉 Migrated to New GitHub Copilot CLI (Programmatic Mode)
+
+**⚠️ BREAKING CHANGES:**
+- Migrated from deprecated `gh copilot` extension to new **standalone `copilot` CLI**
+- **GitHub Copilot CLI node** now requires **`@github/copilot` CLI** instead of `gh` CLI extension
+- Old operations (suggest, explain, shell, revise, rating) replaced with **unified programmatic mode**
+- Node version bumped from 1 to 2 (existing workflows will need updates)
+
+### Added
+- **Programmatic Mode**: Use `copilot -p "prompt"` for any task or query
+- **Tool Approval Options**: Fine-grained control over what Copilot can execute:
+  - `allow-all-tools`: Full automation (⚠️ use with caution)
+  - `shell-only`: Only shell commands
+  - `write-only`: Only file writes
+  - `manual`: Manual approval required (safest)
+  - `custom`: Custom approval rules with `--allow-tool` / `--deny-tool`
+- **Agentic Capabilities**: Copilot can now plan and execute complex multi-step tasks
+- **Configurable Timeout**: Set execution timeout (default: 60s)
+- **Better Error Messages**: Clearer installation and authentication errors
+
+### Changed
+- **Installation**: Now requires `npm install -g @github/copilot` or `brew install copilot-cli`
+- **Authentication**: Use `copilot` command and `/login` slash command (not `gh auth login`)
+- **Command Format**: Unified to `copilot -p "query" [tool-flags]`
+- **Default Model**: Claude Sonnet 4.5 (can be changed with `/model` command in CLI)
+
+### Removed
+- Deprecated `gh copilot suggest/explain/shell/revise/rate` commands
+- Language-specific options (now part of prompt)
+- Command type options (now part of prompt)
+- Filter output option (new CLI has cleaner output)
+
+### Migration Guide
+1. **Uninstall old extension**: `gh extension remove github/gh-copilot` (if installed)
+2. **Install new CLI**: 
+   - npm: `npm install -g @github/copilot`
+   - brew: `brew install copilot-cli`
+   - Windows: `winget install GitHub.Copilot`
+3. **Authenticate**: Run `copilot` and use `/login` command
+4. **Update workflows**: Replace specific operations with programmatic queries
+   - Old: Operation "suggest" with language "python"
+   - New: Prompt "Write a Python function that..."
+
+### Security Note
+⚠️ **Tool approval is critical for security**. The new CLI can execute commands and modify files. Always use the most restrictive approval setting for your use case. See [docs](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli#security-considerations) for details.
+
+---
+
 ## [3.38.34] - 2025-12-30
 
 ### Fixed
