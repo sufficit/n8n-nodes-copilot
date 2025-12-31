@@ -67,14 +67,6 @@ class GitHubCopilot {
                     description: 'Your query or task for GitHub Copilot CLI. Will be executed with: copilot -p "your prompt"',
                 },
                 {
-                    displayName: 'Model',
-                    name: 'model',
-                    type: 'string',
-                    default: '',
-                    placeholder: 'gpt-4o, o1, claude-3.5-sonnet, etc.',
-                    description: 'Model to use (optional). Leave empty for default (Claude Sonnet 4.5). Examples: gpt-4o, gpt-4o-mini, o1, o1-mini, o1-preview, claude-3.5-sonnet',
-                },
-                {
                     displayName: 'Tool Approval',
                     name: 'toolApproval',
                     type: 'options',
@@ -89,6 +81,30 @@ class GitHubCopilot {
                     description: 'Which tools Copilot can use without asking. WARNING: "Allow All" is dangerous - Copilot can execute ANY command!',
                 },
                 {
+                    displayName: 'Options',
+                    name: 'options',
+                    type: 'collection',
+                    placeholder: 'Add Option',
+                    default: {},
+                    options: [
+                        {
+                            displayName: 'Model',
+                            name: 'model',
+                            type: 'string',
+                            default: '',
+                            placeholder: 'gpt-4o, o1, claude-3.5-sonnet, etc.',
+                            description: 'Model to use. Leave empty for default (Claude Sonnet 4.5). Examples: gpt-4o, gpt-4o-mini, o1, o1-mini, o1-preview, claude-3.5-sonnet',
+                        },
+                        {
+                            displayName: 'Timeout (seconds)',
+                            name: 'timeout',
+                            type: 'number',
+                            default: 60,
+                            description: 'Maximum execution time in seconds',
+                        },
+                    ],
+                },
+                {
                     displayName: 'Allowed Tools',
                     name: 'allowedTools',
                     type: 'string',
@@ -100,13 +116,6 @@ class GitHubCopilot {
                     default: '',
                     placeholder: '--allow-tool \'shell(git)\' --allow-tool \'write\'',
                     description: 'Custom tool approval flags (space-separated). Example: --allow-tool \'shell(git)\' --deny-tool \'shell(rm)\'',
-                },
-                {
-                    displayName: 'Timeout (seconds)',
-                    name: 'timeout',
-                    type: 'number',
-                    default: 60,
-                    description: 'Maximum execution time in seconds',
                 },
             ],
         };
@@ -130,10 +139,11 @@ class GitHubCopilot {
             try {
                 const operation = this.getNodeParameter('operation', i);
                 const prompt = this.getNodeParameter('prompt', i);
-                const model = this.getNodeParameter('model', i, '');
                 const toolApproval = this.getNodeParameter('toolApproval', i);
-                const timeout = this.getNodeParameter('timeout', i, 60);
                 const useCredential = this.getNodeParameter('useCredential', i, false);
+                const options = this.getNodeParameter('options', i, {});
+                const model = options.model || '';
+                const timeout = options.timeout || 60;
                 let githubToken = '';
                 let authMethod = 'Local Copilot CLI';
                 if (useCredential) {

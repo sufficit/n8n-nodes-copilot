@@ -3,6 +3,7 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	IDataObject,
 	NodeOperationError,
 } from 'n8n-workflow';
 
@@ -72,14 +73,6 @@ export class GitHubCopilot implements INodeType {
 				description: 'Your query or task for GitHub Copilot CLI. Will be executed with: copilot -p "your prompt"',
 			},
 			{
-				displayName: 'Model',
-				name: 'model',
-				type: 'string',
-				default: '',
-				placeholder: 'gpt-4o, o1, claude-3.5-sonnet, etc.',
-				description: 'Model to use (optional). Leave empty for default (Claude Sonnet 4.5). Examples: gpt-4o, gpt-4o-mini, o1, o1-mini, o1-preview, claude-3.5-sonnet',
-			},
-			{
 				displayName: 'Tool Approval',
 				name: 'toolApproval',
 				type: 'options',
@@ -94,6 +87,30 @@ export class GitHubCopilot implements INodeType {
 				description: 'Which tools Copilot can use without asking. WARNING: "Allow All" is dangerous - Copilot can execute ANY command!',
 			},
 			{
+				displayName: 'Options',
+				name: 'options',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				options: [
+					{
+						displayName: 'Model',
+						name: 'model',
+						type: 'string',
+						default: '',
+						placeholder: 'gpt-4o, o1, claude-3.5-sonnet, etc.',
+						description: 'Model to use. Leave empty for default (Claude Sonnet 4.5). Examples: gpt-4o, gpt-4o-mini, o1, o1-mini, o1-preview, claude-3.5-sonnet',
+					},
+					{
+						displayName: 'Timeout (seconds)',
+						name: 'timeout',
+						type: 'number',
+						default: 60,
+						description: 'Maximum execution time in seconds',
+					},
+				],
+			},
+			{
 				displayName: 'Allowed Tools',
 				name: 'allowedTools',
 				type: 'string',
@@ -105,13 +122,6 @@ export class GitHubCopilot implements INodeType {
 				default: '',
 				placeholder: '--allow-tool \'shell(git)\' --allow-tool \'write\'',
 				description: 'Custom tool approval flags (space-separated). Example: --allow-tool \'shell(git)\' --deny-tool \'shell(rm)\'',
-			},
-			{
-				displayName: 'Timeout (seconds)',
-				name: 'timeout',
-				type: 'number',
-				default: 60,
-				description: 'Maximum execution time in seconds',
 			},
 		],
 	};
@@ -137,9 +147,14 @@ export class GitHubCopilot implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const operation = this.getNodeParameter('operation', i) as string;
-				const prompt = this.getNodeParameter('prompt', i) as string;			const model = this.getNodeParameter('model', i, '') as string;				const toolApproval = this.getNodeParameter('toolApproval', i) as string;
-				const timeout = this.getNodeParameter('timeout', i, 60) as number;
+				const prompt = this.getNodeParameter('prompt', i) as string;
+				const toolApproval = this.getNodeParameter('toolApproval', i) as string;
 				const useCredential = this.getNodeParameter('useCredential', i, false) as boolean;
+				
+				// Get optional parameters from collection
+				const options = this.getNodeParameter('options', i, {}) as IDataObject;
+				const model = (options.model as string) || '';
+				const timeout = (options.timeout as number) || 60;
 
 				// Try to get token from credential only if user chose to use it
 				let githubToken = '';
