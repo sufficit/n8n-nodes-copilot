@@ -106,6 +106,14 @@ class GitHubCopilot {
     async execute() {
         const items = this.getInputData();
         const returnData = [];
+        let copilotVersion = 'unknown';
+        try {
+            const versionResult = await execAsync('copilot --version', { timeout: 5000 });
+            copilotVersion = versionResult.stdout.trim();
+        }
+        catch (error) {
+            copilotVersion = 'not installed';
+        }
         for (let i = 0; i < items.length; i++) {
             try {
                 const operation = this.getNodeParameter('operation', i);
@@ -198,6 +206,7 @@ class GitHubCopilot {
                         prompt,
                         toolApproval,
                         authMethod,
+                        copilotVersion,
                         output: stdout,
                         stderr: stderr || undefined,
                         timestamp: new Date().toISOString(),
@@ -211,6 +220,7 @@ class GitHubCopilot {
                         json: {
                             error: error instanceof Error ? error.message : String(error),
                             operation: 'query',
+                            copilotVersion,
                             prompt: this.getNodeParameter('prompt', i, ''),
                             timestamp: new Date().toISOString(),
                         },
