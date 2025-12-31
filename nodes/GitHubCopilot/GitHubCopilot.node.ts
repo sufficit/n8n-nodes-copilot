@@ -74,19 +74,10 @@ export class GitHubCopilot implements INodeType {
 			{
 				displayName: 'Model',
 				name: 'model',
-				type: 'options',
-				options: [
-					{ name: 'Default (Claude Sonnet 4.5)', value: '' },
-					{ name: 'GPT-4o', value: 'gpt-4o' },
-					{ name: 'GPT-4o Mini', value: 'gpt-4o-mini' },
-					{ name: 'O1', value: 'o1' },
-					{ name: 'O1 Mini', value: 'o1-mini' },
-					{ name: 'O1 Preview', value: 'o1-preview' },
-					{ name: 'Claude Sonnet 3.5', value: 'claude-3.5-sonnet' },
-					{ name: 'Claude Sonnet 4.5', value: 'claude-sonnet-4.5' },
-				],
+				type: 'string',
 				default: '',
-				description: 'Model to use. Default is Claude Sonnet 4.5. Note: Different models have different cost multipliers.',
+				placeholder: 'gpt-4o, o1, claude-3.5-sonnet, etc.',
+				description: 'Model to use (optional). Leave empty for default (Claude Sonnet 4.5). Examples: gpt-4o, gpt-4o-mini, o1, o1-mini, o1-preview, claude-3.5-sonnet',
 			},
 			{
 				displayName: 'Tool Approval',
