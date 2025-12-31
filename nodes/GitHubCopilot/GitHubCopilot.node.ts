@@ -72,6 +72,23 @@ export class GitHubCopilot implements INodeType {
 				description: 'Your query or task for GitHub Copilot CLI. Will be executed with: copilot -p "your prompt"',
 			},
 			{
+				displayName: 'Model',
+				name: 'model',
+				type: 'options',
+				options: [
+					{ name: 'Default (Claude Sonnet 4.5)', value: '' },
+					{ name: 'GPT-4o', value: 'gpt-4o' },
+					{ name: 'GPT-4o Mini', value: 'gpt-4o-mini' },
+					{ name: 'O1', value: 'o1' },
+					{ name: 'O1 Mini', value: 'o1-mini' },
+					{ name: 'O1 Preview', value: 'o1-preview' },
+					{ name: 'Claude Sonnet 3.5', value: 'claude-3.5-sonnet' },
+					{ name: 'Claude Sonnet 4.5', value: 'claude-sonnet-4.5' },
+				],
+				default: '',
+				description: 'Model to use. Default is Claude Sonnet 4.5. Note: Different models have different cost multipliers.',
+			},
+			{
 				displayName: 'Tool Approval',
 				name: 'toolApproval',
 				type: 'options',
@@ -129,8 +146,7 @@ export class GitHubCopilot implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const operation = this.getNodeParameter('operation', i) as string;
-				const prompt = this.getNodeParameter('prompt', i) as string;
-				const toolApproval = this.getNodeParameter('toolApproval', i) as string;
+				const prompt = this.getNodeParameter('prompt', i) as string;			const model = this.getNodeParameter('model', i, '') as string;				const toolApproval = this.getNodeParameter('toolApproval', i) as string;
 				const timeout = this.getNodeParameter('timeout', i, 60) as number;
 				const useCredential = this.getNodeParameter('useCredential', i, false) as boolean;
 
@@ -179,8 +195,9 @@ export class GitHubCopilot implements INodeType {
 				// Escape prompt for shell
 				const escapedPrompt = prompt.replace(/'/g, "'\"'\"'");
 				
-				// Build command: copilot -p "prompt" [tool-flags]
-				const command = `copilot -p '${escapedPrompt}' ${toolFlags}`.trim();
+				// Build command: copilot -p "prompt" [--model model] [tool-flags]
+				const modelFlag = model ? `--model ${model}` : '';
+				const command = `copilot -p '${escapedPrompt}' ${modelFlag} ${toolFlags}`.trim();
 
 				// Execute new GitHub Copilot CLI
 				console.log('Executing command:', command);
@@ -249,6 +266,7 @@ export class GitHubCopilot implements INodeType {
 					json: {
 						operation,
 						prompt,
+						model: model || 'claude-sonnet-4.5',
 						toolApproval,
 						authMethod,
 						copilotVersion: copilotVersionInfo,
