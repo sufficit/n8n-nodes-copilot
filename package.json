@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "4.1.2",
-  "description": "n8n community node for GitHub Copilot with NEW CLI programmatic mode, Chat API access, and AI Chat Model for workflows - access GPT-5, Claude Sonnet 4.5, Gemini and more using your Copilot subscription",
+  "version": "4.2.0",
+  "description": "n8n community node for GitHub Copilot with CLI, Chat API, AI Chat Model, and n8n v2 Chat Hub integration - access GPT-5, Claude Sonnet 4.5, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
   "author": {
@@ -21,7 +21,8 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist"
+    "dist",
+    "shared"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,

@@ -22,6 +22,7 @@ n8n community node package for GitHub Copilot integration with CLI, Chat API, an
 - **[client-integration-ids.instructions.md](.github/instructions/client-integration-ids.instructions.md)**: Client integration IDs configuration
 - **[files-api-discovery.instructions.md](.github/instructions/files-api-discovery.instructions.md)**: Files API discovery findings and status
 - **[publish.instructions.md](.github/instructions/publish.instructions.md)**: Package publishing and deployment instructions
+- **[runtime-provider-injection.instructions.md](.github/instructions/runtime-provider-injection.instructions.md)**: n8n v2 Chat Hub provider injection (experimental)
 
 ### Discovery Documentation (docs/)
 - **[implementation-summary.md](docs/implementation-summary.md)**: Technical implementation overview and architecture decisions
@@ -35,6 +36,7 @@ n8n community node package for GitHub Copilot integration with CLI, Chat API, an
 - OpenAI format compatibility
 - OAuth2 and API key authentication
 - Streaming responses support
+- n8n v2 Chat Hub integration (runtime provider injection)
 
 ## Next Tasks
 

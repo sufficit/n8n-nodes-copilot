@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.2.0] - 2026-01-22 🎯 n8n v2 Chat Hub Integration
+
+### Added
+- **n8n v2 Chat Hub Integration**: Runtime provider injection for n8n v2+
+  - Automatically detects n8n version (v1 vs v2+)
+  - Injects GitHub Copilot into Chat Hub providers list (experimental)
+  - Conditional activation: only runs in n8n v2 or higher
+  - Auto-injection via `GITHUB_COPILOT_AUTO_INJECT=true` environment variable
+  - Manual injection API: `injectGitHubCopilotProvider()`
+  - Version detection utilities: `isN8nV2OrHigher()`, `isChatHubAvailable()`
+  - Comprehensive debugging and status tracking
+  - Fallback to workflow agents in n8n v1.x
+
+### Changed
+- Reorganized documentation: moved USAGE files to `.github/instructions/` with `.instructions.md` format
+- Updated `copilot-instructions.md` with new documentation structure
+- Added shared utilities module for version detection and provider injection
+
+### Documentation
+- Added `.github/instructions/runtime-provider-injection.instructions.md` - Complete runtime injection guide
+- Added `docs/202501220730-n8n-v2-chat-provider-list-integration-research.md` - Technical research
+- Updated all instruction files with proper formatting and structure
+
+### Notes
+⚠️ **Runtime injection is experimental** - may break with n8n updates. Use with caution and test after upgrades.
+✅ **Safe fallback**: Automatically uses workflow agents approach in n8n v1.x
+
 ## [4.0.0] - 2025-12-31 🚀 BREAKING CHANGE
 
 ### 🎉 Migrated to New GitHub Copilot CLI (Programmatic Mode)
