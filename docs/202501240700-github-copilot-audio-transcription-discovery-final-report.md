@@ -155,7 +155,7 @@ class GitHubCopilotSpeechNode {
    - Add to n8n node collection
 
 2. **Documentation Update**
-   - Update `USAGE-github-copilot-api-errors.md`
+   - Update `.github/instructions/api-errors.instructions.md`
    - Add speech capabilities section
    - Document implementation options
 

@@ -12,20 +12,20 @@ n8n community node package for GitHub Copilot integration with CLI, Chat API, an
 - **GitHubCopilotOpenAI**: OpenAI-compatible interface for GitHub Copilot Chat API
 - **GitHubCopilotTest**: Testing and validation node for API responses
 
-## Documentation Files (docs/)
+## Documentation Files
 
-### Core Documentation
+### Instruction Files (.github/instructions/)
+- **[auth-helper-node.instructions.md](.github/instructions/auth-helper-node.instructions.md)**: Auth Helper Node usage and implementation guide
+- **[api-errors.instructions.md](.github/instructions/api-errors.instructions.md)**: Common API errors troubleshooting guide
+- **[models-api.instructions.md](.github/instructions/models-api.instructions.md)**: Models API usage and configuration
+- **[knowing-endpoints.instructions.md](.github/instructions/knowing-endpoints.instructions.md)**: Available API endpoints reference
+- **[client-integration-ids.instructions.md](.github/instructions/client-integration-ids.instructions.md)**: Client integration IDs configuration
+- **[files-api-discovery.instructions.md](.github/instructions/files-api-discovery.instructions.md)**: Files API discovery findings and status
+- **[publish.instructions.md](.github/instructions/publish.instructions.md)**: Package publishing and deployment instructions
+
+### Discovery Documentation (docs/)
 - **[implementation-summary.md](docs/implementation-summary.md)**: Technical implementation overview and architecture decisions
-- **[USAGE-github-copilot-models-api.md](docs/USAGE-github-copilot-models-api.md)**: Models API usage and configuration
-- **[USAGE-github-copilot-knowing-endpoints.md](docs/USAGE-github-copilot-knowing-endpoints.md)**: Available API endpoints reference
-- **[USAGE-github-copilot-api-errors.md](docs/USAGE-github-copilot-api-errors.md)**: Common API errors troubleshooting guide
-
-### Authentication
-- **[USAGE-oauth2-implementation.md](docs/USAGE-oauth2-implementation.md)**: OAuth2 implementation best practices
-
-### Other
-- **[USAGE-github-copilot-client-integration-ids.md](docs/USAGE-github-copilot-client-integration-ids.md)**: Client integration IDs configuration
-- **[USAGE-publish.md](docs/USAGE-publish.md)**: Package publishing and deployment instructions
+- **Timestamped files**: Research findings and technical discoveries (format: YYYYMMDDHHMM-*.md)
 
 ## Key Features
 

@@ -1,5 +1,5 @@
 # Copilot Instructions - n8n GitHub Copilot Nodes
-* **Version**: 202509182335
+* **Version**: 202601220530
 * **Description**: This file provides guidelines and instructions for developing n8n GitHub Copilot nodes.
 * **Repository**: https://github.com/sufficit/n8n-nodes-copilot
 * **VS Code Copilot Chat Repository**: https://github.com/microsoft/vscode-copilot-chat
@@ -14,9 +14,17 @@
 * **Format**: `YYYYMMDDHHMM-description.md` for research findings and usage discoveries
 * **Location**: Save in `./docs/` folder with timestamp prefix
 
+## Usage Instructions
+* **Usage instructions**: Context-specific guidance for using project features
+* **Format**: `feature-name.instructions.md` (no timestamp prefix)
+* **Location**: Save in `./.github/instructions/` folder
+* **Purpose**: Provide AI agents and developers with implementation guidance
+* **Examples**: auth-helper-node.instructions.md, api-errors.instructions.md, models-api.instructions.md
+
 ## Table of Contents
 - [Versioning](#versioning)
 - [Discovery Documentation](#discovery-documentation)
+- [Usage Instructions](#usage-instructions)
 - [General Guidelines](#general-guidelines)
 - [Token Configuration](#token-configuration)
 - [Security and Best Practices](#security-and-best-practices)
@@ -159,7 +167,7 @@ The `./models.json` file contains the **complete and updated list** of all model
 ### 📖 **Complete Documentation**
 For detailed information about models, API endpoint, practical implementations and fallback strategies:
 
-**➡️ See: `./docs/USAGE-github-copilot-models-api.md`**
+**➡️ See: `./.github/instructions/models-api.instructions.md`**
 
 ## Testing and Debugging
 

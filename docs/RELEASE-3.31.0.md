@@ -64,7 +64,7 @@ dist/nodes/
 
 ## 📝 Documentação
 
-- ✅ `/docs/USAGE-auth-helper-node.md` - Guia completo do Auth Helper
+- ✅ `.github/instructions/auth-helper-node.instructions.md` - Guia completo do Auth Helper
 - ✅ `CHANGELOG.md` - Todas as mudanças documentadas
 - ✅ Instruções no próprio node (notice fields)
 

@@ -1,4 +1,4 @@
-# Publishing Guide - n8n GitHub Copilot Nodes
+# Publishing Instructions - n8n GitHub Copilot Nodes
 
 ## Overview
 This document describes the process to publish the `n8n-nodes-github-copilot` package to NPM registry.
@@ -6,7 +6,7 @@ This document describes the process to publish the `n8n-nodes-github-copilot` pa
 ## Prerequisites
 
 ### 1. NPM Account Setup
-- Ensure you have an NPM account with publish permissions
+- Ensure you have NPM account with publish permissions
 - Login to NPM: `npm login`
 - Verify login: `npm whoami`
 
@@ -94,31 +94,36 @@ dist/
 │   ├── GitHubCopilot/
 │   ├── GitHubCopilotChatAPI/
 │   ├── GitHubCopilotChatModel/
+│   ├── GitHubCopilotEmbeddings/
+│   ├── GitHubCopilotFiles/
+│   ├── GitHubCopilotOpenAI/
+│   ├── GitHubCopilotSpeech/
 │   └── GitHubCopilotTest/
 └── shared/
 ```
 
 ## Release Notes Template
 
-### Version 3.27.0 - OAuth2 Integration
+### Version Format
+```markdown
+### Version X.Y.Z - Feature Name
+
 **Features Added:**
-- ✅ New OAuth2 credential type (`GitHubCopilotOAuth2Api`)
-- ✅ Device Flow OAuth support with helper script
-- ✅ Credential type selector in all nodes
-- ✅ Enhanced authentication options
+- ✅ Feature 1 description
+- ✅ Feature 2 description
+- ✅ Feature 3 description
 
 **Nodes Updated:**
-- GitHubCopilotChatModel - Added credential type selector
-- GitHubCopilotChatAPI - Enhanced with OAuth2 support
-- GitHubCopilot - Optional OAuth2 authentication
-- GitHubCopilotTest - Testing with both credential types
+- NodeName1 - Update description
+- NodeName2 - Update description
 
-**Files Added:**
-- `get-copilot-token.js` - OAuth helper script
-- `credentials/GitHubCopilotOAuth2Api.credentials.ts`
+**Files Added/Modified:**
+- `path/to/file1.ts` - Description
+- `path/to/file2.ts` - Description
 
 **Breaking Changes:**
-- None (backward compatible)
+- None (or list breaking changes)
+```
 
 ## Troubleshooting
 
@@ -190,8 +195,55 @@ npm run build
 - Check for vulnerabilities before publishing
 - Use `npm audit fix` to resolve issues
 
+## Publication Workflow
+
+```
+1. Development
+   ↓
+2. Testing
+   ↓
+3. Version Update
+   ↓
+4. Build
+   ↓
+5. Lint Check
+   ↓
+6. Dry Run
+   ↓
+7. Publish
+   ↓
+8. Verification
+   ↓
+9. Documentation
+   ↓
+10. Notification
+```
+
+## Version History Best Practices
+
+### Changelog Maintenance
+- Keep CHANGELOG.md updated
+- Use semantic versioning
+- Document all changes clearly
+- Include migration guides for breaking changes
+
+### Git Tags
+```bash
+# Create annotated tag
+git tag -a v3.37.0 -m "Release version 3.37.0"
+
+# Push tags
+git push origin --tags
+```
+
+### GitHub Releases
+- Create release on GitHub for each version
+- Include release notes
+- Attach built artifacts if needed
+- Link to documentation
+
 ---
 
-**Last Updated**: September 19, 2025
+**Last Updated**: 2025-01-22
 **Maintainer**: Sufficit Development Team
 **Contact**: development@sufficit.com.br

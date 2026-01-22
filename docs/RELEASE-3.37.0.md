@@ -252,7 +252,7 @@ None in this release (feature-only release).
 ## 🔗 Related Links
 
 - [Embeddings Usage Guide](./202510221645-github-copilot-embeddings-complete-guide.md)
-- [Models API Documentation](./USAGE-github-copilot-models-api.md)
+- [Models API Documentation](../.github/instructions/models-api.instructions.md)
 - [GitHub Repository](https://github.com/sufficit/n8n-nodes-github-copilot)
 
 ---

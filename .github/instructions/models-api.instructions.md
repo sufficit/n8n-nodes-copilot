@@ -1,25 +1,25 @@
-# USAGE - GitHub Copilot Models API
+# GitHub Copilot Models API - Usage Instructions
 
-**Data**: 17 de setembro de 2025  
-**Projeto**: n8n-nodes-github-copilot  
-**Objetivo**: Documentação do endpoint de modelos GitHub Copilot e uso da propriedade `model_picker_enabled`
+**Project**: n8n-nodes-github-copilot  
+**Purpose**: Documentation of GitHub Copilot models endpoint and usage of `model_picker_enabled` property
 
-## 🌐 **Endpoint GitHub Copilot Models**
+## GitHub Copilot Models Endpoint
 
-### **URL**
+### URL
 ```
 GET https://api.githubcopilot.com/models
 ```
 
-### **Autenticação**
+### Authentication
 ```javascript
 headers: {
     'Authorization': `Bearer ${gho_token}`,
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'X-GitHub-Api-Version': '2025-07-16'
 }
 ```
 
-### **Resposta da API**
+### API Response
 ```json
 {
   "data": [
@@ -37,85 +37,85 @@ headers: {
 }
 ```
 
-## 🎯 **Propriedade `model_picker_enabled`**
+## Property `model_picker_enabled`
 
-### **Definição**
-A propriedade `model_picker_enabled` controla **quais modelos aparecem na interface de seleção** do GitHub Copilot.
+### Definition
+Property `model_picker_enabled` controls **which models appear in GitHub Copilot selection interface**.
 
-### **Valores Possíveis**
-- `true`: Modelo **habilitado** para seleção na interface
-- `false`: Modelo **desabilitado** (não aparece na interface)
-- `undefined/null`: **Padrão** (tratado como habilitado)
+### Possible Values
+- `true`: Model **enabled** for interface selection
+- `false`: Model **disabled** (does not appear in interface)
+- `undefined/null`: **Default** (treated as enabled)
 
-### **Uso no Projeto**
+### Project Usage
 ```javascript
-// Filtrar apenas modelos habilitados para interface
+// Filter only interface-enabled models
 const enabledModels = allModels.filter(model => 
     model.model_picker_enabled !== false
 );
 ```
 
-## 📊 **Análise dos 28 Modelos (Estado Atual)**
+## Analysis of 28 Models (Current State)
 
-### ✅ **Modelos Habilitados** (`model_picker_enabled: true`) - **12 modelos**
+### ✅ **Enabled Models** (`model_picker_enabled: true`) - **12 models**
 
-#### **Azure OpenAI (5 modelos)**
+#### **Azure OpenAI (5 models)**
 - `gpt-4.1` - GPT-4.1 (versatile)
 - `gpt-5-mini` - GPT-5 mini (lightweight)  
 - `gpt-5` - GPT-5 (versatile)
 - `gpt-4o` - GPT-4o (versatile)
 - `o3-mini` - o3-mini (lightweight)
 
-#### **Anthropic (5 modelos)**
+#### **Anthropic (5 models)**
 - `claude-3.5-sonnet` - Claude Sonnet 3.5 (versatile)
 - `claude-3.7-sonnet` - Claude Sonnet 3.7 (versatile)
 - `claude-3.7-sonnet-thought` - Claude Sonnet 3.7 Thinking (powerful)
 - `claude-sonnet-4` - Claude Sonnet 4 (versatile)
 - `claude-opus-4` - Claude Opus 4 (powerful)
 
-#### **Google (2 modelos)**
+#### **Google (2 models)**
 - `gemini-2.0-flash-001` - Gemini 2.0 Flash (lightweight)
 - `gemini-2.5-pro` - Gemini 2.5 Pro (powerful)
 
-### ❌ **Modelos Desabilitados** (`model_picker_enabled: false`) - **16 modelos**
+### ❌ **Disabled Models** (`model_picker_enabled: false`) - **16 models**
 
-#### **Versões Antigas/Superseded**
-- `gpt-3.5-turbo` / `gpt-3.5-turbo-0613` - Substituídos por GPT-4+
-- `gpt-4` / `gpt-4-0613` - Substituídos por GPT-4.1/GPT-5
-- `gpt-4o-mini` / `gpt-4o-mini-2024-07-18` - Versão mini desabilitada
+#### **Old/Superseded Versions**
+- `gpt-3.5-turbo` / `gpt-3.5-turbo-0613` - Replaced by GPT-4+
+- `gpt-4` / `gpt-4-0613` - Replaced by GPT-4.1/GPT-5
+- `gpt-4o-mini` / `gpt-4o-mini-2024-07-18` - Mini version disabled
 
-#### **Versões Específicas com Data**
-- `gpt-4o-2024-11-20` - Versão específica (genérica `gpt-4o` habilitada)
-- `gpt-4o-2024-05-13` - Versão antiga
-- `gpt-4o-2024-08-06` - Versão antiga
-- `gpt-4-o-preview` - Preview desabilitado
-- `o3-mini-2025-01-31` - Versão específica (genérica `o3-mini` habilitada)
-- `o3-mini-paygo` - Versão pay-as-you-go
-- `gpt-4.1-2025-04-14` - Versão específica (genérica `gpt-4.1` habilitada)
+#### **Date-Specific Versions**
+- `gpt-4o-2024-11-20` - Specific version (generic `gpt-4o` enabled)
+- `gpt-4o-2024-05-13` - Old version
+- `gpt-4o-2024-08-06` - Old version
+- `gpt-4-o-preview` - Preview disabled
+- `o3-mini-2025-01-31` - Specific version (generic `o3-mini` enabled)
+- `o3-mini-paygo` - Pay-as-you-go version
+- `gpt-4.1-2025-04-14` - Specific version (generic `gpt-4.1` enabled)
 
-#### **Modelos de Embedding**
+#### **Embedding Models**
 - `text-embedding-ada-002` - Embedding V2 Ada
 - `text-embedding-3-small` - Embedding V3 small
 - `text-embedding-3-small-inference` - Embedding V3 small (Inference)
 
-## 🔧 **Implementação Prática**
+## Practical Implementation
 
-### **Carregamento de Modelos**
+### Model Loading
 ```javascript
-// Carregar modelos do arquivo local
+// Load models from local file
 const fs = require('fs');
 const modelsData = JSON.parse(fs.readFileSync('./models.json', 'utf8'));
 
-// Filtrar apenas modelos habilitados
+// Filter only enabled models
 const enabledModels = modelsData.data.filter(model => 
     model.model_picker_enabled !== false
 );
 
-console.log(`Total modelos: ${modelsData.data.length}`);
-console.log(`Modelos habilitados: ${enabledModels.length}`);
+console.log(`Total models: ${modelsData.data.length}`);
+console.log(`Enabled models: ${enabledModels.length}`);
 ```
 
-### **Categorização por Provider**
+### Categorization by Provider
 ```javascript
 const modelsByProvider = {};
 enabledModels.forEach(model => {
@@ -125,15 +125,15 @@ enabledModels.forEach(model => {
     modelsByProvider[model.vendor].push(model);
 });
 
-// Resultado:
-// Azure OpenAI: 5 modelos
-// Anthropic: 5 modelos  
-// Google: 2 modelos
+// Result:
+// Azure OpenAI: 5 models
+// Anthropic: 5 models  
+// Google: 2 models
 ```
 
-### **Geração de Lista para UI**
+### UI List Generation
 ```javascript
-// Para dropdowns/selects na interface
+// For dropdowns/selects in interface
 const modelOptions = enabledModels.map(model => ({
     name: `${model.name} (${model.vendor})`,
     value: model.id,
@@ -142,14 +142,14 @@ const modelOptions = enabledModels.map(model => ({
 }));
 ```
 
-## 📋 **Categorias de Modelos**
+## Model Categories
 
-### **model_picker_category**
-- `"versatile"` - Modelos equilibrados para uso geral
-- `"lightweight"` - Modelos rápidos e eficientes
-- `"powerful"` - Modelos mais avançados para tarefas complexas
+### model_picker_category
+- `"versatile"` - Balanced models for general use
+- `"lightweight"` - Fast and efficient models
+- `"powerful"` - Most advanced models for complex tasks
 
-### **Distribuição por Categoria**
+### Distribution by Category
 ```javascript
 const byCategory = {
     versatile: ['gpt-4.1', 'gpt-5', 'gpt-4o', 'claude-3.5-sonnet', 'claude-3.7-sonnet', 'claude-sonnet-4'],
@@ -158,15 +158,15 @@ const byCategory = {
 };
 ```
 
-## 🚀 **Uso Futuro Recomendado**
+## Recommended Future Usage
 
-### **1. Cache de Modelos**
+### 1. Model Cache
 ```javascript
-// Implementar cache para evitar chamadas repetidas à API
+// Implement cache to avoid repeated API calls
 class ModelsCache {
     static cache = null;
     static lastUpdate = 0;
-    static CACHE_DURATION = 300000; // 5 minutos
+    static CACHE_DURATION = 300000; // 5 minutes
 
     static async getModels(token) {
         if (this.cache && Date.now() - this.lastUpdate < this.CACHE_DURATION) {
@@ -174,7 +174,10 @@ class ModelsCache {
         }
 
         const response = await fetch('https://api.githubcopilot.com/models', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'X-GitHub-Api-Version': '2025-07-16'
+            }
         });
         
         this.cache = await response.json();
@@ -184,9 +187,9 @@ class ModelsCache {
 }
 ```
 
-### **2. Detecção Automática de Modelos Disponíveis**
+### 2. Automatic Detection of Available Models
 ```javascript
-// Testar automaticamente quais modelos funcionam
+// Automatically test which models work
 async function getWorkingModels(token) {
     const allModels = await ModelsCache.getModels(token);
     const enabledModels = allModels.data.filter(m => m.model_picker_enabled !== false);
@@ -201,9 +204,9 @@ async function getWorkingModels(token) {
 }
 ```
 
-### **3. UI Dinâmica por Subscription**
+### 3. Dynamic UI by Subscription
 ```javascript
-// Mostrar apenas modelos que funcionam para o usuário
+// Show only models that work for user
 export async function getAvailableModelOptions(context) {
     const token = await getToken(context);
     const workingModels = await getWorkingModels(token);
@@ -216,24 +219,24 @@ export async function getAvailableModelOptions(context) {
 }
 ```
 
-## ⚠️ **Observações Importantes**
+## Important Observations
 
-### **Limitações por Subscription**
-- Nem todos os modelos habilitados (`model_picker_enabled: true`) funcionam em todas as contas
-- Anthropic e Google podem requerer subscription premium
-- Alguns modelos Azure OpenAI também têm restrições específicas
+### Subscription Limitations
+- Not all enabled models (`model_picker_enabled: true`) work in all accounts
+- Anthropic and Google may require premium subscription
+- Some Azure OpenAI models also have specific restrictions
 
-### **Fallback Strategy**
+### Fallback Strategy
 ```javascript
-// Sempre ter fallback para modelos que funcionam
-const FALLBACK_MODELS = ['gpt-5-mini', 'gpt-5']; // Verificadamente funcionais
+// Always have fallback to working models
+const FALLBACK_MODELS = ['gpt-5-mini', 'gpt-5']; // Verified functional
 
 async function getChatCompletion(token, model, messages) {
     try {
         return await callModel(token, model, messages);
     } catch (error) {
         if (error.status === 403) {
-            // Tentar fallback
+            // Try fallback
             for (const fallback of FALLBACK_MODELS) {
                 try {
                     return await callModel(token, fallback, messages);
@@ -247,6 +250,28 @@ async function getChatCompletion(token, model, messages) {
 }
 ```
 
+## Node Implementation Guidelines
+
+### When Loading Models
+1. **Always filter** by `model_picker_enabled !== false`
+2. **Cache results** to avoid repeated API calls
+3. **Test availability** before showing to user
+4. **Provide fallback** for unavailable models
+
+### When Displaying Models
+1. **Group by provider** for better organization
+2. **Show category** (lightweight/versatile/powerful)
+3. **Indicate availability** per user subscription
+4. **Sort by relevance** (most used first)
+
+### When Using Models
+1. **Validate availability** before API call
+2. **Handle 403 errors** with fallback
+3. **Log failures** for debugging
+4. **Update cache** when new models detected
+
 ---
 
-**Conclusão**: A propriedade `model_picker_enabled` é fundamental para filtrar modelos relevantes e evitar versões duplicadas/obsoletas. Sempre usar esta propriedade como base para seleção de modelos na interface.
+**Conclusion**: Property `model_picker_enabled` is fundamental for filtering relevant models and avoiding duplicate/obsolete versions. Always use this property as basis for model selection in interface.
+
+**Last Updated**: 2025-01-22

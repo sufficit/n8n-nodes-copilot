@@ -107,7 +107,7 @@ Bad Request
 
 ✅ **Endpoint exists:** Listed in official VS Code extension code  
 ✅ **Models exist:** 3 embedding models returned by /models API  
-✅ **Documentation exists:** Mentioned in USAGE-github-copilot-knowing-endpoints.md  
+✅ **Documentation exists:** Mentioned in .github/instructions/knowing-endpoints.instructions.md  
 ❌ **Access denied:** Consistent 400 errors across all attempts  
 ❌ **No error details:** Response body only contains "Bad Request"
 

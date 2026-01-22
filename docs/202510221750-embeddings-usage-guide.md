@@ -592,7 +592,7 @@ Need embeddings?
 ## Additional Resources
 
 - **Test Results**: `./temp/embeddings-comprehensive-test-*.json`
-- **API Documentation**: `./docs/USAGE-github-copilot-models-api.md`
+- **API Documentation**: `./.github/instructions/models-api.instructions.md`
 - **OAuth Token Generation**: `./docs/202510221708-oauth-token-generation-guide.md`
 - **Complete Discovery**: `./docs/202510221645-github-copilot-embeddings-complete-guide.md`
 
