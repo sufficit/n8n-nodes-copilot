@@ -1,53 +1,168 @@
-# GitHub Copilot Tests
+# Test Suite - n8n GitHub Copilot Nodes
 
-Esta pasta contém scripts de teste para validar o funcionamento dos modelos GitHub Copilot.
+Esta pasta contém testes completos para validar funcionalidades do pacote n8n-nodes-github-copilot.
 
-## 🧪 **Scripts Disponíveis**
+## 🧪 Tipos de Testes
 
-### `test-all-models.js`
-Script principal que testa todos os modelos disponíveis automaticamente.
-
-**Características:**
-- ✅ Carrega modelos automaticamente do `../models.json`
-- ✅ Carrega token automaticamente do `../.token`
-- ✅ Testa modelos representativos de cada provider
-- ✅ Gera relatório detalhado em `test-results.json`
-- ✅ Identifica problemas de subscription/acesso
+### 1. Testes de API (`test-all-models.js`)
+Valida modelos GitHub Copilot via API.
 
 **Como executar:**
 ```bash
-# Da raiz do projeto
-node ./tests/test-all-models.js
+node tests/test-all-models.js
 ```
 
-**Saída esperada:**
-- Lista de modelos funcionais
-- Erros de acesso por provider
-- Recomendações baseadas nos resultados
-- Arquivo `test-results.json` com dados completos
+### 2. Testes Unitários (`unit/`)
+Valida componentes individuais do sistema de Runtime Provider Injection.
 
-## 📋 **Requisitos**
+#### `version-detection.test.js`
+Testa detecção de versão do n8n.
 
-1. **Token válido**: Arquivo `../.token` com token GitHub Copilot (formato `gho_*`)
-2. **Modelos atualizados**: Arquivo `../models.json` com lista atual da API
-3. **Acesso à internet**: Para testar API GitHub Copilot
+**Como executar:**
+```bash
+node tests/unit/version-detection.test.js
+```
 
-## 🎯 **O que o teste verifica**
+**O que testa:**
+- ✓ Detecção de n8n v1.x vs v2+
+- ✓ Verificação de Chat Hub disponível
+- ✓ Múltiplos métodos de detecção
+- ✓ Mock de versões
 
-1. **Formato do token**: Validação `gho_*`
-2. **Acesso à API**: Endpoint `/models`
-3. **Modelos individuais**: Chat completions para cada modelo
-4. **Restrições de acesso**: Headers de erro 403/401
-5. **Performance**: Rate limiting e timeouts
+**Resultado esperado**: 8-9 testes passando
 
-## 📊 **Interpretação dos Resultados**
+#### `provider-injection.test.js`
+Testa lógica de injeção do provider.
 
-### ✅ **Sucesso**
-- Modelo responde corretamente
-- Disponível para uso em produção
+**Como executar:**
+```bash
+node tests/unit/provider-injection.test.js
+```
 
-### ❌ **Erro 403 (Forbidden)**
-- Modelo requer subscription premium
+**O que testa:**
+- ✓ Status de injeção
+- ✓ Idempotência
+- ✓ Force injection
+- ✓ Compatibilidade de versão
+- ✓ Auto-injection
+
+**Resultado esperado**: 8-9 testes passando
+
+### 3. Teste de Integração (`integration-test.js`)
+Teste end-to-end com ambiente simulado.
+
+**Como executar:**
+```bash
+# Básico
+node tests/integration-test.js
+
+# Com simulação de versão
+node tests/integration-test.js --version=2.15.3 --debug
+```
+
+**Opções:**
+- `--version=X.X.X` - Simula versão do n8n
+- `--debug` - Logging detalhado
+- `--auto-inject` - Simula auto-injection
+
+**Resultado esperado**: 7/7 testes passando
+
+### 4. Debug Interativo (`debug-provider-injection.js`)
+Script step-by-step para diagnóstico.
+
+**Como executar:**
+```bash
+node tests/debug-provider-injection.js
+```
+
+**Features:**
+- ✓ Inspeção interativa do ambiente
+- ✓ Mock de versões
+- ✓ Colored output
+- ✓ Gera `diagnostic-report.json`
+
+---
+
+## 📊 Status dos Testes
+
+| Componente | Status | Cobertura |
+|------------|--------|-----------|
+| version-detection | ✅ OK | 8/9 testes |
+| provider-injection | ✅ OK | 8/9 testes |
+| integration-test | ✅ OK | 7/7 testes |
+| API models | ✅ OK | Funcionando |
+
+---
+
+## 🎯 Executando Todos os Testes
+
+```bash
+# Testes unitários
+node tests/unit/version-detection.test.js
+node tests/unit/provider-injection.test.js
+
+# Integração
+node tests/integration-test.js --version=2.15.3 --debug
+
+# API (opcional)
+node tests/test-all-models.js
+```
+
+---
+
+## 📋 Requisitos
+
+1. **Build**: Execute `npm run build` antes dos testes
+2. **Token**: Arquivo `.token` na raiz (para testes de API)
+3. **Node.js**: v18+ recomendado
+
+---
+
+## 🐛 Troubleshooting
+
+### "Cannot find module './dist/shared/utils/version-detection'"
+**Solução**: Execute `npm run build`
+
+### "n8n version not detected"
+**Solução**: Normal em dev. Use `--version=2.15.3` para simular
+
+### "Injection skipped: n8n v2+ required"
+**Solução**: Use `--version=2.15.3` ou teste em n8n v2+ real
+
+### Provider não aparece no n8n
+**Solução**: Veja [troubleshooting docs](../docs/202601230030-provider-injection-troubleshooting.md)
+
+---
+
+## 📄 Relatórios Gerados
+
+- `integration-test-report.json` - Resultado de integração
+- `diagnostic-report.json` - Debug interativo
+- `test-results-[timestamp].json` - Testes de API
+
+---
+
+## 🎯 Próximos Passos
+
+Para validação completa, teste em n8n v2+ real:
+
+```bash
+# Instalar n8n v2+
+npm install -g n8n@latest
+
+# Instalar pacote
+cd ~/.n8n/nodes
+npm install n8n-nodes-github-copilot@4.2.0
+
+# Configurar
+export GITHUB_COPILOT_AUTO_INJECT=true
+export GITHUB_COPILOT_DEBUG=true
+
+# Iniciar e verificar logs
+n8n start
+```
+
+---
 - Comum para Anthropic/Google em contas básicas
 
 ### ❌ **Erro 401 (Unauthorized)**

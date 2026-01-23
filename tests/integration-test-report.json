@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-01-23T03:15:54.325Z",
+  "options": {
+    "version": "2.15.3",
+    "autoInject": false,
+    "debug": true
+  },
+  "environment": {
+    "nodeVersion": "v22.20.0",
+    "cwd": "Z:\\Desenvolvimento\\n8n-nodes-copilot",
+    "env": {
+      "N8N_VERSION": "2.15.3",
+      "GITHUB_COPILOT_DEBUG": "true"
+    }
+  },
+  "results": [
+    {
+      "name": "Test 1: Module Loading",
+      "passed": true
+    },
+    {
+      "name": "Test 2: Version Detection",
+      "passed": true
+    },
+    {
+      "name": "Test 3: Manual Injection",
+      "passed": true
+    },
+    {
+      "name": "Test 4: Idempotency Check",
+      "passed": true
+    },
+    {
+      "name": "Test 5: Force Injection",
+      "passed": true
+    },
+    {
+      "name": "Test 6: Status Validation",
+      "passed": true
+    },
+    {
+      "name": "Test 7: Module Inspection",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "passRate": "100.0%"
+  },
+  "injectionStatus": {
+    "attempted": true,
+    "success": false,
+    "n8nVersion": "1.111.0 (v1)",
+    "chatHubAvailable": false,
+    "modifications": [],
+    "error": "n8n v2+ required. Detected: 1.111.0 (v1)"
+  }
+}
