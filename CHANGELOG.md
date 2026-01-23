@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.3.0] - 2026-01-23 🗄️ PostgreSQL PGVector Integration
+
+### Added
+- **GitHubCopilotPGVector Node** - PostgreSQL vector store integration with GitHub Copilot Embeddings:
+  - **Create Table** operation: Creates vector tables with pgvector extension and IVFFlat indexing
+  - **Insert Documents** operation: Generates embeddings and inserts documents with metadata (batch processing)
+  - **Search Similar** operation: Semantic similarity search using cosine distance
+  - Configurable dimensions (512-1536)
+  - JSONB metadata storage
+  - Custom column names support
+  - Batch processing with configurable size
+  - Distance threshold filtering
+
+### Features
+- Uses GitHub Copilot Embeddings API as backend
+- PostgreSQL credentials integration
+- Efficient batch document processing
+- IVFFlat index creation for performance
+- Metadata filtering in search queries
+- Configurable table schemas
+
+### Dependencies
+- Requires `pg` (PostgreSQL client)
+- Requires `pgvector` extension in PostgreSQL
+
 ## [4.2.1] - 2026-01-23 🧪 Test Suite & Troubleshooting
 
 ### Added
