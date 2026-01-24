@@ -10,6 +10,55 @@ This document describes the process to publish the `n8n-nodes-github-copilot` pa
 - Login to NPM: `npm login`
 - Verify login: `npm whoami`
 
+#### Authentication Token Setup (Recommended for Automation)
+
+To avoid repeated password prompts during publishing, configure authentication tokens:
+
+**Option 1: Token Files (Recommended)**
+
+Create separate token files in the project root:
+
+```bash
+# NPM automation token
+echo "npm_your_token_here" > .npm.token
+
+# GitHub personal access token
+echo "ghp_your_token_here" > .github.token
+```
+
+**Option 2: config.json (Alternative)**
+
+Create or edit `config.json` in project root:
+
+```json
+{
+  "github": {
+    "token_file": ".github.token",
+    "token": ""
+  },
+  "npm": {
+    "token_file": ".npm.token",
+    "token": ""
+  }
+}
+```
+
+**Token Generation:**
+
+1. **NPM Token**: Visit https://www.npmjs.com/settings/[username]/tokens
+   - Create "Automation" token (recommended) or "Publish" token
+   - Copy token to `.npm.token` file
+
+2. **GitHub Token**: Visit https://github.com/settings/tokens
+   - Create Personal Access Token with `repo` and `workflow` scopes
+   - Copy token to `.github.token` file
+
+**Security Notes:**
+- ✅ Token files (`.npm.token`, `.github.token`) are automatically excluded by `.gitignore` (pattern: `*.token`)
+- ✅ `config.json` is also excluded from version control
+- ⚠️ Never commit tokens to Git repositories
+- ⚠️ Use token files instead of inline tokens in config.json for better security
+
 ### 2. Version Management
 - Update version in `package.json` following semantic versioning
 - Use appropriate version increment:
@@ -186,9 +235,30 @@ npm run build
 ## Security Considerations
 
 ### Token Management
-- Never include `.token` file in published package
-- Ensure `.gitignore` excludes sensitive files
-- Verify `"files"` array in package.json only includes `dist/`
+
+**Protected Files:**
+- `.npm.token` - NPM authentication token
+- `.github.token` - GitHub personal access token
+- `config.json` - Configuration file with token references
+- All `*.token` files - Excluded by `.gitignore` pattern
+
+**Verification:**
+```bash
+# Verify .gitignore includes token protection
+grep -E "\*\.token|config\.json" .gitignore
+
+# Expected output:
+# *.token
+# config.json
+```
+
+**Best Practices:**
+- ✅ Never include token files in published package
+- ✅ Ensure `.gitignore` excludes sensitive files
+- ✅ Verify `"files"` array in package.json only includes `dist/`
+- ✅ Use token files instead of hardcoding tokens in scripts
+- ✅ Rotate tokens periodically (every 90 days recommended)
+- ⚠️ Never commit `config.json` with populated token fields
 
 ### Dependency Security
 - Regularly update dependencies: `npm audit`
@@ -244,6 +314,6 @@ git push origin --tags
 
 ---
 
-**Last Updated**: 2025-01-22
+**Last Updated**: 2026-01-24
 **Maintainer**: Sufficit Development Team
 **Contact**: development@sufficit.com.br

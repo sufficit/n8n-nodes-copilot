@@ -18,7 +18,10 @@ yarn-error.log*
 *~
 .token
 .token**
+*.token
+config.json
 models.json
 package-lock.json
 *-lock.json
 .machine-id
+dist/
