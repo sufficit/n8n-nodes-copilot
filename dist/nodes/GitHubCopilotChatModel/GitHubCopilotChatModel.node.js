@@ -1,10 +1,44 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GitHubCopilotChatModel = void 0;
 const openai_1 = require("@langchain/openai");
 const messages_1 = require("@langchain/core/messages");
 const GitHubCopilotModels_1 = require("../../shared/models/GitHubCopilotModels");
 const GitHubCopilotEndpoints_1 = require("../../shared/utils/GitHubCopilotEndpoints");
+const DynamicModelsManager_1 = require("../../shared/utils/DynamicModelsManager");
 const DynamicModelLoader_1 = require("../../shared/models/DynamicModelLoader");
 const ModelProperties_1 = require("../../shared/properties/ModelProperties");
 const ModelVersionRequirements_1 = require("../../shared/models/ModelVersionRequirements");
@@ -14,6 +48,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         super(config);
         this.context = context;
         this.options = options;
+        this.oauthToken = config.configuration.apiKey;
     }
     invocationParams(options) {
         const params = super.invocationParams(options);
@@ -21,7 +56,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
         return params;
     }
     async _generate(messages, options) {
-        var _a;
+        var _a, _b;
         if (!messages || messages.length === 0) {
             throw new Error('No messages provided for generation');
         }
@@ -139,17 +174,109 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             top_p: this.topP,
             stream: this.options.enableStreaming || false,
         };
+        if (hasVisionContent) {
+            let baseSupportsVision = DynamicModelsManager_1.DynamicModelsManager.modelSupportsVision(this.oauthToken, this.model);
+            if (baseSupportsVision === null) {
+                const baseModelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(this.model);
+                baseSupportsVision = !!((_a = baseModelInfo === null || baseModelInfo === void 0 ? void 0 : baseModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision);
+                console.log(`👁️ Vision check for model ${this.model}: using static list, supportsVision=${baseSupportsVision}`);
+            }
+            else {
+                console.log(`👁️ Vision check for model ${this.model}: using API cache, supportsVision=${baseSupportsVision}`);
+            }
+            if (!baseSupportsVision) {
+                if (this.options.enableVisionFallback) {
+                    const fallbackRaw = this.options.visionFallbackModel;
+                    const fallbackModel = fallbackRaw === '__manual__' ? this.options.visionFallbackCustomModel : fallbackRaw;
+                    if (!fallbackModel || fallbackModel.trim() === '') {
+                        throw new Error('Vision fallback enabled but no fallback model was selected or provided');
+                    }
+                    requestBody.model = fallbackModel;
+                    console.log(`👁️ Using vision fallback model ${fallbackModel} for image processing`);
+                }
+                else {
+                    throw new Error('Selected model does not support vision; enable Vision Fallback and pick a fallback model to process images.');
+                }
+            }
+        }
         if (this.options.tools && JSON.parse(this.options.tools).length > 0) {
             requestBody.tools = JSON.parse(this.options.tools);
             requestBody.tool_choice = this.options.tool_choice || 'auto';
             console.log(`🔧 Request includes ${requestBody.tools.length} tools`);
         }
         const startTime = Date.now();
-        const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+        const shouldUseVision = hasVisionContent;
         if (shouldUseVision) {
-            console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
+            console.log(`👁️ Sending vision request with Copilot-Vision-Request header (images detected)`);
         }
         try {
+            if (hasVisionContent) {
+                console.log('👁️ Preparing image uploads for vision content...');
+                const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+                for (const msg of requestBody.messages) {
+                    if (!(msg === null || msg === void 0 ? void 0 : msg.content) || !Array.isArray(msg.content))
+                        continue;
+                    for (const part of msg.content) {
+                        if ((part === null || part === void 0 ? void 0 : part.type) === 'image_url' && part.image_url && part.image_url.url) {
+                            const url = String(part.image_url.url || '');
+                            try {
+                                let buffer = null;
+                                let mime = 'image/png';
+                                let filename = `upload-${Date.now()}.png`;
+                                if (url.startsWith('data:image/')) {
+                                    const match = url.match(/^data:(image\/[^;]+);base64,(.*)$/);
+                                    if (match) {
+                                        mime = match[1].toLowerCase();
+                                        const base64 = match[2];
+                                        buffer = Buffer.from(base64, 'base64');
+                                        const ext = mime.split('/').pop() || 'png';
+                                        filename = `image-${Date.now()}.${ext}`;
+                                    }
+                                }
+                                else if (url.startsWith('http://') || url.startsWith('https://')) {
+                                    const res = await fetch(url);
+                                    if (!res.ok)
+                                        throw new Error(`Failed to download image: ${res.status}`);
+                                    mime = (res.headers.get('content-type') || 'image/png').toLowerCase();
+                                    const arrayBuffer = await res.arrayBuffer();
+                                    buffer = Buffer.from(arrayBuffer);
+                                    const ext = (mime.split('/')[1] || 'png').split('+')[0].split(';')[0];
+                                    filename = `image-${Date.now()}.${ext}`;
+                                }
+                                else {
+                                    console.log(`⚠️ Skipping unsupported URL format: ${url.substring(0, 50)}...`);
+                                    continue;
+                                }
+                                if (!SUPPORTED_IMAGE_TYPES.includes(mime)) {
+                                    console.warn(`⚠️ Image type ${mime} may not be supported. Supported: ${SUPPORTED_IMAGE_TYPES.join(', ')}`);
+                                }
+                                console.log(`👁️ Processing image: ${filename}, type: ${mime}, size: ${(buffer === null || buffer === void 0 ? void 0 : buffer.length) || 0} bytes`);
+                                if (buffer) {
+                                    try {
+                                        const uploadResult = await Promise.resolve().then(() => __importStar(require('../../shared/utils/GitHubCopilotApiUtils'))).then(m => m.uploadFileToCopilot(this.context, buffer, filename, mime));
+                                        const newUrl = (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.url) || (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.file_url) || (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.id) ? (uploadResult.url || `copilot-file://${uploadResult.id}`) : null;
+                                        if (newUrl) {
+                                            part.image_url.url = newUrl;
+                                            console.log(`👁️ Uploaded image and replaced URL with ${newUrl}`);
+                                        }
+                                        else {
+                                            console.warn('⚠️ File upload succeeded but no URL/id returned by API', uploadResult);
+                                        }
+                                    }
+                                    catch (err) {
+                                        console.error('❌ Image upload failed:', err instanceof Error ? err.message : String(err));
+                                        throw err;
+                                    }
+                                }
+                            }
+                            catch (err) {
+                                console.error('❌ Preparing/uploading image failed:', err instanceof Error ? err.message : String(err));
+                                throw err;
+                            }
+                        }
+                    }
+                }
+            }
             const response = await (0, GitHubCopilotApiUtils_1.makeGitHubCopilotRequest)(this.context, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, shouldUseVision);
             const endTime = Date.now();
             const latency = endTime - startTime;
@@ -164,7 +291,7 @@ class GitHubCopilotChatOpenAI extends openai_1.ChatOpenAI {
             const langchainMessage = new messages_1.AIMessage({
                 content: choice.message.content || '',
             });
-            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_a = choice.message.content) === null || _a === void 0 ? void 0 : _a.length) || 0}, finish_reason=${choice.finish_reason}`);
+            console.log(`📝 Response: role=${choice.message.role}, content_length=${((_b = choice.message.content) === null || _b === void 0 ? void 0 : _b.length) || 0}, finish_reason=${choice.finish_reason}`);
             const generation = {
                 text: choice.message.content || '',
                 generationInfo: {
@@ -334,11 +461,41 @@ class GitHubCopilotChatModel {
                             },
                         },
                         {
-                            displayName: 'Enable Vision (Image Processing)',
-                            name: 'enableVision',
+                            displayName: 'Enable Vision Fallback',
+                            name: 'enableVisionFallback',
                             type: 'boolean',
                             default: false,
-                            description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
+                            description: 'When the primary model does not support vision, automatically use a vision-capable fallback model to process images. Enable this if you want to send images but your primary model does not support vision.',
+                        },
+                        {
+                            displayName: 'Vision Fallback Model',
+                            name: 'visionFallbackModel',
+                            type: 'options',
+                            typeOptions: {
+                                loadOptionsMethod: 'getVisionFallbackModels',
+                            },
+                            default: '',
+                            description: 'Select a vision-capable model to use when processing images with a non-vision primary model',
+                            displayOptions: {
+                                show: {
+                                    enableVisionFallback: [true],
+                                },
+                            },
+                        },
+                        {
+                            displayName: 'Custom Vision Model',
+                            name: 'visionFallbackCustomModel',
+                            type: 'string',
+                            default: '',
+                            placeholder: 'gpt-4o, claude-sonnet-4, gemini-2.0-flash, etc.',
+                            description: 'Enter the model name manually for vision fallback',
+                            hint: 'Enter the exact model ID for vision processing (e.g., gpt-4o, claude-sonnet-4)',
+                            displayOptions: {
+                                show: {
+                                    enableVisionFallback: [true],
+                                    visionFallbackModel: ['__manual__'],
+                                },
+                            },
                         },
                     ],
                 },
@@ -349,10 +506,14 @@ class GitHubCopilotChatModel {
                 async getAvailableModels() {
                     return await DynamicModelLoader_1.loadAvailableModels.call(this);
                 },
+                async getVisionFallbackModels() {
+                    return await DynamicModelLoader_1.loadAvailableVisionModels.call(this);
+                },
             },
         };
     }
     async supplyData(itemIndex) {
+        var _a, _b;
         let model = this.getNodeParameter('model', itemIndex);
         if (model === '__manual__') {
             const customModel = this.getNodeParameter('customModel', itemIndex);
@@ -387,6 +548,10 @@ class GitHubCopilotChatModel {
         const minVSCodeVersion = (0, ModelVersionRequirements_1.getMinVSCodeVersion)(safeModel);
         const additionalHeaders = (0, ModelVersionRequirements_1.getAdditionalHeaders)(safeModel);
         console.log(`🔧 Model: ${safeModel} requires VS Code version: ${minVSCodeVersion}`);
+        if ((_b = (_a = safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.supports) === null || _b === void 0 ? void 0 : _b.vision) {
+            options.enableVision = true;
+            console.log(`👁️ Model ${safeModel} supports vision - enabling vision automatically`);
+        }
         let parsedTools = [];
         if (options.tools && options.tools.trim()) {
             try {
@@ -427,8 +592,7 @@ class GitHubCopilotChatModel {
                     'OpenAI-Intent': 'conversation-panel',
                     'Copilot-Integration-Id': 'vscode-chat',
                     ...additionalHeaders,
-                    ...(options.enableVision &&
-                        (safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities.vision) && {
+                    ...((safeModelInfo === null || safeModelInfo === void 0 ? void 0 : safeModelInfo.capabilities.vision) && {
                         'Copilot-Vision-Request': 'true',
                         'Copilot-Media-Request': 'true',
                     }),

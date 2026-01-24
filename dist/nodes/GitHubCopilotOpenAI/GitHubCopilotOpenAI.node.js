@@ -6,6 +6,8 @@ const nodeProperties_1 = require("./nodeProperties");
 const utils_1 = require("../GitHubCopilotChatAPI/utils");
 const GitHubCopilotEndpoints_1 = require("../../shared/utils/GitHubCopilotEndpoints");
 const DynamicModelLoader_1 = require("../../shared/models/DynamicModelLoader");
+const GitHubCopilotModels_1 = require("../../shared/models/GitHubCopilotModels");
+const DynamicModelsManager_1 = require("../../shared/utils/DynamicModelsManager");
 class GitHubCopilotOpenAI {
     constructor() {
         this.description = {
@@ -34,11 +36,14 @@ class GitHubCopilotOpenAI {
                 async getAvailableModels() {
                     return await DynamicModelLoader_1.loadAvailableModels.call(this);
                 },
+                async getVisionFallbackModels() {
+                    return await DynamicModelLoader_1.loadAvailableVisionModels.call(this);
+                },
             },
         };
     }
     async execute() {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         const items = this.getInputData();
         const returnData = [];
         for (let i = 0; i < items.length; i++) {
@@ -228,7 +233,57 @@ class GitHubCopilotOpenAI {
                     'o1-preview': 'o1-preview',
                     'o1-mini': 'o1-mini',
                 };
-                const copilotModel = modelMapping[model] || model;
+                let copilotModel = modelMapping[model] || model;
+                let hasVisionContent = false;
+                for (const msg of messages) {
+                    const content = msg.content;
+                    if (typeof content === 'string') {
+                        if (content.includes('data:image/') || content.match(/\[.*image.*\]/i)) {
+                            hasVisionContent = true;
+                            break;
+                        }
+                    }
+                    else if (Array.isArray(content)) {
+                        for (const part of content) {
+                            if ((part === null || part === void 0 ? void 0 : part.type) === 'image_url' || (part === null || part === void 0 ? void 0 : part.type) === 'image' || (part === null || part === void 0 ? void 0 : part.image_url)) {
+                                hasVisionContent = true;
+                                break;
+                            }
+                        }
+                        if (hasVisionContent)
+                            break;
+                    }
+                }
+                if (hasVisionContent) {
+                    const credentials = await this.getCredentials('githubCopilotApi');
+                    const oauthToken = credentials.oauthToken;
+                    let supportsVision = DynamicModelsManager_1.DynamicModelsManager.modelSupportsVision(oauthToken, copilotModel);
+                    if (supportsVision === null) {
+                        const modelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(copilotModel);
+                        supportsVision = !!(((_f = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _f === void 0 ? void 0 : _f.vision) || ((_g = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _g === void 0 ? void 0 : _g.multimodal));
+                        console.log(`👁️ Vision check for model ${copilotModel}: using static list, supportsVision=${supportsVision}`);
+                    }
+                    else {
+                        console.log(`👁️ Vision check for model ${copilotModel}: using API cache, supportsVision=${supportsVision}`);
+                    }
+                    if (!supportsVision) {
+                        const enableVisionFallback = advancedOptions.enableVisionFallback || false;
+                        if (enableVisionFallback) {
+                            const fallbackModelRaw = advancedOptions.visionFallbackModel;
+                            const fallbackModel = fallbackModelRaw === '__manual__'
+                                ? advancedOptions.visionFallbackCustomModel
+                                : fallbackModelRaw;
+                            if (!fallbackModel || fallbackModel.trim() === '') {
+                                throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Vision fallback enabled but no fallback model was selected or provided. Please select a vision-capable model in Advanced Options.', { itemIndex: i });
+                            }
+                            console.log(`👁️ Model ${copilotModel} does not support vision - using fallback model: ${fallbackModel}`);
+                            copilotModel = fallbackModel;
+                        }
+                        else {
+                            throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Model ${copilotModel} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`, { itemIndex: i });
+                        }
+                    }
+                }
                 const requestBody = {
                     model: copilotModel,
                     messages,
@@ -272,9 +327,10 @@ class GitHubCopilotOpenAI {
                 console.log('🚀 Sending request to GitHub Copilot API:');
                 console.log('  Model:', copilotModel);
                 console.log('  Messages count:', messages.length);
+                console.log('  Has Vision Content:', hasVisionContent);
                 console.log('  Request body:', JSON.stringify(requestBody, null, 2));
-                const response = await (0, utils_1.makeApiRequest)(this, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, false);
-                const retriesUsed = ((_f = response._retryMetadata) === null || _f === void 0 ? void 0 : _f.retries) || 0;
+                const response = await (0, utils_1.makeApiRequest)(this, GitHubCopilotEndpoints_1.GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS, requestBody, hasVisionContent);
+                const retriesUsed = ((_h = response._retryMetadata) === null || _h === void 0 ? void 0 : _h.retries) || 0;
                 if (retriesUsed > 0) {
                     console.log(`ℹ️ Request completed with ${retriesUsed} retry(ies)`);
                 }

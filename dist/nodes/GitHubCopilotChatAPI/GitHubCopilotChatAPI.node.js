@@ -5,6 +5,7 @@ const utils_1 = require("./utils");
 const nodeProperties_1 = require("./nodeProperties");
 const mediaDetection_1 = require("./utils/mediaDetection");
 const GitHubCopilotModels_1 = require("../../shared/models/GitHubCopilotModels");
+const DynamicModelsManager_1 = require("../../shared/utils/DynamicModelsManager");
 const GitHubCopilotEndpoints_1 = require("../../shared/utils/GitHubCopilotEndpoints");
 const DynamicModelLoader_1 = require("../../shared/models/DynamicModelLoader");
 class GitHubCopilotChatAPI {
@@ -35,11 +36,14 @@ class GitHubCopilotChatAPI {
                 async getAvailableModels() {
                     return await DynamicModelLoader_1.loadAvailableModels.call(this);
                 },
+                async getVisionFallbackModels() {
+                    return await DynamicModelLoader_1.loadAvailableVisionModels.call(this);
+                },
             },
         };
     }
     async execute() {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         const items = this.getInputData();
         const returnData = [];
         for (let i = 0; i < items.length; i++) {
@@ -75,15 +79,33 @@ class GitHubCopilotChatAPI {
                     const enableRetry = advancedOptions.enableRetry !== false;
                     const maxRetries = advancedOptions.maxRetries || 3;
                     const includeMedia = this.getNodeParameter('includeMedia', i, false);
-                    const modelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(model);
-                    if (includeMedia) {
-                        if (modelInfo &&
-                            !(modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities.vision) &&
-                            !(modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities.multimodal)) {
-                            throw new Error(`Model ${model} does not support vision/image processing. Please select a model with vision capabilities.`);
+                    const credentials = await this.getCredentials('githubCopilotApi');
+                    const oauthToken = credentials.oauthToken;
+                    let supportsVision = DynamicModelsManager_1.DynamicModelsManager.modelSupportsVision(oauthToken, model);
+                    if (supportsVision === null) {
+                        const modelInfo = GitHubCopilotModels_1.GitHubCopilotModelsManager.getModelByValue(model);
+                        supportsVision = !!(((_a = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _a === void 0 ? void 0 : _a.vision) || ((_b = modelInfo === null || modelInfo === void 0 ? void 0 : modelInfo.capabilities) === null || _b === void 0 ? void 0 : _b.multimodal));
+                        console.log(`👁️ Vision check for model ${model}: using static list, supportsVision=${supportsVision}`);
+                    }
+                    else {
+                        console.log(`👁️ Vision check for model ${model}: using API cache, supportsVision=${supportsVision}`);
+                    }
+                    let effectiveModel = model;
+                    if (includeMedia && !supportsVision) {
+                        const enableVisionFallback = advancedOptions.enableVisionFallback || false;
+                        if (enableVisionFallback) {
+                            const fallbackModelRaw = advancedOptions.visionFallbackModel;
+                            const fallbackModel = fallbackModelRaw === '__manual__'
+                                ? advancedOptions.visionFallbackCustomModel
+                                : fallbackModelRaw;
+                            if (!fallbackModel || fallbackModel.trim() === '') {
+                                throw new Error('Vision fallback enabled but no fallback model was selected or provided. Please select a vision-capable model in Advanced Options.');
+                            }
+                            effectiveModel = fallbackModel;
+                            console.log(`👁️ Model ${model} does not support vision - using fallback model: ${effectiveModel}`);
                         }
-                        else if (!modelInfo) {
-                            console.warn(`⚠️ Model ${model} not found in known models list. Vision capability unknown - proceeding anyway.`);
+                        else {
+                            throw new Error(`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`);
                         }
                     }
                     const messages = [];
@@ -134,11 +156,14 @@ class GitHubCopilotChatAPI {
                         });
                     }
                     const requestBody = {
-                        model,
+                        model: effectiveModel,
                         messages,
                         stream: false,
                         ...advancedOptions,
                     };
+                    delete requestBody.enableVisionFallback;
+                    delete requestBody.visionFallbackModel;
+                    delete requestBody.visionFallbackCustomModel;
                     const hasMedia = includeMedia;
                     let response = null;
                     let attempt = 1;
@@ -153,7 +178,7 @@ class GitHubCopilotChatAPI {
                         catch (error) {
                             const isLastAttempt = attempt >= totalAttempts;
                             const errorObj = error;
-                            const is403Error = errorObj.status === 403 || ((_a = errorObj.message) === null || _a === void 0 ? void 0 : _a.includes('403'));
+                            const is403Error = errorObj.status === 403 || ((_c = errorObj.message) === null || _c === void 0 ? void 0 : _c.includes('403'));
                             if (is403Error && enableRetry && !isLastAttempt) {
                                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
                                 console.log(`GitHub Copilot API attempt ${attempt}/${totalAttempts} failed with 403, retrying in ${delay}ms...`);
@@ -169,11 +194,13 @@ class GitHubCopilotChatAPI {
                         throw new Error(`Failed to get response from GitHub Copilot API after ${totalAttempts} attempts (${retriesUsed} retries)`);
                     }
                     const result = {
-                        message: ((_c = (_b = response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content) || '',
-                        model,
+                        message: ((_e = (_d = response.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content) || '',
+                        model: effectiveModel,
+                        originalModel: effectiveModel !== model ? model : undefined,
+                        usedVisionFallback: effectiveModel !== model,
                         operation,
                         usage: response.usage || null,
-                        finish_reason: ((_d = response.choices[0]) === null || _d === void 0 ? void 0 : _d.finish_reason) || 'unknown',
+                        finish_reason: ((_f = response.choices[0]) === null || _f === void 0 ? void 0 : _f.finish_reason) || 'unknown',
                         retries: retriesUsed,
                     };
                     returnData.push({

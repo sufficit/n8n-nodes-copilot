@@ -12,7 +12,9 @@ import {
 import { nodeProperties } from './nodeProperties';
 import { makeApiRequest, CopilotResponse } from '../GitHubCopilotChatAPI/utils';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
-import { loadAvailableModels } from '../../shared/models/DynamicModelLoader';
+import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
+import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
 
 export class GitHubCopilotOpenAI implements INodeType {
 	description: INodeTypeDescription = {
@@ -42,6 +44,9 @@ export class GitHubCopilotOpenAI implements INodeType {
 		loadOptions: {
 			async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				return await loadAvailableModels.call(this);
+			},
+			async getVisionFallbackModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return await loadAvailableVisionModels.call(this);
 			},
 		},
 	};
@@ -303,7 +308,81 @@ export class GitHubCopilotOpenAI implements INodeType {
 					'o1-preview': 'o1-preview',
 					'o1-mini': 'o1-mini',
 				};
-				const copilotModel = modelMapping[model] || model;
+				let copilotModel = modelMapping[model] || model;
+
+				// Detect vision content in messages (images)
+				let hasVisionContent = false;
+				for (const msg of messages) {
+					const content = (msg as any).content;
+					const type = (msg as any).type;
+					
+					// Check for type: 'file' at message level (GitHub Copilot format)
+					if (type === 'file' || type === 'image') {
+						hasVisionContent = true;
+						break;
+					}
+
+					if (typeof content === 'string') {
+						if (content.includes('data:image/') || content.match(/\[.*image.*\]/i) || content.startsWith('copilot-file://')) {
+							hasVisionContent = true;
+							break;
+						}
+					} else if (Array.isArray(content)) {
+						for (const part of content) {
+							if (part?.type === 'image_url' || part?.type === 'image' || part?.image_url || part?.type === 'file') {
+								hasVisionContent = true;
+								break;
+							}
+						}
+						if (hasVisionContent) break;
+					}
+				}
+
+				// Handle vision fallback when model doesn't support vision
+				if (hasVisionContent) {
+					// Get credentials for dynamic model lookup
+					const credentials = await this.getCredentials('githubCopilotApi');
+					const oauthToken = credentials.oauthToken as string;
+
+					// Check vision support: first try dynamic API cache, then static list
+					let supportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(oauthToken, copilotModel);
+					
+					if (supportsVision === null) {
+						// Fallback to static model list
+						const modelInfo = GitHubCopilotModelsManager.getModelByValue(copilotModel);
+						supportsVision = !!(modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal);
+						console.log(`👁️ Vision check for model ${copilotModel}: using static list, supportsVision=${supportsVision}`);
+					} else {
+						console.log(`👁️ Vision check for model ${copilotModel}: using API cache, supportsVision=${supportsVision}`);
+					}
+					
+					if (!supportsVision) {
+						const enableVisionFallback = advancedOptions.enableVisionFallback as boolean || false;
+						if (enableVisionFallback) {
+							const fallbackModelRaw = advancedOptions.visionFallbackModel as string;
+							const fallbackModel = fallbackModelRaw === '__manual__'
+								? (advancedOptions.visionFallbackCustomModel as string)
+								: fallbackModelRaw;
+							
+							if (!fallbackModel || fallbackModel.trim() === '') {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Vision fallback enabled but no fallback model was selected or provided. Please select a vision-capable model in Advanced Options.',
+									{ itemIndex: i }
+								);
+							}
+							
+							console.log(`👁️ Model ${copilotModel} does not support vision - using fallback model: ${fallbackModel}`);
+							copilotModel = fallbackModel;
+						} else {
+							throw new NodeOperationError(
+								this.getNode(),
+								`Model ${copilotModel} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`,
+								{ itemIndex: i }
+							);
+						}
+					}
+				}
 
 				// Build GitHub Copilot API request body
 				const requestBody: Record<string, unknown> = {
@@ -390,6 +469,7 @@ export class GitHubCopilotOpenAI implements INodeType {
 				console.log('🚀 Sending request to GitHub Copilot API:');
 				console.log('  Model:', copilotModel);
 				console.log('  Messages count:', messages.length);
+				console.log('  Has Vision Content:', hasVisionContent);
 				console.log('  Request body:', JSON.stringify(requestBody, null, 2));
 
 				// Make API request to GitHub Copilot
@@ -397,7 +477,7 @@ export class GitHubCopilotOpenAI implements INodeType {
 					this,
 					GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS,
 					requestBody,
-					false, // hasMedia
+					hasVisionContent, // Pass vision flag for proper headers
 				);
 
 				// Extract retry information from response metadata

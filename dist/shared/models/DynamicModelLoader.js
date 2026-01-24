@@ -1,11 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loadAvailableModels = loadAvailableModels;
+exports.loadAvailableVisionModels = loadAvailableVisionModels;
 exports.loadAvailableEmbeddingModels = loadAvailableEmbeddingModels;
 const DynamicModelsManager_1 = require("../utils/DynamicModelsManager");
 const OAuthTokenManager_1 = require("../utils/OAuthTokenManager");
 async function loadAvailableModels(forceRefresh = false) {
     return loadModelsWithFilter.call(this, "chat", forceRefresh);
+}
+async function loadAvailableVisionModels(forceRefresh = false) {
+    const allOptions = await loadModelsWithFilter.call(this, "chat", forceRefresh);
+    const visionOptions = allOptions.filter((opt) => { var _a; return opt.name.includes("👁️") || ((_a = opt.description) === null || _a === void 0 ? void 0 : _a.includes("Vision")); });
+    const manualOption = {
+        name: "✏️ Enter Custom Model Name",
+        value: "__manual__",
+        description: "Type your own model name (for new/beta models)",
+    };
+    const hasManual = visionOptions.some((o) => o.value === "__manual__");
+    return hasManual ? visionOptions : [manualOption, ...visionOptions];
 }
 async function loadAvailableEmbeddingModels(forceRefresh = false) {
     return loadModelsWithFilter.call(this, "embeddings", forceRefresh);

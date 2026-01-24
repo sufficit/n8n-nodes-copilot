@@ -12,7 +12,8 @@ import {
 	DEFAULT_MODELS,
 } from '../../shared/models/GitHubCopilotModels';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
-import { loadAvailableModels } from '../../shared/models/DynamicModelLoader';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
+import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 import { CHAT_MODEL_PROPERTIES } from '../../shared/properties/ModelProperties';
 import {
 	getMinVSCodeVersion,
@@ -34,6 +35,12 @@ interface IOptions {
 	tools?: string;
 	tool_choice?: string;
 	enableVision?: boolean;
+	/** When base model doesn't support vision, enable using a separate vision-capable model */
+	enableVisionFallback?: boolean;
+	/** Selected fallback model (id) or '__manual__' to type a custom model id */
+	visionFallbackModel?: string;
+	/** If fallback model is manual, user can enter the model id here */
+	visionFallbackCustomModel?: string;
 	maxRetries?: number;
 }
 
@@ -84,11 +91,13 @@ interface IModelConfig {
 class GitHubCopilotChatOpenAI extends ChatOpenAI {
 	private context: ISupplyDataFunctions;
 	private options: IOptions;
+	private oauthToken: string;
 
 	constructor(context: ISupplyDataFunctions, options: IOptions, config: IModelConfig) {
 		super(config as unknown as ConstructorParameters<typeof ChatOpenAI>[0]);
 		this.context = context;
 		this.options = options;
+		this.oauthToken = config.configuration.apiKey;
 	}
 
 	/**
@@ -150,7 +159,7 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			// Check for image data in string content (data:image/... format)
 			if (typeof rawContent === 'string') {
 				// Detect base64 image data URLs in string content
-				if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i)) {
+				if (rawContent.includes('data:image/') || rawContent.match(/\[.*image.*\]/i) || rawContent.startsWith('copilot-file://')) {
 					hasVisionContent = true;
 					console.log(`👁️ Vision content detected in string message (data URL or image reference)`);
 				}
@@ -256,6 +265,36 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 			stream: this.options.enableStreaming || false,
 		};
 
+		// If this request contains images and the selected model doesn't support vision,
+		// optionally switch to a configured vision-capable fallback model.
+		if (hasVisionContent) {
+			// First, try to get vision support from dynamic API cache (most accurate)
+			let baseSupportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(this.oauthToken, this.model);
+			
+			// Fallback to static model list if not found in API cache
+			if (baseSupportsVision === null) {
+				const baseModelInfo = GitHubCopilotModelsManager.getModelByValue(this.model);
+				baseSupportsVision = !!(baseModelInfo?.capabilities?.vision || baseModelInfo?.capabilities?.multimodal);
+				console.log(`👁️ Vision check for model ${this.model}: using static list, supportsVision=${baseSupportsVision}`);
+			} else {
+				console.log(`👁️ Vision check for model ${this.model}: using API cache, supportsVision=${baseSupportsVision}`);
+			}
+
+			if (!baseSupportsVision) {
+				if ((this.options as IOptions).enableVisionFallback) {
+					const fallbackRaw = (this.options as IOptions).visionFallbackModel;
+					const fallbackModel = fallbackRaw === '__manual__' ? (this.options as IOptions).visionFallbackCustomModel : fallbackRaw;
+					if (!fallbackModel || fallbackModel.trim() === '') {
+						throw new Error('Vision fallback enabled but no fallback model was selected or provided');
+					}
+					requestBody.model = fallbackModel;
+					console.log(`👁️ Using vision fallback model ${fallbackModel} for image processing`);
+				} else {
+					throw new Error('Selected model does not support vision; enable Vision Fallback and pick a fallback model to process images.');
+				}
+			}
+		}
+
 		if (this.options.tools && (JSON.parse(this.options.tools) as unknown[]).length > 0) {
 			requestBody.tools = JSON.parse(this.options.tools);
 			requestBody.tool_choice = this.options.tool_choice || 'auto';
@@ -264,15 +303,90 @@ class GitHubCopilotChatOpenAI extends ChatOpenAI {
 
 		const startTime = Date.now();
 
-		// Check if vision should be enabled (auto-detected OR manually enabled)
-		const shouldUseVision = hasVisionContent || this.options.enableVision === true;
+		// Vision is auto-enabled when images are detected in messages
+		const shouldUseVision = hasVisionContent;
 
-		// Log vision request if detected or enabled
+		// Log vision request if detected
 		if (shouldUseVision) {
-			console.log(`👁️ Sending vision request with Copilot-Vision-Request header (auto=${hasVisionContent}, manual=${this.options.enableVision})`);
+			console.log(`👁️ Sending vision request with Copilot-Vision-Request header (images detected)`);
 		}
 
 		try {
+			// If there is vision content, upload external image URLs or data URLs to the Files endpoint
+			if (hasVisionContent) {
+				console.log('👁️ Preparing image uploads for vision content...');
+				
+				// Supported image types by GitHub Copilot
+				const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+				
+				for (const msg of requestBody.messages as any[]) {
+					if (!msg?.content || !Array.isArray(msg.content)) continue;
+					for (const part of msg.content) {
+						if (part?.type === 'image_url' && part.image_url && part.image_url.url) {
+							const url = String(part.image_url.url || '');
+							try {
+								let buffer: Buffer | null = null;
+								let mime = 'image/png'; // Default to PNG
+								let filename = `upload-${Date.now()}.png`;
+								
+								if (url.startsWith('data:image/')) {
+									// data URL
+									const match = url.match(/^data:(image\/[^;]+);base64,(.*)$/);
+									if (match) {
+										mime = match[1].toLowerCase();
+										const base64 = match[2];
+										buffer = Buffer.from(base64, 'base64');
+										const ext = mime.split('/').pop() || 'png';
+										filename = `image-${Date.now()}.${ext}`;
+									}
+								} else if (url.startsWith('http://') || url.startsWith('https://')) {
+									// Download external image
+									const res = await fetch(url);
+									if (!res.ok) throw new Error(`Failed to download image: ${res.status}`);
+									mime = (res.headers.get('content-type') || 'image/png').toLowerCase();
+									const arrayBuffer = await res.arrayBuffer();
+									buffer = Buffer.from(arrayBuffer);
+									const ext = (mime.split('/')[1] || 'png').split('+')[0].split(';')[0];
+									filename = `image-${Date.now()}.${ext}`;
+								} else {
+									// Unhandled URL format, skip
+									console.log(`⚠️ Skipping unsupported URL format: ${url.substring(0, 50)}...`);
+									continue;
+								}
+								
+								// Validate mime type
+								if (!SUPPORTED_IMAGE_TYPES.includes(mime)) {
+									console.warn(`⚠️ Image type ${mime} may not be supported. Supported: ${SUPPORTED_IMAGE_TYPES.join(', ')}`);
+									// Try to continue anyway, let API reject if needed
+								}
+								
+								console.log(`👁️ Processing image: ${filename}, type: ${mime}, size: ${buffer?.length || 0} bytes`);
+								
+								if (buffer) {
+									try {
+										const uploadResult = await import('../../shared/utils/GitHubCopilotApiUtils').then(m => m.uploadFileToCopilot(this.context as unknown as import('n8n-workflow').IExecuteFunctions, buffer as Buffer, filename, mime));
+										// Prefer 'url' field if available
+										const newUrl = uploadResult?.url || uploadResult?.file_url || uploadResult?.id ? (uploadResult.url || `copilot-file://${uploadResult.id}`) : null;
+										if (newUrl) {
+											part.image_url.url = newUrl;
+											console.log(`👁️ Uploaded image and replaced URL with ${newUrl}`);
+										} else {
+											console.warn('⚠️ File upload succeeded but no URL/id returned by API', uploadResult);
+										}
+									} catch (err) {
+										console.error('❌ Image upload failed:', err instanceof Error ? err.message : String(err));
+										throw err;
+									}
+								}
+							} catch (err) {
+								console.error('❌ Preparing/uploading image failed:', err instanceof Error ? err.message : String(err));
+								throw err;
+							}
+						}
+					}
+				}
+			}
+
 			const response = await makeGitHubCopilotRequest(
 				this.context as unknown as import('n8n-workflow').IExecuteFunctions,
 				GITHUB_COPILOT_API.ENDPOINTS.CHAT_COMPLETIONS,
@@ -479,11 +593,41 @@ export class GitHubCopilotChatModel implements INodeType {
 						},
 					},
 					{
-						displayName: 'Enable Vision (Image Processing)',
-						name: 'enableVision',
+						displayName: 'Enable Vision Fallback',
+						name: 'enableVisionFallback',
 						type: 'boolean',
 						default: false,
-						description: 'Enable vision capabilities for processing images. Required when sending images via chat. Only works with vision-capable models (GPT-4o, GPT-5, Claude, etc.).',
+						description: 'When the primary model does not support vision, automatically use a vision-capable fallback model to process images. Enable this if you want to send images but your primary model does not support vision.',
+					},
+					{
+						displayName: 'Vision Fallback Model',
+						name: 'visionFallbackModel',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getVisionFallbackModels',
+						},
+						default: '',
+						description: 'Select a vision-capable model to use when processing images with a non-vision primary model',
+						displayOptions: {
+							show: {
+								enableVisionFallback: [true],
+							},
+						},
+					},
+					{
+						displayName: 'Custom Vision Model',
+						name: 'visionFallbackCustomModel',
+						type: 'string',
+						default: '',
+						placeholder: 'gpt-4o, claude-sonnet-4, gemini-2.0-flash, etc.',
+						description: 'Enter the model name manually for vision fallback',
+						hint: 'Enter the exact model ID for vision processing (e.g., gpt-4o, claude-sonnet-4)',
+						displayOptions: {
+							show: {
+								enableVisionFallback: [true],
+								visionFallbackModel: ['__manual__'],
+							},
+						},
 					},
 				],
 			},
@@ -495,7 +639,11 @@ export class GitHubCopilotChatModel implements INodeType {
 			async getAvailableModels(this: import('n8n-workflow').ILoadOptionsFunctions) {
 				return await loadAvailableModels.call(this);
 			},
+			async getVisionFallbackModels(this: import('n8n-workflow').ILoadOptionsFunctions) {
+				return await loadAvailableVisionModels.call(this);
+			},
 		},
+	
 	};
 
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData> {
@@ -557,6 +705,12 @@ export class GitHubCopilotChatModel implements INodeType {
 
 		console.log(`🔧 Model: ${safeModel} requires VS Code version: ${minVSCodeVersion}`);
 
+		// Auto-enable vision if model supports vision
+		if (safeModelInfo?.capabilities?.vision || safeModelInfo?.capabilities?.multimodal) {
+			options.enableVision = true;
+			console.log(`👁️ Model ${safeModel} supports vision - enabling vision automatically`);
+		}
+
 		let parsedTools: object[] = [];
 		if (options.tools && options.tools.trim()) {
 			try {
@@ -603,11 +757,12 @@ export class GitHubCopilotChatModel implements INodeType {
 					'OpenAI-Intent': 'conversation-panel',
 					'Copilot-Integration-Id': 'vscode-chat',
 					...additionalHeaders,
-					...(options.enableVision &&
-						safeModelInfo?.capabilities.vision && {
-							'Copilot-Vision-Request': 'true',
-							'Copilot-Media-Request': 'true',
-						}),
+					// Pre-add vision headers for vision-capable models (they're needed when images are sent)
+					// The actual vision detection happens in _generate() which passes shouldUseVision to makeGitHubCopilotRequest
+					...(safeModelInfo?.capabilities.vision && {
+						'Copilot-Vision-Request': 'true',
+						'Copilot-Media-Request': 'true',
+					}),
 				},
 			},
 		};

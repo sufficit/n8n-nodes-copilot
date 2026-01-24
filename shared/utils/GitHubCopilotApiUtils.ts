@@ -191,6 +191,55 @@ export async function makeGitHubCopilotRequest(
     body: JSON.stringify(body),
   };
 
+  // Helper: Upload a file (multipart/form-data) to GitHub Copilot Files endpoint
+  // Note: Endpoint may enforce size limits and multipart format. Returns parsed JSON on success.
+  async function uploadFile(buffer: Buffer, filename: string, mimeType = 'application/octet-stream') {
+    const url = `${GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+
+    // Prepare form-data
+    // Use global FormData + Blob (Node 18+) or fallback to Buffer-based FormData
+    let form: any;
+    try {
+      form = new FormData();
+      const blob = new Blob([buffer], { type: mimeType });
+      // @ts-ignore - Node FormData typings
+      form.append('file', blob, filename);
+    } catch (err) {
+      // Fallback for environments without Blob
+      const FormData = require('form-data');
+      form = new FormData();
+      form.append('file', buffer, { filename, contentType: mimeType });
+    }
+
+    const uploadHeaders: Record<string, string> = {
+      ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+      'X-GitHub-Api-Version': '2025-05-01',
+      'X-Interaction-Type': 'copilot-chat',
+      'OpenAI-Intent': 'conversation-panel',
+      'Copilot-Integration-Id': 'vscode-chat',
+      // 'Content-Type' will be set by FormData
+    } as Record<string, string>;
+
+    // If using form.getHeaders (form-data package), merge those headers
+    if (typeof form.getHeaders === 'function') {
+      Object.assign(uploadHeaders, (form as any).getHeaders());
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: uploadHeaders as any,
+      body: form as any,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+    }
+
+    const json = await res.json();
+    return json;
+  }
+
   // Use centralized endpoint construction
   const fullUrl = `${GITHUB_COPILOT_API.BASE_URL}${endpoint}`;
   
@@ -204,11 +253,9 @@ export async function makeGitHubCopilotRequest(
       // If we get a 403, retry (unless it's the last attempt)
       if (response.status === 403 && RETRY_ON_403 && attempt < MAX_RETRIES) {
         const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);
-        // Add small random jitter (0-20%) to avoid thundering herd
         const jitter = Math.random() * delayMs * 0.2;
         const totalDelay = Math.floor(delayMs + jitter);
         console.warn(`⚠️ GitHub Copilot API 403 error on attempt ${attempt}/${MAX_RETRIES}. Retrying in ${totalDelay}ms...`);
-        // Wait before retrying (exponential backoff with jitter)
         await new Promise(resolve => setTimeout(resolve, totalDelay));
         continue;
       }
@@ -219,35 +266,26 @@ export async function makeGitHubCopilotRequest(
         // Check for 400 Bad Request - should NOT retry
         if (response.status === 400) {
           console.log(`🚫 400 Bad Request detected - not retrying`);
-          const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText}`;
-          throw new Error(enhancedError);
+          throw new Error(`GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText}`);
         }
 
-        // Secure token display - show only prefix and last 5 characters
         const tokenPrefix = token.substring(0, 4);
         const tokenSuffix = token.substring(token.length - 5);
         const tokenInfo = `${tokenPrefix}...${tokenSuffix}`;
 
         console.error(`❌ GitHub Copilot API Error: ${response.status} ${response.statusText}`);
         console.error(`❌ Error details: ${errorText}`);
-        console.error(`❌ Used credential type: ${credentialType}`);
-        console.error(`❌ Token format used: ${tokenInfo}`);
         console.error(`❌ Attempt: ${attempt}/${MAX_RETRIES}`);
 
-        // Enhanced error message with secure token info
-        const enhancedError = `GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token used: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`;
-
-        throw new Error(enhancedError);
+        throw new Error(`GitHub Copilot API error: ${response.status} ${response.statusText}. ${errorText} [Token: ${tokenInfo}] [Attempt: ${attempt}/${MAX_RETRIES}]`);
       }
       
-      // Success! Return the response with retry metadata
       if (attempt > 1) {
         console.log(`✅ GitHub Copilot API succeeded on attempt ${attempt}/${MAX_RETRIES}`);
       }
       
       const responseData = await response.json() as CopilotResponse;
       
-      // Add retry metadata to response
       responseData._retryMetadata = {
         attempts: attempt,
         retries: attempt - 1,
@@ -259,10 +297,8 @@ export async function makeGitHubCopilotRequest(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       
-      // If it's not the last attempt and it's a network/timeout error, retry
       if (attempt < MAX_RETRIES) {
         const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);
-        // Add small random jitter (0-20%) to avoid thundering herd
         const jitter = Math.random() * delayMs * 0.2;
         const totalDelay = Math.floor(delayMs + jitter);
         console.warn(`⚠️ GitHub Copilot API error on attempt ${attempt}/${MAX_RETRIES}: ${lastError.message}. Retrying in ${totalDelay}ms...`);
@@ -270,13 +306,77 @@ export async function makeGitHubCopilotRequest(
         continue;
       }
       
-      // Last attempt failed, throw the error
       throw lastError;
     }
   }
   
-  // Should never reach here, but just in case
   throw lastError || new Error("GitHub Copilot API request failed after all retries");
+}
+
+/**
+ * Upload a file (e.g., image) to GitHub Copilot Files endpoint.
+ * Returns the parsed JSON response from the API.
+ */
+export async function uploadFileToCopilot(
+  context: IExecuteFunctions,
+  buffer: Buffer,
+  filename: string,
+  mimeType = 'application/octet-stream',
+): Promise<any> {
+  // Determine credential type dynamically
+  let credentialType = 'githubCopilotApi';
+  try {
+    credentialType = context.getNodeParameter('credentialType', 0, 'githubCopilotApi') as string;
+  } catch {}
+
+  const credentials = await context.getCredentials(credentialType) as OAuth2Credentials;
+  if (!credentials || !credentials.token) {
+    throw new Error('GitHub Copilot: No token found in credentials for file upload');
+  }
+
+  const githubToken = credentials.token as string;
+  const token = await OAuthTokenManager.getValidOAuthToken(githubToken);
+
+  const url = `${GITHUB_COPILOT_API.BASE_URL}/copilot/chat/attachments/files`;
+
+  // Prepare form data
+  let form: any;
+  try {
+    form = new FormData();
+    const blob = new Blob([buffer], { type: mimeType });
+    form.append('file', blob, filename);
+  } catch (err) {
+    const FormData = require('form-data');
+    form = new FormData();
+    form.append('file', buffer, { filename, contentType: mimeType });
+  }
+
+  const headers: Record<string, string> = {
+    ...GITHUB_COPILOT_API.HEADERS.WITH_AUTH(token),
+    'X-GitHub-Api-Version': '2025-05-01',
+    'X-Interaction-Type': 'copilot-chat',
+    'OpenAI-Intent': 'conversation-panel',
+    'Copilot-Integration-Id': 'vscode-chat',
+    'Copilot-Vision-Request': 'true',
+    'Copilot-Media-Request': 'true',
+  } as Record<string, string>;
+
+  if (typeof form.getHeaders === 'function') {
+    Object.assign(headers, (form as any).getHeaders());
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: headers as any,
+    body: form as any,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`File upload failed: ${res.status} ${res.statusText} - ${text}`);
+  }
+
+  return await res.json();
 }
 
 /**

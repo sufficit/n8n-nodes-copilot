@@ -12,8 +12,9 @@ import { ChatMessage, ChatMessageContent, makeApiRequest, CopilotResponse } from
 import { nodeProperties } from './nodeProperties';
 import { processMediaFile } from './utils/mediaDetection';
 import { GitHubCopilotModelsManager } from '../../shared/models/GitHubCopilotModels';
+import { DynamicModelsManager } from '../../shared/utils/DynamicModelsManager';
 import { GITHUB_COPILOT_API } from '../../shared/utils/GitHubCopilotEndpoints';
-import { loadAvailableModels } from '../../shared/models/DynamicModelLoader';
+import { loadAvailableModels, loadAvailableVisionModels } from '../../shared/models/DynamicModelLoader';
 
 export class GitHubCopilotChatAPI implements INodeType {
 	description: INodeTypeDescription = {
@@ -43,6 +44,9 @@ export class GitHubCopilotChatAPI implements INodeType {
 		loadOptions: {
 			async getAvailableModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				return await loadAvailableModels.call(this);
+			},
+			async getVisionFallbackModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return await loadAvailableVisionModels.call(this);
 			},
 		},
 	};
@@ -99,22 +103,51 @@ export class GitHubCopilotChatAPI implements INodeType {
 
 					const includeMedia = this.getNodeParameter('includeMedia', i, false) as boolean;
 
-					// Get model capabilities from centralized manager (if available)
-					const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
+					// Get credentials for dynamic model lookup
+					const credentials = await this.getCredentials('githubCopilotApi');
+					const oauthToken = credentials.oauthToken as string;
 
-					// Validate model capabilities before processing (only if media is included)
-					if (includeMedia) {
-						if (
-							modelInfo &&
-							!modelInfo?.capabilities.vision &&
-							!modelInfo?.capabilities.multimodal
-						) {
+					// Detect vision content in user message (data URLs or image references)
+					const hasVisionInMessage = userMessage.includes('data:image/') || !!userMessage.match(/\[.*image.*\]/i) || userMessage.startsWith('copilot-file://');
+					const hasVisionContent = includeMedia || hasVisionInMessage;
+
+					if (hasVisionInMessage) {
+						console.log(`👁️ Vision content detected in message text (data URL or image reference)`);
+					}
+
+					// Check vision support: first try dynamic API cache, then static list
+					let supportsVision: boolean | null = DynamicModelsManager.modelSupportsVision(oauthToken, model);
+					
+					if (supportsVision === null) {
+						// Fallback to static model list
+						const modelInfo = GitHubCopilotModelsManager.getModelByValue(model);
+						supportsVision = !!(modelInfo?.capabilities?.vision || modelInfo?.capabilities?.multimodal);
+						console.log(`👁️ Vision check for model ${model}: using static list, supportsVision=${supportsVision}`);
+					} else {
+						console.log(`👁️ Vision check for model ${model}: using API cache, supportsVision=${supportsVision}`);
+					}
+
+					// Track actual model to use (may change via fallback)
+					let effectiveModel = model;
+
+					// Handle vision fallback when model doesn't support vision but vision content is detected
+					if (hasVisionContent && !supportsVision) {
+						const enableVisionFallback = advancedOptions.enableVisionFallback as boolean || false;
+						if (enableVisionFallback) {
+							const fallbackModelRaw = advancedOptions.visionFallbackModel as string;
+							const fallbackModel = fallbackModelRaw === '__manual__' 
+								? (advancedOptions.visionFallbackCustomModel as string)
+								: fallbackModelRaw;
+							
+							if (!fallbackModel || fallbackModel.trim() === '') {
+								throw new Error('Vision fallback enabled but no fallback model was selected or provided. Please select a vision-capable model in Advanced Options.');
+							}
+							
+							effectiveModel = fallbackModel;
+							console.log(`👁️ Model ${model} does not support vision - using fallback model: ${effectiveModel}`);
+						} else {
 							throw new Error(
-								`Model ${model} does not support vision/image processing. Please select a model with vision capabilities.`,
-							);
-						} else if (!modelInfo) {
-							console.warn(
-								`⚠️ Model ${model} not found in known models list. Vision capability unknown - proceeding anyway.`,
+								`Model ${model} does not support vision/image processing. Enable "Vision Fallback" in Advanced Options and select a vision-capable model, or choose a model with vision capabilities.`,
 							);
 						}
 					}
@@ -192,16 +225,20 @@ export class GitHubCopilotChatAPI implements INodeType {
 						});
 					}
 
-					// Prepare request body
+					// Prepare request body - use effectiveModel (may be fallback model for vision)
 					const requestBody: Record<string, unknown> = {
-						model,
+						model: effectiveModel,
 						messages,
 						stream: false,
 						...advancedOptions,
 					};
+					// Remove vision fallback options from request body (they're node-only options)
+					delete requestBody.enableVisionFallback;
+					delete requestBody.visionFallbackModel;
+					delete requestBody.visionFallbackCustomModel;
 
 					// Make API request with retry logic
-					const hasMedia = includeMedia;
+					const hasMedia = hasVisionContent;
 					let response: CopilotResponse | null = null;
 					let attempt = 1;
 					const totalAttempts = maxRetries + 1;
@@ -248,7 +285,9 @@ export class GitHubCopilotChatAPI implements INodeType {
 					// Extract result with retry information
 					const result: IDataObject = {
 						message: response.choices[0]?.message?.content || '',
-						model,
+						model: effectiveModel,
+						originalModel: effectiveModel !== model ? model : undefined,
+						usedVisionFallback: effectiveModel !== model,
 						operation,
 						usage: response.usage || null,
 						finish_reason: response.choices[0]?.finish_reason || 'unknown',

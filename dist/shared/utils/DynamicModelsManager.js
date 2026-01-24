@@ -181,6 +181,56 @@ class DynamicModelsManager {
         this.cache.clear();
         console.log("🗑️ Cleared all models cache");
     }
+    static getModelFromCache(oauthToken, modelId) {
+        const tokenHash = this.hashToken(oauthToken);
+        const cached = this.cache.get(tokenHash);
+        if (!cached) {
+            return null;
+        }
+        return cached.models.find(m => m.id === modelId) || null;
+    }
+    static modelSupportsVision(oauthToken, modelId) {
+        var _a, _b;
+        const model = this.getModelFromCache(oauthToken, modelId);
+        if (!model) {
+            return null;
+        }
+        const supports = ((_a = model.capabilities) === null || _a === void 0 ? void 0 : _a.supports) || {};
+        if (supports.vision === true) {
+            return true;
+        }
+        const limits = ((_b = model.capabilities) === null || _b === void 0 ? void 0 : _b.limits) || {};
+        if (limits.vision) {
+            return true;
+        }
+        return false;
+    }
+    static modelSupportsTools(oauthToken, modelId) {
+        var _a;
+        const model = this.getModelFromCache(oauthToken, modelId);
+        if (!model) {
+            return null;
+        }
+        const supports = ((_a = model.capabilities) === null || _a === void 0 ? void 0 : _a.supports) || {};
+        return supports.tool_calls === true;
+    }
+    static getModelCapabilities(oauthToken, modelId) {
+        var _a, _b, _c;
+        const model = this.getModelFromCache(oauthToken, modelId);
+        if (!model) {
+            return null;
+        }
+        const supports = ((_a = model.capabilities) === null || _a === void 0 ? void 0 : _a.supports) || {};
+        const limits = ((_b = model.capabilities) === null || _b === void 0 ? void 0 : _b.limits) || {};
+        return {
+            vision: supports.vision === true || !!limits.vision,
+            tools: supports.tool_calls === true,
+            streaming: supports.streaming === true,
+            maxContextTokens: limits.max_context_window_tokens || 128000,
+            maxOutputTokens: limits.max_output_tokens || 4096,
+            isPremium: ((_c = model.billing) === null || _c === void 0 ? void 0 : _c.is_premium) === true,
+        };
+    }
     static getCacheInfo(oauthToken) {
         const tokenHash = this.hashToken(oauthToken);
         const cached = this.cache.get(tokenHash);

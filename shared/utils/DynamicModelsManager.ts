@@ -321,11 +321,98 @@ export class DynamicModelsManager {
   }
 
   /**
-   * Clear all cached models
-   */
+ * Clear all cached models
+ */
   public static clearAllCache(): void {
     this.cache.clear();
     console.log("🗑️ Cleared all models cache");
+  }
+
+  /**
+   * Get a specific model by ID from cache
+   * Returns null if not cached or model not found
+   */
+  public static getModelFromCache(oauthToken: string, modelId: string): CopilotModel | null {
+    const tokenHash = this.hashToken(oauthToken);
+    const cached = this.cache.get(tokenHash);
+
+    if (!cached) {
+      return null;
+    }
+
+    return cached.models.find(m => m.id === modelId) || null;
+  }
+
+  /**
+   * Check if a model supports vision from cached data
+   * Returns true if model supports vision, false otherwise
+   * Returns null if model not found in cache (should fetch or use fallback)
+   */
+  public static modelSupportsVision(oauthToken: string, modelId: string): boolean | null {
+    const model = this.getModelFromCache(oauthToken, modelId);
+    
+    if (!model) {
+      return null; // Not in cache, unknown
+    }
+
+    // Check API format: capabilities.supports.vision
+    const supports = (model.capabilities as any)?.supports || {};
+    if (supports.vision === true) {
+      return true;
+    }
+
+    // Check for vision limits (another indicator)
+    const limits = (model.capabilities as any)?.limits || {};
+    if (limits.vision) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if a model supports tool calling from cached data
+   */
+  public static modelSupportsTools(oauthToken: string, modelId: string): boolean | null {
+    const model = this.getModelFromCache(oauthToken, modelId);
+    
+    if (!model) {
+      return null;
+    }
+
+    const supports = (model.capabilities as any)?.supports || {};
+    return supports.tool_calls === true;
+  }
+
+  /**
+   * Get model capabilities from cache (convenience method)
+   * Returns capabilities or null if not cached
+   */
+  public static getModelCapabilities(oauthToken: string, modelId: string): {
+    vision: boolean;
+    tools: boolean;
+    streaming: boolean;
+    maxContextTokens: number;
+    maxOutputTokens: number;
+    isPremium: boolean;
+  } | null {
+    const model = this.getModelFromCache(oauthToken, modelId);
+    
+    if (!model) {
+      return null;
+    }
+
+    const supports = (model.capabilities as any)?.supports || {};
+    const limits = (model.capabilities as any)?.limits || {};
+
+    return {
+      vision: supports.vision === true || !!limits.vision,
+      tools: supports.tool_calls === true,
+      streaming: supports.streaming === true,
+      maxContextTokens: limits.max_context_window_tokens || 128000,
+      maxOutputTokens: limits.max_output_tokens || 4096,
+      isPremium: model.billing?.is_premium === true,
+    };
   }
 
   /**

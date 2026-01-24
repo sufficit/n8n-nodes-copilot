@@ -2,138 +2,68 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.3.0] - 2026-01-23 🗄️ PostgreSQL PGVector Integration
-
-### Added
-- **GitHubCopilotPGVector Node** - PostgreSQL vector store integration with GitHub Copilot Embeddings:
-  - **Create Table** operation: Creates vector tables with pgvector extension and IVFFlat indexing
-  - **Insert Documents** operation: Generates embeddings and inserts documents with metadata (batch processing)
-  - **Search Similar** operation: Semantic similarity search using cosine distance
-  - Configurable dimensions (512-1536)
-  - JSONB metadata storage
-  - Custom column names support
-  - Batch processing with configurable size
-  - Distance threshold filtering
-
-### Features
-- Uses GitHub Copilot Embeddings API as backend
-- PostgreSQL credentials integration
-- Efficient batch document processing
-- IVFFlat index creation for performance
-- Metadata filtering in search queries
-- Configurable table schemas
-
-### Dependencies
-- Requires `pg` (PostgreSQL client)
-- Requires `pgvector` extension in PostgreSQL
-
-## [4.2.1] - 2026-01-23 🧪 Test Suite & Troubleshooting
-
-### Added
-- **Complete Test Suite** for Runtime Provider Injection:
-  - Unit tests: `tests/unit/version-detection.test.js` (8/9 passing)
-  - Unit tests: `tests/unit/provider-injection.test.js` (8/9 passing)
-  - Integration test: `tests/integration-test.js` (7/7 passing)
-  - Interactive debug tool: `tests/debug-provider-injection.js`
-- **Troubleshooting Documentation**:
-  - `docs/202601230030-provider-injection-troubleshooting.md` - Complete problem analysis
-  - Updated `tests/README.md` with comprehensive test guide
-- **Test Reports**: JSON reports for integration tests and diagnostics
+## [3.38.41] - 2025-12-30
 
 ### Fixed
-- Module path resolution in integration tests (relative paths)
-- Test suite documentation and usage instructions
 
-### Documentation
-- Detailed troubleshooting guide for provider injection issues
-- Test execution instructions and expected results
-- Environment detection and validation procedures
+- **Vision Fallback**: Improved detection of vision content in text messages (data URLs and `copilot-file://` references)
+- **Vision Fallback**: Fixed static capability check in `Chat Model` node
+- **Vision Fallback**: Added `multimodal` capability check for broader model support
+- **Vision Fallback**: Fallback now triggers even if "Include Media" is false but vision content is found in message
 
-### Notes
-✅ All tests pass successfully in development environment  
-⚠️ Final validation requires testing in actual n8n v2+ instance  
-📊 Test coverage: 23/25 tests passing (92%)
-
-## [4.2.0] - 2026-01-22 🎯 n8n v2 Chat Hub Integration
+## [3.38.40] - 2025-12-30
 
 ### Added
-- **n8n v2 Chat Hub Integration**: Runtime provider injection for n8n v2+
-  - Automatically detects n8n version (v1 vs v2+)
-  - Injects GitHub Copilot into Chat Hub providers list (experimental)
-  - Conditional activation: only runs in n8n v2 or higher
-  - Auto-injection via `GITHUB_COPILOT_AUTO_INJECT=true` environment variable
-  - Manual injection API: `injectGitHubCopilotProvider()`
-  - Version detection utilities: `isN8nV2OrHigher()`, `isChatHubAvailable()`
-  - Comprehensive debugging and status tracking
-  - Fallback to workflow agents in n8n v1.x
 
-### Changed
-- Reorganized documentation: moved USAGE files to `.github/instructions/` with `.instructions.md` format
-- Updated `copilot-instructions.md` with new documentation structure
-- Added shared utilities module for version detection and provider injection
+- **Dynamic Model Management**: Implemented `DynamicModelsManager` with 1-hour caching
+- **Dynamic Capabilities**: System now prioritizes API-provided capabilities over static definitions
+- **Model Sync**: Synchronized static model list with June 2025 API data (GPT-5, Claude 4.5, Grok)
+- **Billing Multiplier**: Added support for `billing.multiplier` via `X-GitHub-Api-Version: 2025-05-01`
 
-### Documentation
-- Added `.github/instructions/runtime-provider-injection.instructions.md` - Complete runtime injection guide
-- Added `docs/202501220730-n8n-v2-chat-provider-list-integration-research.md` - Technical research
-- Updated all instruction files with proper formatting and structure
-
-### Notes
-⚠️ **Runtime injection is experimental** - may break with n8n updates. Use with caution and test after upgrades.
-✅ **Safe fallback**: Automatically uses workflow agents approach in n8n v1.x
-
-## [4.0.0] - 2025-12-31 🚀 BREAKING CHANGE
-
-### 🎉 Migrated to New GitHub Copilot CLI (Programmatic Mode)
-
-**⚠️ BREAKING CHANGES:**
-- Migrated from deprecated `gh copilot` extension to new **standalone `copilot` CLI**
-- **GitHub Copilot CLI node** now requires **`@github/copilot` CLI** instead of `gh` CLI extension
-- Old operations (suggest, explain, shell, revise, rating) replaced with **unified programmatic mode**
-- Node version bumped from 1 to 2 (existing workflows will need updates)
+## [3.38.36] - 2025-12-30
 
 ### Added
-- **Programmatic Mode**: Use `copilot -p "prompt"` for any task or query
-- **Tool Approval Options**: Fine-grained control over what Copilot can execute:
-  - `allow-all-tools`: Full automation (⚠️ use with caution)
-  - `shell-only`: Only shell commands
-  - `write-only`: Only file writes
-  - `manual`: Manual approval required (safest)
-  - `custom`: Custom approval rules with `--allow-tool` / `--deny-tool`
-- **Agentic Capabilities**: Copilot can now plan and execute complex multi-step tasks
-- **Configurable Timeout**: Set execution timeout (default: 60s)
-- **Better Error Messages**: Clearer installation and authentication errors
 
-### Changed
-- **Installation**: Now requires `npm install -g @github/copilot` or `brew install copilot-cli`
-- **Authentication**: Use `copilot` command and `/login` slash command (not `gh auth login`)
-- **Command Format**: Unified to `copilot -p "query" [tool-flags]`
-- **Default Model**: Claude Sonnet 4.5 (can be changed with `/model` command in CLI)
+- **GitHubCopilotChatAPI**: Vision Fallback feature
+  - **Enable Vision Fallback** in Advanced Options
+  - **Vision Fallback Model** dropdown (vision-capable models only)
+  - **Custom Vision Model** for manual model id entry
+  - Automatic model switching when primary model doesn't support vision
+- **GitHubCopilotOpenAI**: Vision Fallback feature
+  - Same options as ChatAPI for consistency
+  - Auto-detection of vision content in messages
+  - Proper Copilot-Vision-Request header when images detected
 
-### Removed
-- Deprecated `gh copilot suggest/explain/shell/revise/rate` commands
-- Language-specific options (now part of prompt)
-- Command type options (now part of prompt)
-- Filter output option (new CLI has cleaner output)
+### Fixed
 
-### Migration Guide
-1. **Uninstall old extension**: `gh extension remove github/gh-copilot` (if installed)
-2. **Install new CLI**: 
-   - npm: `npm install -g @github/copilot`
-   - brew: `brew install copilot-cli`
-   - Windows: `winget install GitHub.Copilot`
-3. **Authenticate**: Run `copilot` and use `/login` command
-4. **Update workflows**: Replace specific operations with programmatic queries
-   - Old: Operation "suggest" with language "python"
-   - New: Prompt "Write a Python function that..."
+- **GitHubCopilotApiUtils**: Removed duplicated code causing TypeScript compilation errors
+- **Vision Fallback UI**: Options now properly appear in Advanced Options collection
+- **Response metadata**: Added `usedVisionFallback` and `originalModel` fields when fallback is used
 
-### Security Note
-⚠️ **Tool approval is critical for security**. The new CLI can execute commands and modify files. Always use the most restrictive approval setting for your use case. See [docs](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli#security-considerations) for details.
+## [3.38.35] - 2025-12-30
 
----
+### Added
+
+- **GitHubCopilotChatModel**: Vision Fallback feature
+  - **Enable Vision Fallback** checkbox to use a separate vision-capable model when the primary model doesn't support vision
+  - **Vision Fallback Model** dropdown (loads only models with Vision capability)
+  - **Vision Fallback Custom Model Name** field for manual model id entry
+  - Automatic upload/integration with GitHub Copilot Files endpoint for image processing
+
+### Fixed
+
+- **GitHubCopilotChatModel**: Auto-enable vision for models that support vision; fallback to configured model for images when needed
+- **Upload**: Added `uploadFileToCopilot` helper to handle multipart uploads and replace image URLs with file references
+
+### Updated
+
+- **temp_models.json**: Refreshed with complete model list (39 models)
+
 
 ## [3.38.34] - 2025-12-30
 
 ### Fixed
+
 - **GitHubCopilotChatModel**: Added critical headers to `defaultHeaders` for premium model access
   - `X-GitHub-Api-Version: 2025-05-01`
   - `X-Interaction-Type: copilot-chat`

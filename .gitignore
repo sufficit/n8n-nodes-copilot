@@ -1,11 +1,6 @@
 node_modules/
 temp/
-dist/
-**/dist/
 results/
-.vscode/
-.idea/
-
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -16,6 +11,8 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .DS_Store
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
@@ -27,4 +24,3 @@ package-lock.json
 .token.oauth
 .token.oauth.generated.json.token.oauth.info.json
 .machine-id
-*.tgz
