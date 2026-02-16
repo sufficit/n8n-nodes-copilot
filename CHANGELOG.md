@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.17] - 2026-02-16 🔁 Republish
+
+### Changed
+- **Release**: Republished as patch bump to avoid version conflicts in environments that already had `4.4.16` installed.
+
+## [4.4.16] - 2026-02-16 🆔 Always Show Model ID
+
+### Improved
+- **Dynamic Model Picker**: Always show `ID: ...` in model option descriptions.
+  - Helps identify the exact model string to use in manual/custom scenarios.
+
 ## [4.4.15] - 2026-02-13 🧠 Model Info in Errors
 
 ### Improved

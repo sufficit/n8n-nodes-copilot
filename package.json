@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-github-copilot",
-  "version": "4.4.15",
+  "version": "4.4.17",
   "description": "n8n community node for GitHub Copilot with CLI integration, Chat API access, and AI Chat Model for workflows with full tools and function calling support - access GPT-5, Claude, Gemini and more using your Copilot subscription",
   "license": "MIT",
   "homepage": "https://github.com/sufficit/n8n-nodes-github-copilot",
@@ -16,8 +16,8 @@
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
-    "lint": "eslint nodes credentials shared --ext .ts",
-    "lintfix": "eslint nodes credentials shared --ext .ts --fix",
+    "lint": "eslint nodes credentials shared",
+    "lintfix": "eslint nodes credentials shared --fix",
     "prepublishOnly": "npm run build"
   },
   "files": [

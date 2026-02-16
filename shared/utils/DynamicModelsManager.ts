@@ -240,13 +240,6 @@ export class DynamicModelsManager {
     value: string;
     description?: string;
   }> {
-    // First pass: count how many models share the same display name
-    const nameCount = new Map<string, number>();
-    models.forEach((model) => {
-      const displayName = model.display_name || model.name || model.id;
-      nameCount.set(displayName, (nameCount.get(displayName) || 0) + 1);
-    });
-
     return models.map((model) => {
       // Build capability badges/chips
       const badges: string[] = [];
@@ -270,9 +263,6 @@ export class DynamicModelsManager {
       const costMultiplier = this.getCostMultiplier(model);
       const badgesText = badges.length > 0 ? ` [${badges.join(" • ")}]` : "";
       
-      // Check if this display name has duplicates
-      const hasDuplicates = (nameCount.get(displayName) || 0) > 1;
-      
       // Get category label (capitalize first letter)
       const category = model.model_picker_category || "";
       const categoryLabel = category ? ` - ${category.charAt(0).toUpperCase() + category.slice(1)}` : "";
@@ -285,11 +275,9 @@ export class DynamicModelsManager {
       if (model.capabilities) {
         const limits = (model.capabilities as any).limits || {};
         const parts: string[] = [];
-        
-        // If duplicates exist, add model ID
-        if (hasDuplicates) {
-          parts.push(`ID: ${model.id}`);
-        }
+
+        // Always include model ID to help users reference the exact model
+        parts.push(`ID: ${model.id}`);
         
         if (limits.max_context_window_tokens) {
           parts.push(`Context: ${(limits.max_context_window_tokens / 1000).toFixed(0)}k`);
@@ -303,10 +291,8 @@ export class DynamicModelsManager {
         
         description = parts.join(" • ");
       } else {
-        // No capabilities, just show ID if duplicates
-        if (hasDuplicates) {
-          description = `ID: ${model.id}`;
-        }
+        // No capabilities, still show ID
+        description = `ID: ${model.id}`;
       }
 
       return {
