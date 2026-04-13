@@ -27,8 +27,7 @@
   "include": [
     "credentials/**/*",
     "nodes/**/*",
-    "shared/**/*",
-    "package.json"
+    "shared/**/*"
   ],
   "exclude": [
     "dist",
